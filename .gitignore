@@ -1,0 +1,20 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+__pycache__
+.jj
+.env
+
+data/
+satellite-recordings/
+scrap_data/
+docs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python Packaging
+*.egg-info/
+dist/
+build/
