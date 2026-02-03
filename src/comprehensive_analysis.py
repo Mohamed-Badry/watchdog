@@ -28,10 +28,12 @@ sns.set_theme(context='notebook', style='whitegrid', palette='viridis')
 # %% [markdown]
 # ## 1. Load Data
 
-# %%
+# %% 
 DATA_DIR = Path('../data')
 if not DATA_DIR.exists():
     DATA_DIR = Path('data')
+FIG_DIR = Path('../docs/figures')
+if not FIG_DIR.exists(): FIG_DIR = Path('docs/figures')
 
 # Load AMSAT (Frequencies)
 df_amsat = pd.read_csv(DATA_DIR / 'amsat-active-frequencies.csv')
@@ -50,7 +52,7 @@ print(f"Loaded SatNOGS DB: {len(df_satnogs)} rows")
 # 
 # Join Key: `satnogs_id` (AMSAT) == `sat_id` (SatNOGS).
 
-# %%
+# %% 
 # Prepare AMSAT
 df_amsat_clean = df_amsat.dropna(subset=['satnogs_id']).copy()
 # Rename for clarity
@@ -84,7 +86,7 @@ print(merged['status'].value_counts())
 # 1.  **Status:** Must be 'alive' (SatNOGS) OR 'unknown' (AMSAT exclusive). We exclude 're-entered' or 'dead'.
 # 2.  **Band:** 433-438 MHz.
 
-# %%
+# %% 
 # 1. Status Filter
 active_sats = merged[merged['status'].isin(['alive', 'unknown'])].copy()
 print(f"Satellites considered Active: {len(active_sats)}")
@@ -114,7 +116,7 @@ print(f"Satellites in 433-438 MHz Band: {len(target_band)}")
 # ## 4. Modulation Analysis
 # Normalize the messy mode strings to find the "Standard".
 
-# %%
+# %% 
 def normalize_mode(mode_str):
     if pd.isna(mode_str):
         return "Unknown", "Unknown"
@@ -161,13 +163,14 @@ target_band['combined_mode'] = target_band['baud'] + " " + target_band['modulati
 # %% [markdown]
 # ## 5. Visualizing the Landscape
 
-# %%
+# %% 
 # Top Modes
 plt.figure(figsize=(12, 6))
 mode_counts = target_band['combined_mode'].value_counts().head(10)
 sns.barplot(x=mode_counts.values, y=mode_counts.index, hue=mode_counts.index, legend=False)
 plt.title("Active Satellites: Top Downlink Modes (433-438 MHz)")
 plt.xlabel("Count")
+plt.savefig(FIG_DIR / 'modulation_distribution.png', bbox_inches='tight', dpi=150)
 plt.show()
 
 # Frequency Distribution
@@ -177,6 +180,7 @@ plt.title("Active Satellites: Frequency Distribution")
 plt.xlabel("Frequency (MHz)")
 plt.axvline(437.0, color='red', linestyle='--', label='Center (437 MHz)')
 plt.legend()
+plt.savefig(FIG_DIR / 'frequency_distribution.png', bbox_inches='tight', dpi=150)
 plt.show()
 
 # %% [markdown]
@@ -186,7 +190,7 @@ plt.show()
 # 2.  **9600 bps** (High data rate).
 # 3.  **GMSK/GFSK/FSK** (Common demodulator).
 
-# %%
+# %% 
 target_mods = ['9600 GMSK', '9600 GFSK', '9600 FSK']
 cohort = target_band[target_band['combined_mode'].isin(target_mods)].sort_values('primary_freq')
 
@@ -200,9 +204,8 @@ cols = ['amsat_name', 'primary_freq', 'mode', 'status', 'norad_cat_id', 'callsig
 print("\nTop Candidates (Confirmed Alive):")
 print(cohort[cols].head(20).to_string(index=False))
 
-# %%
+# %% 
 # Export
 out_path = DATA_DIR / 'golden_candidates.csv'
 cohort[cols].to_csv(out_path, index=False)
 print(f"\nSaved {len(cohort)} candidates to {out_path}")
-

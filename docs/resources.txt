@@ -1,0 +1,3 @@
+https://www.kaggle.com/datasets/thedevastator/amateur-satellites-in-space
+
+https://db.satnogs.org/api/

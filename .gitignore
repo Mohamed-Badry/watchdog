@@ -9,7 +9,9 @@ __pycache__
 data/
 satellite-recordings/
 scrap_data/
-docs/
+docs/figures/
+docs/*.html
+docs/*.pdf
 
 # Jupyter
 .ipynb_checkpoints/
