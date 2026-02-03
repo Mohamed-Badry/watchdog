@@ -10,7 +10,7 @@
   config-info(
     title: [Project Watchdog],
     subtitle: [AI-Powered Amateur Satellite Ground Station],
-    author: [Gemini عمك],
+    author: [],
   ),
   config-colors(
     primary: color-primary,
@@ -72,13 +72,60 @@
 
 *Real-Time Anomaly Detection at the Edge*
 
-Instead of passive data logging, this system acts as a "First Responder" for amateur satellites.
+Instead of passive data logging, this system acts as a "Proactive Early Warning System" for amateur satellites.
 
 #v(1em)
 *Key Capabilities:*
 - *Strict Validation:* AX.25 Checksums prevent false identification.
 - *Schema Normalization:* Mapping heterogeneous raw telemetry to SI units.
 - *Synthetic Fault Injection:* Validating detection using simulated physical failures.
+
+== The Problem vs. The Solution
+
+#text(size: 16pt)[
+  #grid(
+    columns: (1fr, 1fr),
+    gutter: 1.5em,
+    block(
+      fill: color-secondary.lighten(90%),
+      // height: 21em,
+      inset: 1em,
+      radius: 4pt,
+      width: 100%,
+      stroke: (left: 4pt + color-secondary),
+      [
+        *The Problem: "Post-Mortem Analysis"*
+        #v(0.5em)
+        Current amateur ground stations are passive data loggers.
+        #v(0.5em)
+        - *Latency Gap:* Anomalies are detected weeks later by humans manually reviewing logs.
+        #v(0.1em)
+        - *Static Thresholds:* Simple limits fail to catch complex, multivariate failures (e.g., thermal runaway during eclipse).
+        #v(0.1em)
+        - *Scale:* No operator can monitor 300+ live downlinks 24/7.
+      ]
+    ),
+    block(
+      fill: color-primary.lighten(90%),
+      // height: 21em,
+      inset: 1em,
+      radius: 4pt,
+      width: 100%,
+      stroke: (left: 4pt + color-primary),
+      [
+        *Our Solution: The Edge Watchdog*
+        #v(0.5em)
+        Deploying an *Unsupervised ML Model* at the Ground Station.
+        #v(0.5em)
+        - *Zero Latency:* Inference happens *during* the reception window.
+        #v(0.1em)
+        - *Context Aware:* Learns correlations (e.g., "High Current" is normal *only* if "TX is Active").
+        #v(0.1em)
+        - *Data Efficient:* Trains on "Normal" data (abundant), doesn't require rare "Failure" labels.
+      ]
+    )
+  )
+]
 
 = Phase 1: The Selection Funnel
 
