@@ -4,9 +4,10 @@
 **Real-Time Anomaly Detection at the Edge.**
 A system to detect anomalies in amateur satellite telemetry using an Autoencoder trained on historical data.
 
-## 2. Current Status (As of 2026-02-02)
-*   **Phase:** Operations Planning Complete.
-*   **Next Step:** "The Lab Phase" (Downloading historical training data from SatNOGS).
+## 2. Current Status (As of 2026-02-04)
+*   **Phase:** "The Lab Phase" (Data Acquisition & Preprocessing).
+*   **Status:** Active. Data ingestion pipeline (`fetch_training_data.py`) is deployed and operational.
+*   **Next Step:** "The Warehouse" (Deduplication & Preprocessing into Parquet).
 
 ## 3. The Golden Cohort (Target Satellites)
 Selected based on:
@@ -43,5 +44,6 @@ Selected based on:
 *   `docs/figures/`: Stores the auto-generated PNGs.
 
 ## 5. Key Commands
-*   **Regenerate Figures:** `pixi run python src/comprehensive_analysis.py && pixi run python src/pass_analysis_viz.py`
-*   **Update Notebooks:** `uv tool run jupytext --to notebook src/pass_analysis_viz.py --output notebooks/pass_visualization.ipynb`
+*   **Fetch Training Data:** `just fetch` (Interactive) or `just fetch --all` (Batch 30 days).
+*   **Regenerate Analysis:** `just regenerate-all` (Updates Target Selection & Viz).
+*   **Sync Notebooks:** `just sync-notebooks` (Scripts -> Notebooks).

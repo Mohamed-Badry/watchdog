@@ -5,6 +5,7 @@
 __pycache__
 .jj
 .env
+logs/
 
 data/
 satellite-recordings/

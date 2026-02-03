@@ -32,8 +32,18 @@ The system is split into two distinct environments that share a common logic cor
 ### A. "The Lab" (Offline Training Pipeline)
 * **Goal:** Learn "Normal" behavior from historical data.
 * **Source:** SatNOGS Database (JSON Archives).
+
+#### 1. Data Ingestion (The Siphon)
+*   **Tool:** `scripts/fetch_training_data.py` (Interactive CLI).
+*   **Strategy:** "The Lake". We download raw JSON batches (1-day chunks) to `data/raw/`.
+*   **Features:**
+    *   **Fault Tolerant:** Exponential backoff & Resume capability.
+    *   **Rate Limit Aware:** Token bucket delays to respect SatNOGS API limits.
+    *   **Streaming:** Appends to `.jsonl` to prevent RAM spikes.
+
+#### 2. Preprocessing & Training
 * **Process:**
-    1. Download raw frames (JSON).
+    1. Deduplicate (Frame + Timestamp) to remove multi-station redundancy.
     2. Decode & Normalize using the **Shared Core**.
     3. Train Unsupervised ML Models (Autoencoder / Isolation Forest).
 * **Validation Strategy:** **"Injected Physics"**. Since real anomaly labels are rare, we validate the model by synthetically injecting known faults (e.g., voltage drift, sensor noise, stuck values) into clean data to measure detection accuracy.
@@ -118,10 +128,18 @@ def process_packet(raw_bytes):
 * **Interface:** UDP Stream (packets sent to `localhost`).
 
 ### Software
-* **Language:** Python 3.11 (`scikit-learn`, `pytorch`, `pandas`).
-* **Physics Engine:** `skyfield` (Orbit prediction & geometry).
-* **Parsing:** `construct` library (Declarative binary parsing).
-* **Visualization:** `matplotlib`, `seaborn` (for operational dashboards).
+
+*   **Language:** Python 3.11.
+
+*   **Data Engineering:** `requests`, `loguru`, `rich` (Robust CLI pipelines).
+
+*   **ML Core:** `scikit-learn`, `pytorch`, `pandas`.
+
+*   **Physics Engine:** `skyfield` (Orbit prediction & geometry).
+
+*   **Parsing:** `construct` library (Declarative binary parsing).
+
+*   **Visualization:** `matplotlib`, `seaborn` (for operational dashboards).
 
 ---
 
