@@ -21,9 +21,13 @@ from pathlib import Path
 import matplotlib.dates as mdates
 
 # Set aesthetic
-sns.set_theme(style="whitegrid", palette="deep")
+sns.set_theme(style="whitegrid", palette="deep", rc={
+    'axes.facecolor': '#fafafa',
+    'figure.facecolor': '#fafafa'
+})
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['figure.dpi'] = 120
+plt.rcParams['savefig.facecolor'] = '#fafafa'
 
 # %% [markdown]
 # ## 1. Configuration & Data Loading

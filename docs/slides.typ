@@ -10,7 +10,7 @@
   config-info(
     title: [Project Watchdog],
     subtitle: [AI-Powered Amateur Satellite Ground Station],
-    author: [Gemini CLI],
+    author: [Gemini عمك],
   ),
   config-colors(
     primary: color-primary,
@@ -91,7 +91,8 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
   [*Status:* Must be confirmed 'Alive' in SatNOGS DB.],
   [*Band:* 433-438 MHz (70cm Amateur Band).],
   [*Modulation:* High-rate 9600 bps GMSK/FSK (Modern Standard).],
-  [*Visibility:* High-elevation passes (>30°) over Beni Suef.]
+  [*Visibility:* High-elevation passes (>30°) over Beni Suef.],
+  [*Support:* Must be explicitly supported by `gr_satellites` (AX.25).]
 )
 
 == Analysis Result: The Golden Cohort
@@ -100,7 +101,7 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    We identified *87 candidates* that match the technical criteria.
+    We identified *45 candidates* that match the technical criteria.
     
     *Dominant Standard:* 9600 bps GMSK.
     
@@ -133,10 +134,10 @@ These satellites offer the highest *Operational Efficiency* for our ground stati
   align: horizon,
   table.header([*Satellite*], [*Passes (48h)*], [*Total Mins*], [*Max El*]),
   "GO-32 (TechSat-1B)", "4", "20.6 m", "89°",
-  "HORYU-4", "7", "18.3 m", "89°",
-  "STEP CubeLab-II", "4", "16.9 m", "75°",
   "STRaND-1", "4", "14.4 m", "89°",
-  "BisonSat", "4", "13.3 m", "73°",
+  "TigriSat", "4", "13.3 m", "69°",
+  "STEP CubeLab-II", "3", "12.7 m", "75°",
+  "UniSat-6", "4", "11.6 m", "78°",
 )
 
 == Operational Reality: Skyplot
@@ -196,12 +197,40 @@ Two distinct environments sharing a single *Shared Core*.
   `batt_voltage`, "Volts", "Standardized from mV/ADC",
   `batt_current`, "Amps", "Charge/Discharge rate",
   `temp_obc`, "Celsius", "Main computer temp",
-  `solar_current`, "Amps", "Panel health & eclipse"
+  `solar_current`, "Amps", "Panel health & eclipse",
+  `temp_pa`, "Celsius", "PA Temp (Radio stuck ON)",
+  `signal_rssi`, "dBm", "RSSI (Tumble detection)"
 )
+
+= Implementation Logic
+
+== The Adapter Pattern
+
+#code-block(```python
+# The Shared Core
+REGISTRY = {
+    "NJ7P": { # Fox-1B
+        "decoder": Fox1_Construct_Struct, 
+        "adapter": adapt_fox1_to_si
+    },
+    "UPSAT": {
+        "decoder": UPSat_Construct_Struct, 
+        "adapter": adapt_upsat_to_si
+    }
+}
+
+def process_packet(raw_bytes):
+    # 1. Identify (Header)
+    callsign = parse_ax25_header(raw_bytes).src_callsign
+    # 2. Decode (Binary -> Dict)
+    raw = REGISTRY[callsign]["decoder"].parse(raw_bytes)
+    # 3. Normalize (Dict -> Golden Features)
+    return REGISTRY[callsign]["adapter"](raw)
+```)
 
 == Summary & Next Steps
 
-1.  *Targeting:* We have locked onto *GO-32* and *HORYU-4* as primary targets.
+1.  *Targeting:* We have locked onto *GO-32* and *STRaND-1* as primary targets.
 2.  *Operations:* We have a precise schedule for high-quality data.
 3.  *Architecture:* The V-Model is ready for implementation.
 

@@ -23,7 +23,11 @@ from pathlib import Path
 
 # Set style
 plt.style.use('ggplot')
-sns.set_theme(context='notebook', style='whitegrid', palette='viridis')
+sns.set_theme(context='notebook', style='whitegrid', palette='viridis', rc={
+    'axes.facecolor': '#fafafa',
+    'figure.facecolor': '#fafafa'
+})
+plt.rcParams['savefig.facecolor'] = '#fafafa'
 
 # %% [markdown]
 # ## 1. Load Data
@@ -44,6 +48,43 @@ print(f"Loaded AMSAT List: {len(df_amsat)} rows")
 df_satnogs = pd.read_csv(DATA_DIR / 'satnogs.csv')
 print(f"Loaded SatNOGS DB: {len(df_satnogs)} rows")
 
+# Load gr_satellites list
+gr_sat_path = Path('satellites_list.txt')
+if not gr_sat_path.exists():
+    gr_sat_path = Path('../satellites_list.txt')
+
+supported_norad_ids = set()
+if gr_sat_path.exists():
+    with open(gr_sat_path, 'r') as f:
+        lines = f.readlines()
+    
+    current_id = None
+    has_ax25 = False
+    
+    for line in lines:
+        # Check for new satellite header "* Name (NORAD 12345)"
+        header_match = re.match(r'\*.*\(NORAD\s+(\d+)\)', line)
+        if header_match:
+            # Save previous if valid
+            if current_id and has_ax25:
+                supported_norad_ids.add(current_id)
+            
+            # Reset for new sat
+            current_id = int(header_match.group(1))
+            has_ax25 = False
+        elif current_id:
+            # Check lines belonging to current sat for AX.25
+            if "AX.25" in line.upper():
+                has_ax25 = True
+    
+    # Add last one
+    if current_id and has_ax25:
+        supported_norad_ids.add(current_id)
+        
+    print(f"Loaded gr_satellites support list: {len(supported_norad_ids)} satellites with AX.25 support")
+else:
+    print("WARNING: satellites_list.txt not found. Skipping decoder verification.")
+
 # %% [markdown]
 # ## 2. Data Integration
 # We merge the datasets to get the best of both worlds:
@@ -52,7 +93,7 @@ print(f"Loaded SatNOGS DB: {len(df_satnogs)} rows")
 # 
 # Join Key: `satnogs_id` (AMSAT) == `sat_id` (SatNOGS).
 
-# %% 
+# %%
 # Prepare AMSAT
 df_amsat_clean = df_amsat.dropna(subset=['satnogs_id']).copy()
 # Rename for clarity
@@ -75,23 +116,35 @@ merged = pd.merge(
 # Fill missing status with 'unknown' (since AMSAT list implies active, but we prefer SatNOGS confirmation)
 merged['status'] = merged['status'].fillna('unknown')
 
+# Ensure NORAD ID is int
+merged['norad_cat_id'] = pd.to_numeric(merged['norad_cat_id'], errors='coerce').fillna(0).astype(int)
+
+# Mark gr_satellites support
+if supported_norad_ids:
+    merged['supported'] = merged['norad_cat_id'].isin(supported_norad_ids)
+else:
+    merged['supported'] = True # Assume true if list missing to avoid empty result
+
 print(f"Merged Dataset: {len(merged)} satellites")
-print("Status Counts:")
-print(merged['status'].value_counts())
+print(f"Supported by gr_satellites: {merged['supported'].sum()}")
 
 # %% [markdown]
 # ## 3. Filtering: The "Alive" & "In-Band" Cohort
 # 
 # Rules:
-# 1.  **Status:** Must be 'alive' (SatNOGS) OR 'unknown' (AMSAT exclusive). We exclude 're-entered' or 'dead'.
+# 1.  **Status:** 'alive' or 'unknown'.
 # 2.  **Band:** 433-438 MHz.
+# 3.  **Decoder:** Must be in `satellites_list.txt`.
 
-# %% 
+# %%
 # 1. Status Filter
 active_sats = merged[merged['status'].isin(['alive', 'unknown'])].copy()
-print(f"Satellites considered Active: {len(active_sats)}")
 
-# 2. Frequency Parsing
+# 2. Support Filter
+active_supported = active_sats[active_sats['supported']].copy()
+print(f"Satellites Active & Supported: {len(active_supported)}")
+
+# 3. Frequency Parsing
 def parse_frequencies(downlink_str):
     if pd.isna(downlink_str):
         return []
@@ -104,14 +157,13 @@ def get_primary_freq(freq_list):
             return f
     return np.nan
 
-active_sats['all_freqs'] = active_sats['downlink'].apply(parse_frequencies)
-active_sats['primary_freq'] = active_sats['all_freqs'].apply(get_primary_freq)
+active_supported['all_freqs'] = active_supported['downlink'].apply(parse_frequencies)
+active_supported['primary_freq'] = active_supported['all_freqs'].apply(get_primary_freq)
 
-# 3. Band Filter (433-438 MHz)
-target_band = active_sats[(active_sats['primary_freq'] >= 433.0) & (active_sats['primary_freq'] <= 438.0)].copy()
+# 4. Band Filter (433-438 MHz)
+target_band = active_supported[(active_supported['primary_freq'] >= 433.0) & (active_supported['primary_freq'] <= 438.0)].copy()
 
-print(f"Satellites in 433-438 MHz Band: {len(target_band)}")
-
+print(f"Satellites in 433-438 MHz Band (Supported): {len(target_band)}")
 # %% [markdown]
 # ## 4. Modulation Analysis
 # Normalize the messy mode strings to find the "Standard".
