@@ -1,3 +1,5 @@
+# DISCLAIMER: This project is still nowhere near complete and heavily AI-assisted use at your own discretion.
+
 # Project Watchdog (gr_sat)
 
 This repository hosts the **Project Watchdog** codebase, an AI-powered system for real-time anomaly detection in amateur satellite telemetry.
