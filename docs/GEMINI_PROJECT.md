@@ -5,9 +5,14 @@
 A system to detect anomalies in amateur satellite telemetry using an Autoencoder trained on historical data.
 
 ## 2. Current Status (As of 2026-02-04)
-*   **Phase:** "The Lab Phase" (Data Acquisition & Preprocessing).
-*   **Status:** Active. Data ingestion pipeline (`fetch_training_data.py`) is deployed and operational.
-*   **Next Step:** "The Warehouse" (Deduplication & Preprocessing into Parquet).
+*   **Phase:** "The Refinery" (Data Processing & Normalization).
+*   **Status:** Active.
+    *   **Data Ingestion:** `scripts/fetch_training_data.py` is operational.
+    *   **Data Processing:** `scripts/process_data.py` is operational.
+    *   **Shared Core:** `src/gr_sat/telemetry.py` implemented ("Golden Features" schema).
+    *   **Decoders:** GO-32 (TechSat-1B) decoder implemented (Stub/Reverse Engineered).
+    *   **Tools:** `scripts/telemetry_inspector.py` created for visual verification.
+*   **Next Step:** "The Lab" - Train the Autoencoder on the processed CSV data.
 
 ## 3. The Golden Cohort (Target Satellites)
 Selected based on:
@@ -40,10 +45,14 @@ Selected based on:
 ### File Structure
 *   `src/comprehensive_analysis.py`: Filters 300+ sats down to the Golden Cohort.
 *   `src/pass_analysis_viz.py`: Generates the Skyplot and Gantt Chart for the next 48h.
+*   `src/gr_sat/telemetry.py`: The Shared Core (Data Standardization).
+*   `scripts/telemetry_inspector.py`: Interactive tool for inspecting raw/decoded frames.
 *   `docs/slides.typ`: The master presentation (Typst).
 *   `docs/figures/`: Stores the auto-generated PNGs.
 
 ## 5. Key Commands
 *   **Fetch Training Data:** `just fetch` (Interactive) or `just fetch --all` (Batch 30 days).
+*   **Process Data:** `pixi run python scripts/process_data.py --norad 25397` (Generates CSV).
+*   **Inspect Data:** `pixi run python scripts/telemetry_inspector.py` (Interactive Notebook).
 *   **Regenerate Analysis:** `just regenerate-all` (Updates Target Selection & Viz).
 *   **Sync Notebooks:** `just sync-notebooks` (Scripts -> Notebooks).

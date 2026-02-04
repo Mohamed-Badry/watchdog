@@ -117,9 +117,32 @@ def process_packet(raw_bytes):
         
         return ml_vector
 ```
+
+## 6. Development Progress (Updated Feb 2026)
+
+### Implemented Components
+
+#### 1. The Shared Core (`src/gr_sat/telemetry.py`)
+*   **`TelemetryFrame`:** The concrete implementation of "Golden Features" as a Python dataclass. Enforces type safety and SI unit standardization.
+*   **`DecoderRegistry`:** A singleton registry that automatically registers decoders via decorators (`@DecoderRegistry.register`).
+*   **`process_frame`:** The universal entry point function.
+
+#### 2. Data Refinery (`scripts/process_data.py`)
+*   **Pipeline:** `Raw JSONL` -> `Dedup` -> `Decode` -> `Normalize` -> `CSV`.
+*   **Status:** Successfully processed GO-32 (TechSat-1B) data with ~92% decode rate.
+
+#### 3. Telemetry Inspector (`scripts/telemetry_inspector.py`)
+*   **Tool:** An interactive Jupyter-based visual debugger.
+*   **Goal:** "Ground Truth" verification. Allows humans to visually correlate raw hex bytes with parsed values to ensure the decoder is not hallucinating.
+*   **Features:**
+    *   **Hex View:** Raw payload inspection.
+    *   **Struct View:** Visualization of the intermediate binary parsing steps (ADC counts).
+    *   **Telemetry View:** Verification of the final physical values (Volts, Amps).
+    *   **Navigation:** Slider-based frame traversal.
+
 ---
 
-## 6. Technology Stack
+## 7. Technology Stack
 
 ### Hardware & RF
 * **Antenna:** Omnidirectional or Yagi.
@@ -143,7 +166,7 @@ def process_packet(raw_bytes):
 
 ---
 
-## 7. Reviewer Defense Strategy
+## 8. Reviewer Defense Strategy
 * **"How do you know it's not hallucinating?"**
     * We use AX.25 Checksums (CRC-16). We only process mathematically valid packets.
     * We use the embedded Callsign for ID, not orbital predictions.

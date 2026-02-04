@@ -251,35 +251,51 @@ Two distinct environments sharing a single *Shared Core*.
 
 = Implementation Logic
 
-== The Adapter Pattern
+== The Shared Core Pipeline
 
-#code-block(```python
-# The Shared Core
-REGISTRY = {
-    "NJ7P": { # Fox-1B
-        "decoder": Fox1_Construct_Struct, 
-        "adapter": adapt_fox1_to_si
-    },
-    "UPSAT": {
-        "decoder": UPSat_Construct_Struct, 
-        "adapter": adapt_upsat_to_si
-    }
-}
+We have implemented the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal adapter between raw bits and our AI model.
 
-def process_packet(raw_bytes):
-    # 1. Identify (Header)
-    callsign = parse_ax25_header(raw_bytes).src_callsign
-    # 2. Decode (Binary -> Dict)
-    raw = REGISTRY[callsign]["decoder"].parse(raw_bytes)
-    # 3. Normalize (Dict -> Golden Features)
-    return REGISTRY[callsign]["adapter"](raw)
-```)
+#v(0.5em)
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    *Pipeline Steps:*
+    1.  *Ingest:* Read raw hex frames (SatNOGS/SDR).
+    2.  *Parse:* Binary bit-banging via `construct`.
+    3.  *Normalize:* Convert ADC counts to SI Units (V, A, °C).
+    4.  *Validate:* Check against physical limits.
+  ],
+  [
+    *Current Status:*
+    - Core Logic: *Complete*
+    - Decoder (GO-32): *Implemented*
+    - Decode Rate: *~92%*
+  ]
+)
+
+== Data Verification (GO-32)
+
+Initial telemetry extraction from GO-32 (TechSat-1B). 
+*Note:* Values require final calibration (ADC scaling factors) based on specific ICD.
+
+#align(center)[
+  #image("figures/telemetry_25397.png", height: 80%)
+]
+
+== The Inspector Tool
+
+We built an interactive debugger (`telemetry_inspector`) to verify decoders against real historical data.
+
+#align(center)[
+  #image("figures/decoded_packets.png", height: 85%)
+]
 
 == Summary & Next Steps
 
 1.  *Targeting:* We have locked onto *GO-32* and *STRaND-1* as primary targets.
-2.  *Operations:* We have a precise schedule for high-quality data.
-3.  *Architecture:* The V-Model is ready for implementation.
+2.  *Pipeline:* The *Data Refinery* is operational, converting raw frames to Training CSVs.
+3.  *Validation:* Inspector tools are in place to verify data quality.
 
 #v(1em)
-*Next Milestone:* Download historical telemetry (The Lab) and train the anomaly detector.
+*Next Milestone:* Train the Autoencoder (The Lab Phase 2).

@@ -31,3 +31,4 @@ rich = ">=14.3.2,<15"
 [pypi-dependencies]
 gr_sat = { path = ".", editable = true }
 pyax25 = ">=1.0.0, <2"
+construct = ">=2.10"
