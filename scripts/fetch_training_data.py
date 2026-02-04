@@ -101,7 +101,13 @@ class SatNOGSDownloader:
         progress_obj.update(progress_task_id, description=f"Fetching {log_prefix}...")
 
         frames_downloaded = 0
+        chunk_seen_hashes = set() # Circuit breaker for infinite page loops
         
+        # Cursor Pagination Logic
+        # We start with the base URL and params. Subsequent requests use the 'next' URL from the API.
+        current_url = self.base_url
+        current_params = params 
+
         with open(outfile, 'a') as f:
             while True:
                 retry_count = 0
@@ -113,7 +119,11 @@ class SatNOGSDownloader:
                 # Retry Loop
                 while retry_count < MAX_RETRIES:
                     try:
-                        response = self.session.get(self.base_url, params=params, timeout=15)
+                        # Use params only if we are hitting the base URL (first page)
+                        # If we are following a 'next' link, params are already in the string.
+                        req_params = current_params if current_url == self.base_url else None
+                        
+                        response = self.session.get(current_url, params=req_params, timeout=15)
                         
                         if response.status_code == 429:
                             sleep_time = 60 * (retry_count + 1)
@@ -159,14 +169,29 @@ class SatNOGSDownloader:
                 if not frames_list:
                     break 
 
+                # --- LOOP DETECTION (Circuit Breaker) ---
+                if len(frames_list) > 0:
+                    first_frame = frames_list[0]
+                    page_sig = f"{first_frame.get('timestamp')}_{first_frame.get('observation_id')}_{len(frames_list)}"
+                    
+                    if page_sig in chunk_seen_hashes:
+                        logger.warning(f"{log_prefix} | [red]Loop Detected[/] (API returned duplicate page). Stopping chunk.")
+                        break
+                    chunk_seen_hashes.add(page_sig)
+                # ----------------------------------------
+
                 for frame in frames_list:
                     f.write(json.dumps(frame) + '\n')
                     frames_downloaded += 1
 
-                if len(frames_list) < 25:
-                    break
-
-                params['page'] += 1
+                # PAGINATION UPDATE
+                # Check for 'next' link. If present, use it for the next iteration.
+                next_link = raw_data.get('next')
+                if next_link:
+                    current_url = next_link
+                    current_params = None # Clear params since they are in the URL now
+                else:
+                    break # End of pages
                 
         # Cleanup
         if frames_downloaded == 0:
