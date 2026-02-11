@@ -23,7 +23,7 @@ curl -fsSL https://pixi.sh/install.sh | bash
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://pixi.sh/install.ps1 | iex
+powershell -ExecutionPolicy Bypass -c "irm -useb https://pixi.sh/install.ps1 | iex"
 ```
 
 ### 2. Setup the Project
