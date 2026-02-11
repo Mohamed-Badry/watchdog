@@ -30,7 +30,6 @@ iwr -useb https://pixi.sh/install.ps1 | iex
 Clone the repo and install dependencies:
 ```bash
 git clone https://github.com/Mohamed-Badry/watchdog.git
-cd gr_sat
 pixi install
 ```
 
