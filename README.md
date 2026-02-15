@@ -7,7 +7,7 @@ This repository hosts the **Project Watchdog** codebase, an AI-powered system fo
 ## 📚 Key Documentation
 
 *   **[Technical Details & Architecture](DETAILS.md)**: Deep dive into the system's design and "Golden Features".
-*   **[Project Context & Status](docs/GEMINI_PROJECT.md)**: Current phase, team objectives, and "Gemini" integration details.
+*   **[.gemini/GEMINI.md](.gemini/GEMINI.md)**: Active project context and agent instructions.
 
 ---
 
