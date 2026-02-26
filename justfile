@@ -20,11 +20,11 @@ fetch +args='':
 
 # Regenerate target analysis and selection
 analyze-targets:
-    pixi run python scripts/comprehensive_analysis.py
+    pixi run python notebooks/sat_analysis.py
 
 # Generate operational dashboards (Skyplots, Gantt)
 viz-passes:
-    pixi run python scripts/pass_analysis_viz.py
+    pixi run python notebooks/pass_analysis_viz.py
 
 # Run the full visualization pipeline (Select -> Visualize)
 regenerate-all: analyze-targets viz-passes
@@ -33,11 +33,11 @@ regenerate-all: analyze-targets viz-passes
 
 # Sync Jupyter Notebooks from Scripts
 sync-notebooks:
-    @for script in scripts/*.py; do \
+    @for script in notebooks/*.py; do \
         filename=$(basename -- "$script"); \
         name="${filename%.*}"; \
-        echo "Syncing $script to notebooks/$name.ipynb"; \
-        uv tool run jupytext --to notebook "$script" --output "notebooks/$name.ipynb"; \
+        echo "Syncing notebook-script $script to notebooks/$name.ipynb"; \
+        pixi run jupytext --to notebook --update "$script" --output "notebooks/$name.ipynb"; \
     done
 
 # Clean temporary files (pycache, etc.)

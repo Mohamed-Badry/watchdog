@@ -147,7 +147,7 @@ def process_packet(raw_bytes):
 *   **Pipeline:** `Raw JSONL` -> `Dedup` -> `Decode` -> `Normalize` -> `CSV`.
 *   **Status:** Successfully processed GO-32 (TechSat-1B) data with ~92% decode rate.
 
-#### 3. Telemetry Inspector (`scripts/telemetry_inspector.py`)
+#### 3. Telemetry Inspector (`notebooks/telemetry_inspector.py`)
 *   **Tool:** An interactive Jupyter-based visual debugger.
 *   **Goal:** "Ground Truth" verification. Allows humans to visually correlate raw hex bytes with parsed values to ensure the decoder is not hallucinating.
 *   **Features:**

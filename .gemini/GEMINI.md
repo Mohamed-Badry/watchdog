@@ -31,7 +31,7 @@
 *   **Visualize Passes:** `just viz-passes` (Generates Skyplots/Gantt charts).
 *   **Regenerate All Analysis:** `just regenerate-all`.
 *   **Process Data (Manual):** `pixi run python scripts/process_data.py --norad <id>`
-*   **Inspect Telemetry:** `pixi run python scripts/telemetry_inspector.py`
+*   **Inspect Telemetry:** `pixi run python notebooks/telemetry_inspector.py`
 
 ## 6. Technical Specifics
 *   **The Shared Core (`src/gr_sat/telemetry.py`):**

@@ -27,6 +27,7 @@ tqdm = ">=4.67.2,<5"
 just = ">=1.46.0,<2"
 loguru = ">=0.7.3,<0.8"
 rich = ">=14.3.2,<15"
+jupytext = ">=1.19.1,<2"
 
 [pypi-dependencies]
 gr_sat = { path = ".", editable = true }

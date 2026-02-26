@@ -108,6 +108,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyhc90fa1f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/jupyterlab_pygments-0.3.0-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/jupyterlab_widgets-3.0.16-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/jupytext-1.19.1-pyhbbac1ac_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/just-1.46.0-hdab8a38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.3-hb9d3cd8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.9-py311h724c32c_2.conda
@@ -221,6 +222,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.10.8-py311h38be061_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.10.8-py311h0f3be63_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/matplotlib-inline-0.2.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/mdit-py-plugins-0.5.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mistune-3.2.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/mpg123-1.32.9-hc50e24c_0.conda
@@ -456,6 +458,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyh6dadd2b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/jupyterlab_pygments-0.3.0-pyhd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/jupyterlab_widgets-3.0.16-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/jupytext-1.19.1-pyhbbac1ac_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/just-1.46.0-h77a83cd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.9-py311h275cad7_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/krb5-1.21.3-hdf4eb48_0.conda
@@ -515,6 +518,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/matplotlib-3.10.8-py311h1ea47a8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/matplotlib-base-3.10.8-py311h1675fdf_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/matplotlib-inline-0.2.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/mdit-py-plugins-0.5.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/menuinst-2.4.2-py311h3e6a449_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mistune-3.2.0-pyhcf101f3_0.conda
@@ -3039,6 +3043,23 @@ packages:
   - pkg:pypi/jupyterlab-widgets?source=hash-mapping
   size: 216779
   timestamp: 1762267481404
+- conda: https://conda.anaconda.org/conda-forge/noarch/jupytext-1.19.1-pyhbbac1ac_0.conda
+  sha256: 1027cf4d0eb0c40f36de9e9b78bcdc7edc17b62ff9e7a20ad6bc81422f30713c
+  md5: d8f030e3730713c93a358fdb46f08281
+  depends:
+  - markdown-it-py >=1.0
+  - mdit-py-plugins
+  - nbformat
+  - packaging
+  - python >=3.10
+  - pyyaml
+  - tomli
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/jupytext?source=hash-mapping
+  size: 113306
+  timestamp: 1769455798581
 - conda: https://conda.anaconda.org/conda-forge/linux-64/just-1.46.0-hdab8a38_0.conda
   sha256: efddc2e956fd97aeab218b9d54964950087ba5d81fbbe26336fb49515ee1b594
   md5: 5cecf646914eafce027a81a812a96d09
@@ -5297,6 +5318,18 @@ packages:
   - pkg:pypi/matplotlib-inline?source=hash-mapping
   size: 15175
   timestamp: 1761214578417
+- conda: https://conda.anaconda.org/conda-forge/noarch/mdit-py-plugins-0.5.0-pyhd8ed1ab_0.conda
+  sha256: 123cc004e2946879708cdb6a9eff24acbbb054990d6131bb94bca7a374ebebfc
+  md5: 1997a083ef0b4c9331f9191564be275e
+  depends:
+  - markdown-it-py >=2.0.0,<5.0.0
+  - python >=3.10
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/mdit-py-plugins?source=hash-mapping
+  size: 43805
+  timestamp: 1754946862113
 - conda: https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda
   sha256: 78c1bbe1723449c52b7a9df1af2ee5f005209f67e40b6e1d3c7619127c43b1c7
   md5: 592132998493b3ff25fd7479396e8351

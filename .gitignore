@@ -16,6 +16,7 @@ docs/*.pdf
 
 # Jupyter
 .ipynb_checkpoints/
+notebooks/*.ipynb
 
 # Python Packaging
 *.egg-info/
