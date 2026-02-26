@@ -33,3 +33,5 @@ jupytext = ">=1.19.1,<2"
 gr_sat = { path = ".", editable = true }
 pyax25 = ">=1.0.0, <2"
 construct = ">=2.10"
+satnogs-decoders = ">=1.115.0, <2"
+kaitaistruct = ">=0.10, <0.11"
