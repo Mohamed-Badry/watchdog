@@ -42,11 +42,27 @@ The system is split into two distinct environments that share a common logic cor
     *   **Streaming:** Appends to `.jsonl` to prevent RAM spikes.
 
 #### 2. Preprocessing & Training
-* **Process:**
-    1. Deduplicate (Frame + Timestamp) to remove multi-station redundancy.
-    2. Decode & Normalize using the **Shared Core**.
-    3. Train Unsupervised ML Models (Autoencoder / Isolation Forest).
+* **Strategy: "Shared Tools, Unique Models"**
+    *   **The Problem:** Satellites are physically distinct (different bus voltages, thermal masses). A single "Universal Model" would fail.
+    *   **The Solution:** We use the *Shared Core* to normalize data engineering (SI Units), but we train a **separate Autoencoder instance per NORAD ID**.
+        *   `models/25397.pkl` (GO-32 Specific Physics).
+        *   `models/40908.pkl` (UniSat-6 Specific Physics).
+* **Algorithm: Self-Supervised Autoencoder**
+    *   **Input:** The current telemetry snapshot (e.g., `[8.2V, 0.15A, 25°C]`).
+    *   **Target:** The Input Itself (Reconstruction).
+    *   **Goal:** The model learns the **correlations** (physics) of the satellite to compress the data through a bottleneck. It learns rules like "High Voltage usually means Positive Solar Current".
 * **Validation Strategy:** **"Injected Physics"**. Since real anomaly labels are rare, we validate the model by synthetically injecting known faults (e.g., voltage drift, sensor noise, stuck values) into clean data to measure detection accuracy.
+
+#### 3. Interpretability: Feature Contribution Analysis
+An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide actionable insights by analyzing the **reconstruction error per feature**.
+
+*   **Logic:** $\text{Contribution} = | \text{Input} - \text{Reconstruction} |$
+*   **Example (Heater Stuck ON):**
+    *   **Input:** `[Temp: 50°C, Current: 0.1A]` (Hot but low power draw).
+    *   **Model Expectation:** `[Temp: 10°C, Current: 0.1A]` (Model knows low power usually means low temp).
+    *   **Result:**
+        *   `Temp Error`: **40.0** (Critical Contributor -> Flag "Temperature Anomaly").
+        *   `Current Error`: 0.0 (Normal).
 
 ### B. "The Watchdog" (Online Inference Pipeline)
 * **Goal:** Detect anomalies during a 10-minute satellite pass.

@@ -33,7 +33,12 @@ regenerate-all: analyze-targets viz-passes
 
 # Sync Jupyter Notebooks from Scripts
 sync-notebooks:
-    uv tool run jupytext --to notebook scripts/pass_analysis_viz.py --output notebooks/pass_visualization.ipynb
+    @for script in scripts/*.py; do \
+        filename=$(basename -- "$script"); \
+        name="${filename%.*}"; \
+        echo "Syncing $script to notebooks/$name.ipynb"; \
+        uv tool run jupytext --to notebook "$script" --output "notebooks/$name.ipynb"; \
+    done
 
 # Clean temporary files (pycache, etc.)
 clean:

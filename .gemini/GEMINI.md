@@ -46,9 +46,14 @@
     *   **Processed:** `data/processed/{norad_id}.csv` (Standardized CSV).
     *   **Flow:** Raw -> Deduplicate (Timestamp) -> Decode -> Normalize -> CSV.
 
-## 7. Coding Standards
-*   **Logging:** Use `loguru` for all logging. Configure with `rich` handler for CLI output.
-*   **Type Hinting:** Mandatory. Use `typing` (Dict, List, Optional, Protocol).
-*   **Path Handling:** Use `pathlib.Path` exclusively. No `os.path`.
-*   **Configuration:** Use `argparse` for scripts.
-*   **Dependencies:** Manage via `pixi.toml` (not `requirements.txt`).
+## 8. ML Strategy (The Lab)
+*   **Architecture:** Autoencoder (Self-Supervised).
+    *   **Input:** Normalized TelemetryFrame (SI Units).
+    *   **Output:** Reconstructed Telemetry.
+*   **Model Management:** "Shared Tools, Unique Models".
+    *   **Training Script:** Generic (`train_model.py`).
+    *   **Artifacts:** Specific per NORAD ID (e.g., `models/25397.pkl`).
+*   **Interpretability:** Feature Contribution Analysis.
+    *   **Metric:** Absolute Error per Feature (`|Input - Reconstruction|`).
+    *   **Goal:** Pinpoint the *specific subsystem* causing the anomaly (e.g., "Temp Error: +40C").
+*   **Validation:** Synthetic Fault Injection (Drift, Stuck Value, Noise).

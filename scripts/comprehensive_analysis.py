@@ -188,22 +188,34 @@ def normalize_mode(mode_str):
         rate = 'Other'
         
     # Modulation Type
+    found_mods = []
     if 'gmsk' in m:
-        mod = 'GMSK'
-    elif 'gfsk' in m:
-        mod = 'GFSK'
-    elif 'afsk' in m:
-        mod = 'AFSK'
-    elif 'bpsk' in m:
-        mod = 'BPSK'
-    elif 'fsk' in m:
-        mod = 'FSK'
-    elif 'cw' in m and len(m) < 10:
-        mod = 'CW'
-    elif 'lora' in m:
-        mod = 'LoRa'
-    else:
-        mod = 'Other'
+        found_mods.append('GMSK')
+    if 'gfsk' in m:
+        found_mods.append('GFSK')
+    if 'afsk' in m:
+        found_mods.append('AFSK')
+    if 'bpsk' in m:
+        found_mods.append('BPSK')
+    if 'fsk' in m and 'gfsk' not in m and 'afsk' not in m: # Prevent FSK from matching GFSK/AFSK if they were already matched, though 'fsk' is in 'gfsk'
+        # Actually, let's just use regex or word boundaries, or just simple 'fsk' check but exclude if it's part of another word.
+        # Simple fix: just check if 'fsk' is in the string, but if 'gfsk' or 'afsk' is the ONLY reason 'fsk' is there, it's tricky.
+        # Let's just check for 'fsk' and ensure it's not double-counting.
+        # A better way is to check for standalone 'fsk'.
+        pass
+
+    # Let's rewrite the modulation detection to be more robust
+    mods = []
+    import re
+    if re.search(r'\bgmsk\b', m): mods.append('GMSK')
+    if re.search(r'\bgfsk\b', m): mods.append('GFSK')
+    if re.search(r'\bafsk\b', m): mods.append('AFSK')
+    if re.search(r'\bbpsk\b', m): mods.append('BPSK')
+    if re.search(r'\bfsk\b', m): mods.append('FSK')
+    if re.search(r'\bcw\b', m) and len(m) < 10: mods.append('CW')
+    if re.search(r'\blora\b', m): mods.append('LoRa')
+    
+    mod = '/'.join(mods) if mods else 'Other'
         
     return rate, mod
 
