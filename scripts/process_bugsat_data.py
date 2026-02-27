@@ -70,7 +70,7 @@ def decode_bugsat_telemetry(hex_str):
         return None
     return None
 
-def process_40014_data(raw_dir="data/raw/40014", output_file="data/processed/40014_processed.csv"):
+def process_40014_data(raw_dir="data/raw/40014", output_file="data/processed/40014.csv"):
     raw_dir = Path(raw_dir)
     all_decoded = []
     

@@ -137,7 +137,7 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
 #list(
   [*Status:* Must be confirmed 'Alive' in SatNOGS DB.],
   [*Band:* 433-438 MHz (70cm Amateur Band).],
-  [*Modulation:* High-rate 9600 bps GMSK/FSK (Modern Standard).],
+  [*Modulation:* High-rate 9600 bps GMSK/GFSK (Modern Standard).],
   [*Visibility:* High-elevation passes (>30°) over Beni Suef.],
   [*Support:* Must be explicitly supported by `satnogs-decoders` (Kaitai).]
 )
@@ -148,9 +148,9 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    We identified *36 candidates* that match the technical criteria and have decoders.
+    We identified *12 candidates* that match the technical criteria and have decoders.
     
-    *Dominant Standard:* 9600 bps GMSK.
+    *Dominant Standard:* 9600 bps GFSK.
     
     This ensures our receiver pipeline works for maximum targets with `satnogs-decoders`.
   ],
@@ -168,7 +168,7 @@ Pass count isn't enough. We rank satellites by the *total duration* they spend a
 #task-card("1", "Satellite Scoring", 
   "Maximize data collection opportunity",
   [Sum(Duration of all passes > 30°)],
-  "Top 5 Operational Targets"
+  "Top Operational Targets"
 )
 
 == The Winners (Top Targets)
@@ -180,14 +180,16 @@ These satellites offer the highest *Operational Efficiency* for our ground stati
   inset: 8pt,
   align: horizon,
   table.header([*Satellite*], [*Passes (48h)*], [*Total Mins*], [*Max El*]),
-  "BugSat-1", "3", "9.5 m", "85°",
   "UWE-4", "3", "7.5 m", "50°",
-  "INSPIRESat-1", "0", "0.0 m", "-",
+  "BugSat-1 (Dropped)*", "3", "9.5 m", "85°",
 )
+
+#v(1em)
+*\*Data Engineering Reality Check:* BugSat-1 was dropped despite high visibility due to undocumented protocol variations (`US37` payload header) causing Kaitai parser failures. ML requires clean data; UWE-4 provides perfect compatibility and rich thermal/power telemetry.
 
 == Operational Reality: Skyplot
 
-Where to point the antenna for the Top 5 targets.
+Where to point the antenna for the Top targets.
 
 #align(center)[
   #image("figures/skyplot_top_candidates.png", height: 85%)
@@ -201,7 +203,7 @@ When to operate the ground station (Next 48 Hours).
   #image("figures/timeline_schedule.png", height: 80%)
 ]
 
-== Phase 3: System Architecture
+== Phase 3: System Architecture (Update to satnogsdecoders/kaitai structs)
 
 #align(center)[
   #image("figures/systemArch_compressed.png", height: 100%)
@@ -272,13 +274,13 @@ We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal
   ]
 )
 
-== Data Verification (GO-32)
+== Data Verification (UWE-4)
 
-Initial telemetry extraction from GO-32 (TechSat-1B). 
-*Note:* Values require final calibration (ADC scaling factors) based on specific ICD.
+Telemetry extraction from UWE-4 (NORAD 43880). 
+Perfect mapping from `satnogs-decoders` to our Golden Features (Volts, Amps, °C).
 
 #align(center)[
-  #image("figures/telemetry_25397.png", height: 80%)
+  #image("figures/telemetry_43880.png", height: 80%)
 ]
 
 == The Inspector Tool
@@ -291,8 +293,8 @@ We built an interactive debugger (`telemetry_inspector`) to verify decoders agai
 
 == Summary & Next Steps
 
-1.  *Targeting:* We have locked onto *GO-32* and *STRaND-1* as primary targets.
-2.  *Pipeline:* The *Data Refinery* is operational, converting raw frames to Training CSVs.
+1.  *Targeting:* We have locked onto *UWE-4* (43880) as our primary "Golden Path" target.
+2.  *Pipeline:* The *Data Refinery* is operational, successfully generating over 2,000 clean training frames.
 3.  *Validation:* Inspector tools are in place to verify data quality.
 
 #v(1em)

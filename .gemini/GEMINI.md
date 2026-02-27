@@ -57,8 +57,13 @@
     *   **Output:** Reconstructed Telemetry.
 *   **Model Management:** "Shared Tools, Unique Models".
     *   **Training Script:** Generic (`train_model.py`).
-    *   **Artifacts:** Specific per NORAD ID (e.g., `models/25397.pkl`).
+    *   **Artifacts:** Specific per NORAD ID (e.g., `models/43880.pkl`).
 *   **Interpretability:** Feature Contribution Analysis.
     *   **Metric:** Absolute Error per Feature (`|Input - Reconstruction|`).
-    *   **Goal:** Pinpoint the *specific subsystem* causing the anomaly (e.g., "Temp Error: +40C").
+    *   **Goal:** Pinpoint the *specific subsystem* causing the anomaly.
 *   **Validation:** Synthetic Fault Injection (Drift, Stuck Value, Noise).
+
+## 9. EDA Insights & ML Plan (UWE-4)
+*   **Correlations:** Strong physical correlations exist (e.g., `temp_panel_z` correlates highly with `batt_voltage` and `batt_current`). This proves the Autoencoder will have solid physical rules to learn.
+*   **Feature Selection:** Use `batt_voltage`, `batt_current`, `temp_batt_a`, `temp_batt_b`, and `temp_panel_z`.
+*   **Limitation/Dropping:** The `temp_obc` feature has a strict zero variance (stuck at 17°C in the current dataset). It MUST be dropped during training to avoid matrix singularity issues during normalization (e.g., `StandardScaler` dividing by zero).

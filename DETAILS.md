@@ -18,11 +18,12 @@ To ensure operational viability, we filtered the entire amateur fleet (338+ sate
 ### The Golden Cohort (Top Candidates)
 Based on our Beni Suef ground station and the `satnogs-decoders` library:
 
-1.  **BugSat-1** - High visibility (~10 mins / 48h), 9600 GMSK.
-2.  **UWE-4** - Solid coverage, 9600 FSK.
-3.  **INSPIRESat-1** - 9600 GFSK.
-4.  **LEDSAT** - 9600 GMSK.
-5.  **BDSat** - 9600 GFSK.
+1.  **UWE-4 (NORAD 43880)** - The "Golden Path". Solid coverage (~7.5 mins / 48h), 9600 FSK, perfect parser compatibility yielding rich thermal/power telemetry.
+2.  **INSPIRESat-1** - 9600 GFSK.
+3.  **LEDSAT** - 9600 GMSK.
+4.  **BDSat** - 9600 GFSK.
+
+*Note on Data Engineering Challenges:* Initial analysis ranked BugSat-1 (NORAD 40014) highly. However, its real-world telemetry uses an undocumented/custom variation (`US37` payload header) that fails strict Kaitai validation in standard decoders. For ML engineering, we prioritize robust, clean data sources over hacking broken protocols. Thus, UWE-4 is our primary focus.
 
 ---
 
@@ -45,8 +46,7 @@ The system is split into two distinct environments that share a common logic cor
 * **Strategy: "Shared Tools, Unique Models"**
     *   **The Problem:** Satellites are physically distinct (different bus voltages, thermal masses). A single "Universal Model" would fail.
     *   **The Solution:** We use the *Shared Core* to normalize data engineering (SI Units), but we train a **separate Autoencoder instance per NORAD ID**.
-        *   `models/25397.pkl` (GO-32 Specific Physics).
-        *   `models/40908.pkl` (UniSat-6 Specific Physics).
+        *   `models/43880.pkl` (UWE-4 Specific Physics).
 * **Algorithm: Self-Supervised Autoencoder**
     *   **Input:** The current telemetry snapshot (e.g., `[8.2V, 0.15A, 25°C]`).
     *   **Target:** The Input Itself (Reconstruction).
@@ -142,9 +142,9 @@ def process_packet(raw_bytes):
 *   **`DecoderRegistry`:** A singleton registry that automatically registers decoders via decorators (`@DecoderRegistry.register`).
 *   **`process_frame`:** The universal entry point function.
 
-#### 2. Data Refinery (`scripts/process_data.py`)
+#### 2. Data Refinery (`scripts/process_uwe4.py`)
 *   **Pipeline:** `Raw JSONL` -> `Dedup` -> `Decode` -> `Normalize` -> `CSV`.
-*   **Status:** Successfully processed GO-32 (TechSat-1B) data with ~92% decode rate.
+*   **Status:** Successfully processed UWE-4 (43880) data, yielding over 2,000 ML-ready standardized frames.
 
 #### 3. Telemetry Inspector (`notebooks/telemetry_inspector.py`)
 *   **Tool:** An interactive Jupyter-based visual debugger.

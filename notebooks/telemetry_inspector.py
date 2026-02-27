@@ -5,7 +5,11 @@
 # This notebook allows you to trace the lifecycle of a single packet:
 # `Raw Hex` -> `Binary Struct` -> `Standardized Telemetry`
 #
-# Use this to verify decoders against real SatNOGS data.
+# Note: As we moved to satnogs-decoders, this inspector might need refactoring 
+# to use Kaitai Structs instead of the old 'process_frame' which relied on 'construct'.
+# For now, we update the documentation to refer to UWE-4.
+# (Future work: Adapt Inspector UI for Kaitai dictionary outputs)
+
 
 # %%
 import ipywidgets as widgets
