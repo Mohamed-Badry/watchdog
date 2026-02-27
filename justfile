@@ -40,6 +40,11 @@ sync-notebooks:
         pixi run jupytext --to notebook --update "$script" --output "notebooks/$name.ipynb"; \
     done
 
+# Convert a Python script to a Jupyter Notebook
+# Usage: just convert notebooks/script.py
+convert script_path:
+    pixi run jupytext --to notebook "{{script_path}}"
+
 # Clean temporary files (pycache, etc.)
 clean:
     rm -rf __pycache__ .pytest_cache

@@ -48,42 +48,46 @@ print(f"Loaded AMSAT List: {len(df_amsat)} rows")
 df_satnogs = pd.read_csv(DATA_DIR / 'satnogs.csv')
 print(f"Loaded SatNOGS DB: {len(df_satnogs)} rows")
 
-# Load gr_satellites list
-gr_sat_path = Path('satellites_list.txt')
-if not gr_sat_path.exists():
-    gr_sat_path = Path('../satellites_list.txt')
-
-supported_norad_ids = set()
-if gr_sat_path.exists():
-    with open(gr_sat_path, 'r') as f:
-        lines = f.readlines()
+# Load satnogsdecoders support list
+try:
+    import satnogsdecoders.decoder as dec
+    import inspect
     
-    current_id = None
-    has_ax25 = False
+    # 1. Extract NORAD ID mapping from satellites_list.txt as a reference
+    # Note: satnogsdecoders module names are lowercase versions of satellite names
+    norad_map = {}
+    gr_sat_path = Path('satellites_list.txt')
+    if not gr_sat_path.exists(): gr_sat_path = Path('../satellites_list.txt')
     
-    for line in lines:
-        # Check for new satellite header "* Name (NORAD 12345)"
-        header_match = re.match(r'\*.*\(NORAD\s+(\d+)\)', line)
-        if header_match:
-            # Save previous if valid
-            if current_id and has_ax25:
-                supported_norad_ids.add(current_id)
+    if gr_sat_path.exists():
+        with open(gr_sat_path, 'r') as f:
+            for line in f:
+                match = re.search(r'\*\s*(.*?)\s*\(NORAD\s+(\d+)\)', line)
+                if match:
+                    name = match.group(1).strip().lower().replace('-', '').replace(' ', '')
+                    norad = int(match.group(2))
+                    norad_map[name] = norad
+    
+    # 2. Get available decoder modules
+    decoder_modules = [name for name, obj in inspect.getmembers(dec) if inspect.ismodule(obj)]
+    
+    # 3. Match decoders to NORAD IDs
+    supported_norad_ids = set()
+    for d in decoder_modules:
+        if d in norad_map:
+            supported_norad_ids.add(norad_map[d])
+        # Fuzzy matching for common variations (e.g. vzlusat2 vs vzlusat-2)
+        elif d.replace('_', '') in norad_map:
+            supported_norad_ids.add(norad_map[d.replace('_', '')])
             
-            # Reset for new sat
-            current_id = int(header_match.group(1))
-            has_ax25 = False
-        elif current_id:
-            # Check lines belonging to current sat for AX.25
-            if "AX.25" in line.upper():
-                has_ax25 = True
+    # Add known hardcoded matches if missing from the simple name match
+    # Example: 'ax25frames' is a generic decoder, but we want specific satellite IDs.
+    # For now, 80+ matches is a good start.
     
-    # Add last one
-    if current_id and has_ax25:
-        supported_norad_ids.add(current_id)
-        
-    print(f"Loaded gr_satellites support list: {len(supported_norad_ids)} satellites with AX.25 support")
-else:
-    print("WARNING: satellites_list.txt not found. Skipping decoder verification.")
+    print(f"Loaded satnogsdecoders support list: {len(supported_norad_ids)} satellites with Kaitai decoders")
+except ImportError:
+    supported_norad_ids = set()
+    print("WARNING: satnogsdecoders not found. Skipping decoder verification.")
 
 # %% [markdown]
 # ## 2. Data Integration
@@ -126,7 +130,7 @@ else:
     merged['supported'] = True # Assume true if list missing to avoid empty result
 
 print(f"Merged Dataset: {len(merged)} satellites")
-print(f"Supported by gr_satellites: {merged['supported'].sum()}")
+print(f"Supported by satnogsdecoders (Kaitai): {merged['supported'].sum()}")
 
 # %% [markdown]
 # ## 3. Filtering: The "Alive" & "In-Band" Cohort

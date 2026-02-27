@@ -26,14 +26,28 @@ CHUNK_SIZE_DAYS = 1
 # We'll stick to a safe 2s delay between requests to avoid hitting 429s constantly.
 REQUEST_DELAY_SECONDS = 2.0 
 
-# Verified NORAD IDs
-TARGETS = {
-    "25397": "GO-32 (TechSat-1B)",
-    "39090": "STRaND-1",
-    "40043": "TigriSat",
-    "40012": "UniSat-6",
-    "52897": "STEP CubeLab-II"
-}
+# Load Targets from golden_candidates.csv
+# If not available, fallback to a small set.
+DATA_DIR = Path('data')
+CANDIDATES_PATH = DATA_DIR / 'golden_candidates.csv'
+
+TARGETS = {}
+if CANDIDATES_PATH.exists():
+    import pandas as pd
+    try:
+        df = pd.read_csv(CANDIDATES_PATH)
+        # Use norad_cat_id as key, amsat_name as value
+        TARGETS = {str(row['norad_cat_id']): row['amsat_name'] for _, row in df.iterrows()}
+        logger.info(f"Loaded {len(TARGETS)} targets from {CANDIDATES_PATH}")
+    except Exception as e:
+        logger.warning(f"Failed to parse {CANDIDATES_PATH}: {e}")
+else:
+    logger.warning(f"{CANDIDATES_PATH} not found. Using fallback targets.")
+    TARGETS = {
+        "43880": "UWE-4",
+        "40014": "BugSat-1",
+        "51657": "INSPIRESat-1",
+    }
 
 # --- LOGGING SETUP ---
 logger.configure(handlers=[

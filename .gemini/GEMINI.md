@@ -2,12 +2,15 @@
 
 ## 1. Project Overview
 **Goal:** Real-time anomaly detection for amateur satellite telemetry using an Autoencoder.
-**Key Concept:** "The Golden Cohort" (Top 5 satellites) -> "Shared Core" (Normalization) -> "The Lab" (Training) / "The Watchdog" (Inference).
+**Key Concept:** "The Golden Cohort" (Optimal targets) -> "Shared Core" (Normalization) -> "The Lab" (Training) / "The Watchdog" (Inference).
 
 ## 2. Agent Mandates & Conventions
 *   **Package Manager:** STRICTLY use `pixi`. NEVER use `pip install` or `venv` directly.
 *   **Task Runner:** Use `just` for all standard workflows defined in `justfile`.
+*   **Decoders:** Use `satnogs-decoders` (Kaitai Structs) for all telemetry parsing. DO NOT write manual `construct` decoders.
+*   **Notebooks:** Use `jupytext` to manage scripts as notebooks. Always prefer editing `.py` files and converting/syncing them.
 *   **Python:** Version 3.11. Use `loguru` for logging.
+*   **Documentation:** ALWAYS update relevant documentation (e.g., `DETAILS.md`, `docs/slides.typ`) to ensure it remains consistent with code changes.
 *   **Paths:**
     *   `src/gr_sat/`: Library code (Shared Core, Telemetry Models).
     *   `scripts/`: Executable pipelines (Data ingestion/processing).
@@ -18,9 +21,9 @@
 ## 3. Active Context (Memory)
 *   **Current Phase:** "The Refinery" (Data Processing).
 *   **Recent Accomplishments:**
-    *   Implemented `fetch_training_data.py` (Ingestion).
-    *   Implemented `process_data.py` (Normalization).
-    *   Implemented GO-32 Decoder.
+    *   Implemented `fetch_training_data.py` (Dynamic Target Loading).
+    *   Transitioned to `satnogs-decoders` (Kaitai Structs) for universal coverage.
+    *   Updated `sat_analysis.py` & `pass_analysis_viz.py` for new decoder ecosystem.
 *   **Current Blockers/Tasks:**
     *   Train Autoencoder ("The Lab").
     *   Validate with "Injected Physics".
@@ -30,6 +33,8 @@
 *   **Analyze Targets:** `just analyze-targets` (Filters candidates to "The Golden Cohort").
 *   **Visualize Passes:** `just viz-passes` (Generates Skyplots/Gantt charts).
 *   **Regenerate All Analysis:** `just regenerate-all`.
+*   **Sync Notebooks:** `just sync-notebooks` (Updates all `.ipynb` from `.py` in `notebooks/`).
+*   **Convert Script:** `just convert notebooks/script.py` (Converts a single script to notebook).
 *   **Process Data (Manual):** `pixi run python scripts/process_data.py --norad <id>`
 *   **Inspect Telemetry:** `pixi run python notebooks/telemetry_inspector.py`
 

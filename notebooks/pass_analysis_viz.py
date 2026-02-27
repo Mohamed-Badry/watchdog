@@ -40,7 +40,7 @@ LONGITUDE = 31.0994
 ELEVATION_M = 32.0
 MIN_ELEVATION = 30.0 # High quality passes only
 HOURS_AHEAD = 48     # Analyze 48h window
-TOP_N_SATS = 5       # Pick the Top 5 best satellites
+TOP_N_SATS = 10      # Pick the Top 10 best satellites
 
 DATA_DIR = Path('../data')
 if not DATA_DIR.exists(): DATA_DIR = Path('data')
@@ -58,10 +58,19 @@ print(f"Candidate Pool: {len(target_ids)} satellites")
 # ## 2. Physics Engine (Skyfield)
 
 # %% 
-# Load TLEs
-satellites = load.tle_file("https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle", 
-                          filename=str(DATA_DIR / "celestrak_active.txt"))
-by_id = {sat.model.satnum: sat for sat in satellites}
+# Load TLEs from multiple groups to increase coverage
+TLE_GROUPS = ["active", "amateur"]
+by_id = {}
+for group in TLE_GROUPS:
+    url = f"https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle"
+    filename = DATA_DIR / f"celestrak_{group}.txt"
+    try:
+        satellites = load.tle_file(url, filename=str(filename))
+        for sat in satellites:
+            by_id[sat.model.satnum] = sat
+    except Exception as e:
+        print(f"Warning: Failed to load TLE group {group}: {e}")
+
 my_sats = [by_id[nid] for nid in target_ids if nid in by_id]
 
 # Setup Observer

@@ -12,17 +12,17 @@ To ensure operational viability, we filtered the entire amateur fleet (338+ sate
 1.  **Status Check:** Must be confirmed 'Alive' in SatNOGS DB.
 2.  **Band Compatibility:** 433-438 MHz (70cm Amateur Band).
 3.  **Modulation:** High-rate 9600 bps GMSK/FSK (Modern Standard).
-4.  **Decoder Support:** Must be explicitly supported by `gr_satellites` (AX.25 Mode).
+4.  **Decoder Support:** Must be explicitly supported by `satnogs-decoders` (Kaitai Structs).
 5.  **Operational Viability:** Ranked by "Total Observable Time" (Sum of pass durations > 30° elevation over 48h).
 
-### The Golden Cohort (Top 5 Targets)
-These satellites offer the highest operational efficiency for our ground station in Beni Suef:
+### The Golden Cohort (Top Candidates)
+Based on our Beni Suef ground station and the `satnogs-decoders` library:
 
-1.  **GO-32 (TechSat-1B)** - The heavy lifter (~20 mins coverage / 48h).
-2.  **STRaND-1**
-3.  **TigriSat**
-4.  **STEP CubeLab-II**
-5.  **UniSat-6**
+1.  **BugSat-1** - High visibility (~10 mins / 48h), 9600 GMSK.
+2.  **UWE-4** - Solid coverage, 9600 FSK.
+3.  **INSPIRESat-1** - 9600 GFSK.
+4.  **LEDSAT** - 9600 GMSK.
+5.  **BDSat** - 9600 GFSK.
 
 ---
 
@@ -66,10 +66,10 @@ An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide act
 
 ### B. "The Watchdog" (Online Inference Pipeline)
 * **Goal:** Detect anomalies during a 10-minute satellite pass.
-* **Source:** Local Antenna -> SDR -> `gr_satellites`.
+* **Source:** Local Antenna -> SDR -> `satnogs-decoders`.
 * **Process:**
-    1. Demodulate AX.25 packets.
-    2. Decode & Normalize using the **Shared Core**.
+    1. Demodulate packets.
+    2. Decode & Normalize using `satnogs-decoders` (Kaitai Structs).
     3. Run Inference using the pre-trained model.
     4. Alert on high reconstruction error.
 
@@ -78,10 +78,9 @@ An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide act
 ## 4. Standardization Strategy
 To handle multiple disparate satellites without chaos, the system enforces strict standardization layers.
 
-### Transport Layer: AX.25 "Promiscuous Mode"
-* **Protocol:** We strictly listen for **AX.25** packets.
-* **Identification:** We do **not** predict the satellite ID based on orbit. We read the **Source Callsign** from the AX.25 Header.
-* **Benefit:** Strict Validation. If the header says `NJ7P`, it is Fox-1B. If the CRC fails, the packet is dropped.
+### Transport Layer: SatNOGS Compatible
+* **Protocol:** We leverage the **`satnogs-decoders`** ecosystem.
+* **Benefit:** Battle-tested Kaitai Structs that already handle a wide variety of amateur satellite formats.
 
 ### Semantic Layer: The "Golden Features" (Expanded)
 We define a universal target interface (SI Units) that all satellite data must be mapped to.
@@ -162,9 +161,10 @@ def process_packet(raw_bytes):
 
 ### Hardware & RF
 * **Antenna:** Omnidirectional or Yagi.
-* **SDR:** RTL-SDR.
-* **Demodulator:** `gr_satellites` (handling Doppler, FM/BPSK demodulation, and AX.25 Deframing).
-* **Interface:** UDP Stream (packets sent to `localhost`).
+*   **SDR:** RTL-SDR.
+*   **Demodulator:** `gr_satellites` or raw baseband processors.
+*   **Decoder:** `satnogs-decoders` (Kaitai Structs).
+*   **Interface:** UDP Stream or SatNOGS DB frames.
 
 ### Software
 
@@ -176,9 +176,10 @@ def process_packet(raw_bytes):
 
 *   **Physics Engine:** `skyfield` (Orbit prediction & geometry).
 
-*   **Parsing:** `construct` library (Declarative binary parsing).
+*   **Parsing:** `satnogs-decoders` (Kaitai Struct compiler output).
 
 *   **Visualization:** `matplotlib`, `seaborn` (for operational dashboards).
+
 
 ---
 

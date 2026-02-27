@@ -76,7 +76,7 @@ Instead of passive data logging, this system acts as a "Proactive Early Warning 
 
 #v(1em)
 *Key Capabilities:*
-- *Strict Validation:* AX.25 Checksums prevent false identification.
+- *Universal Decoding:* Leveraging `satnogs-decoders` (Kaitai Structs).
 - *Schema Normalization:* Mapping heterogeneous raw telemetry to SI units.
 - *Synthetic Fault Injection:* Validating detection using simulated physical failures.
 
@@ -139,7 +139,7 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
   [*Band:* 433-438 MHz (70cm Amateur Band).],
   [*Modulation:* High-rate 9600 bps GMSK/FSK (Modern Standard).],
   [*Visibility:* High-elevation passes (>30°) over Beni Suef.],
-  [*Support:* Must be explicitly supported by `gr_satellites` (AX.25).]
+  [*Support:* Must be explicitly supported by `satnogs-decoders` (Kaitai).]
 )
 
 == Analysis Result: The Golden Cohort
@@ -148,11 +148,11 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    We identified *45 candidates* that match the technical criteria.
+    We identified *36 candidates* that match the technical criteria and have decoders.
     
     *Dominant Standard:* 9600 bps GMSK.
     
-    This ensures our receiver pipeline (`gr_satellites` "9k6" flow) works for maximum targets.
+    This ensures our receiver pipeline works for maximum targets with `satnogs-decoders`.
   ],
   align(center + horizon)[
     #image("figures/modulation_distribution.png", width: 100%)
@@ -171,7 +171,7 @@ Pass count isn't enough. We rank satellites by the *total duration* they spend a
   "Top 5 Operational Targets"
 )
 
-== The Winners (Top 5)
+== The Winners (Top Targets)
 
 These satellites offer the highest *Operational Efficiency* for our ground station.
 
@@ -180,11 +180,9 @@ These satellites offer the highest *Operational Efficiency* for our ground stati
   inset: 8pt,
   align: horizon,
   table.header([*Satellite*], [*Passes (48h)*], [*Total Mins*], [*Max El*]),
-  "GO-32 (TechSat-1B)", "4", "20.6 m", "89°",
-  "STRaND-1", "4", "14.4 m", "89°",
-  "TigriSat", "4", "13.3 m", "69°",
-  "STEP CubeLab-II", "3", "12.7 m", "75°",
-  "UniSat-6", "4", "11.6 m", "78°",
+  "BugSat-1", "3", "9.5 m", "85°",
+  "UWE-4", "3", "7.5 m", "50°",
+  "INSPIRESat-1", "0", "0.0 m", "-",
 )
 
 == Operational Reality: Skyplot
@@ -253,7 +251,7 @@ Two distinct environments sharing a single *Shared Core*.
 
 == The Shared Core Pipeline
 
-We have implemented the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal adapter between raw bits and our AI model.
+We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal adapter between raw bits and our AI model.
 
 #v(0.5em)
 #grid(
@@ -262,15 +260,15 @@ We have implemented the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as 
   [
     *Pipeline Steps:*
     1.  *Ingest:* Read raw hex frames (SatNOGS/SDR).
-    2.  *Parse:* Binary bit-banging via `construct`.
-    3.  *Normalize:* Convert ADC counts to SI Units (V, A, °C).
+    2.  *Parse:* Kaitai Structs via `satnogs-decoders`.
+    3.  *Normalize:* Convert binary fields to SI Units (V, A, °C).
     4.  *Validate:* Check against physical limits.
   ],
   [
     *Current Status:*
-    - Core Logic: *Complete*
-    - Decoder (GO-32): *Implemented*
-    - Decode Rate: *~92%*
+    - Core Logic: *Operational*
+    - Decoder Ecosystem: *satnogs-decoders*
+    - Coverage: *80+ Satellites*
   ]
 )
 
