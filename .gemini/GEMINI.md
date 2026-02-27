@@ -64,6 +64,8 @@
 *   **Validation:** Synthetic Fault Injection (Drift, Stuck Value, Noise).
 
 ## 9. EDA Insights & ML Plan (UWE-4)
-*   **Correlations:** Strong physical correlations exist (e.g., `temp_panel_z` correlates highly with `batt_voltage` and `batt_current`). This proves the Autoencoder will have solid physical rules to learn.
-*   **Feature Selection:** Use `batt_voltage`, `batt_current`, `temp_batt_a`, `temp_batt_b`, and `temp_panel_z`.
-*   **Limitation/Dropping:** The `temp_obc` feature has a strict zero variance (stuck at 17°C in the current dataset). It MUST be dropped during training to avoid matrix singularity issues during normalization (e.g., `StandardScaler` dividing by zero).
+*   **Data Quality (Zero Variance):** The `temp_obc` feature is perfectly clean but stuck at 17°C (zero variance). It MUST be dropped before training to prevent `StandardScaler` from dividing by zero and crashing.
+*   **Time-Series Dynamics (Bursty Data):** The median time between frames is ~18 seconds, but the maximum gap is ~11 hours (due to limited ground station passes). **Conclusion:** Rolling window or sequence models (like LSTM) are inappropriate due to extreme temporal discontinuity. A stateless Feed-Forward Autoencoder processing each frame independently is required.
+*   **Physics over Statistics:** Standard statistical tests (IQR) flagged ~40% of the battery current data as "outliers". Deeper physical correlation revealed this is simply the bimodal state of the satellite: Charging during sunlight (Panel > 15°C) and discharging during eclipse (Panel < 15°C). We will NOT clip these "outliers".
+*   **Feature Selection:** The final training vector will be 5-dimensional: `[batt_voltage, batt_current, temp_batt_a, temp_batt_b, temp_panel_z]`.
+*   **Scaling Strategy:** Use `StandardScaler` (Z-score normalization) to center the bimodal distributions correctly for the Autoencoder.
