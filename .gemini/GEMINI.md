@@ -25,8 +25,9 @@
     *   Transitioned to `satnogs-decoders` (Kaitai Structs) for universal coverage.
     *   Updated `sat_analysis.py` & `pass_analysis_viz.py` for new decoder ecosystem.
 *   **Current Blockers/Tasks:**
-    *   Train Autoencoder ("The Lab").
-    *   Validate with "Injected Physics".
+    *   Ingest long-term (180+ days) UWE-4 data to capture Seasonal/Beta Angle thermal variations.
+    *   Build `scripts/generate_faults.py` for Synthetic Fault Injection benchmarking.
+    *   Train Autoencoder ("The Lab") and benchmark for Edge Deployment (Latency/Memory).
 
 ## 4. Key Workflows
 *   **Fetch Data:** `just fetch` (Interactive) or `just fetch --all` (Batch).
@@ -61,7 +62,9 @@
 *   **Interpretability:** Feature Contribution Analysis.
     *   **Metric:** Absolute Error per Feature (`|Input - Reconstruction|`).
     *   **Goal:** Pinpoint the *specific subsystem* causing the anomaly.
-*   **Validation:** Synthetic Fault Injection (Drift, Stuck Value, Noise).
+*   **Validation & Benchmarking (The Edge):**
+    *   **Accuracy Benchmark:** "Synthetic Fault Injection". Since labeled anomaly data is rare, we programmatically inject physical faults (e.g., Sensor Stuck, Tumbling/High Variance, Solar Panel Failure) into a clean test set and measure the model's Recall and False Positive Rate.
+    *   **Performance Benchmark:** Measure inference Latency (target < 10ms per frame) and Memory Footprint (model size in MB) to ensure it can run on a Raspberry Pi/Ground Station PC alongside `gr_satellites`.
 
 ## 9. EDA Insights & ML Plan (UWE-4)
 *   **Data Quality (Zero Variance):** The `temp_obc` feature is perfectly clean but stuck at 17°C (zero variance). It MUST be dropped before training to prevent `StandardScaler` from dividing by zero and crashing.

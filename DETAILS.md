@@ -53,16 +53,25 @@ The system is split into two distinct environments that share a common logic cor
     *   **Goal:** The model learns the **correlations** (physics) of the satellite to compress the data through a bottleneck. It learns rules like "High Voltage usually means Positive Solar Current".
 * **Validation Strategy:** **"Injected Physics"**. Since real anomaly labels are rare, we validate the model by synthetically injecting known faults (e.g., voltage drift, sensor noise, stuck values) into clean data to measure detection accuracy.
 
-#### 3. Interpretability: Feature Contribution Analysis
+#### 3. Interpretability & Benchmarking (The Edge)
 An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide actionable insights by analyzing the **reconstruction error per feature**.
 
 *   **Logic:** $\text{Contribution} = | \text{Input} - \text{Reconstruction} |$
 *   **Example (Heater Stuck ON):**
     *   **Input:** `[Temp: 50°C, Current: 0.1A]` (Hot but low power draw).
     *   **Model Expectation:** `[Temp: 10°C, Current: 0.1A]` (Model knows low power usually means low temp).
-    *   **Result:**
-        *   `Temp Error`: **40.0** (Critical Contributor -> Flag "Temperature Anomaly").
-        *   `Current Error`: 0.0 (Normal).
+    *   **Result:** `Temp Error`: **40.0** (Critical Contributor -> Flag "Temperature Anomaly").
+
+**Validation Strategy: "Synthetic Fault Injection"**
+Since real anomaly labels are rare in amateur telemetry, we validate the model using a custom script (`generate_faults.py`). We programmatically inject physical failures into a clean test set to measure the model's **Recall** and **False Positive Rate**:
+1.  **Sensor Stuck:** Force voltage to be perfectly static for 5 minutes.
+2.  **Solar Panel Failure:** Temp indicates Sunlight (>15°C), but we artificially force current to remain negative (Discharging).
+3.  **Tumbling:** Inject high-frequency noise into panel temperatures to simulate rapid spinning.
+
+**Edge Performance Metrics:**
+The model is deployed on low-power ground station hardware alongside SDR processors. We benchmark:
+1.  **Latency:** Target < 10ms inference per frame.
+2.  **Footprint:** Target < 5MB model file size.
 
 ### B. "The Watchdog" (Online Inference Pipeline)
 * **Goal:** Detect anomalies during a 10-minute satellite pass.

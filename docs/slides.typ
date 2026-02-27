@@ -274,6 +274,27 @@ We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal
   ]
 )
 
+== Validation & Edge Benchmarking
+
+Because real anomaly data is rare, we validate the model using *Synthetic Fault Injection* on clean data.
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    *Accuracy (Recall / FPR)*
+    1. *Sensor Stuck:* Force static voltage.
+    2. *Panel Failure:* High temp, but negative current.
+    3. *Tumbling:* High-variance noise in panel temps.
+  ],
+  [
+    *Edge Performance*
+    Must run on Raspberry Pi alongside SDR processing.
+    - *Latency:* $< 10$ ms per frame.
+    - *Memory:* $< 5$ MB model footprint.
+  ]
+)
+
 == Data Verification (UWE-4)
 
 Telemetry extraction from UWE-4 (NORAD 43880). 
@@ -295,7 +316,7 @@ We built an interactive debugger (`telemetry_inspector`) to verify decoders agai
 
 1.  *Targeting:* We have locked onto *UWE-4* (43880) as our primary "Golden Path" target.
 2.  *Pipeline:* The *Data Refinery* is operational, successfully generating over 2,000 clean training frames.
-3.  *Validation:* Inspector tools are in place to verify data quality.
+3.  *Data Strategy:* Fetching 180+ days of data to capture *Seasonal/Beta Angle* thermal variations.
 
 #v(1em)
-*Next Milestone:* Train the Autoencoder (The Lab Phase 2).
+*Next Milestone:* Train the Autoencoder and run Edge Benchmarks (The Lab Phase 2).
