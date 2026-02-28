@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 from pathlib import Path
-from kaitaistruct import KaitaiStream, BytesIO
 import satnogsdecoders.decoder as dec
 from satnogsdecoders.decoder.uwe4 import Uwe4
 from loguru import logger
@@ -15,36 +14,12 @@ def decode_uwe4_telemetry(hex_str):
         if not data or 'beacon_payload_uptime' not in data:
             return None
             
-        # Map to our "Golden Features" (SI Units)
-        normalized = {
-            "src_callsign": data.get("src_callsign"),
-            "dest_callsign": data.get("dest_callsign"),
-            "uptime": data.get("beacon_payload_uptime"),
-            
-            # Power System (mV -> V, mA -> A)
-            "batt_a_voltage": data.get("beacon_payload_batt_a_voltage", 0) / 1000.0,
-            "batt_b_voltage": data.get("beacon_payload_batt_b_voltage", 0) / 1000.0,
-            "batt_a_current": data.get("beacon_payload_batt_a_current", 0) / 1000.0,
-            "batt_b_current": data.get("beacon_payload_batt_b_current", 0) / 1000.0,
-            "power_consumption": data.get("beacon_payload_power_consumption", 0) / 1000.0, # mA to A
-            
-            # Thermal System (°C)
-            "temp_obc": data.get("beacon_payload_obc_temp"),
-            "temp_batt_a": data.get("beacon_payload_batt_a_temp"),
-            "temp_batt_b": data.get("beacon_payload_batt_b_temp"),
-            "temp_panel_z": data.get("beacon_payload_panel_pos_z_temp"),
-        }
-        
-        # Aggregate logic: Average voltage, total current
-        normalized["batt_voltage"] = (normalized["batt_a_voltage"] + normalized["batt_b_voltage"]) / 2.0
-        normalized["batt_current"] = normalized["batt_a_current"] + normalized["batt_b_current"]
-        
-        return normalized
+        return data
         
     except Exception:
         return None
 
-def process_uwe4_data(raw_dir="data/raw/43880", output_file="data/processed/43880.csv"):
+def decode_uwe4_data(raw_dir="data/raw/43880", output_file="data/interim/43880.csv"):
     raw_dir = Path(raw_dir)
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -78,12 +53,11 @@ def process_uwe4_data(raw_dir="data/raw/43880", output_file="data/processed/4388
         df.to_csv(output_file, index=False)
         logger.success(f"Successfully processed {len(df)} frames. Saved to {output_file}")
         
-        print("\nGolden Features (First 5 Rows):")
-        cols = ["timestamp", "batt_voltage", "batt_current", "temp_obc", "temp_batt_a", "uptime"]
-        print(df[cols].head(5).to_string(index=False))
+        print("\nRaw Telemetry (First 5 Rows, up to 10 columns):")
+        print(df.iloc[:, :10].head(5).to_string(index=False))
         
     else:
         logger.warning("No valid UWE-4 frames found.")
 
 if __name__ == "__main__":
-    process_uwe4_data()
+    decode_uwe4_data()

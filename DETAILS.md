@@ -151,7 +151,7 @@ def process_packet(raw_bytes):
 *   **`DecoderRegistry`:** A singleton registry that automatically registers decoders via decorators (`@DecoderRegistry.register`).
 *   **`process_frame`:** The universal entry point function.
 
-#### 2. Data Refinery (`scripts/process_uwe4.py`)
+#### 2. Data Refinery (`scripts/decode_uwe4.py`)
 *   **Pipeline:** `Raw JSONL` -> `Dedup` -> `Decode` -> `Normalize` -> `CSV`.
 *   **Status:** Successfully processed UWE-4 (43880) data, yielding over 2,000 ML-ready standardized frames.
 
