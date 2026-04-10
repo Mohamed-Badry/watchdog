@@ -50,13 +50,13 @@ To download telemetry, you need a **SatNOGS API Token**.
 
 ---
 
-## 📂 Data Directory Structure
+## 📂 Data Pipeline
 
-The project organizes telemetry data into three distinct stages to maintain clear boundaries between raw fetches, raw decodes, and clean features:
+The project processes satellite telemetry through three distinct stages. Each stage has a corresponding directory under `data/` and a clear boundary of responsibility:
 
-*   **`data/raw/`**: Contains original, unprocessed JSONL files fetched directly from the SatNOGS DB API.
-*   **`data/interim/`**: Contains CSV files with all decoded telemetry fields, extracted exactly as they were parsed by `satnogs-decoders` without modification.
-*   **`data/processed/`**: Contains finalized CSV files mapped to our SI-unit "Golden Features", cleaned, scaled, and ready for model training.
+*   **`data/raw/`**: Original JSONL files fetched directly from the SatNOGS DB API via `scripts/fetch_training_data.py`. One file per day per satellite.
+*   **`data/interim/`**: CSV files with all decoded telemetry fields, extracted exactly as `satnogs-decoders` (Kaitai Structs) parses them — no unit conversion or renaming.
+*   **`data/processed/`**: Finalized CSV files mapped to our SI-unit "Golden Features", cleaned, deduplicated, and ready for model training.
 
 ---
 
@@ -64,32 +64,36 @@ The project organizes telemetry data into three distinct stages to maintain clea
 
 We use `just` (installed automatically by Pixi) to run common tasks.
 
-**Recommended:** Enter the environment to use `just` directly:
+**Recommended:** Enter the Pixi environment first:
 ```bash
 pixi shell
 ```
-Now you can run commands simply like `just fetch`.
-
-*(Note: If you prefer not to enter the shell, or don't have `just` installed globally, you can prefix commands with `pixi run`, e.g., `pixi run just fetch`)*
 
 **Common Commands:**
-*   **Download Telemetry:**
-    ```bash
-    just fetch
-    ```
-*   **Run Analysis:**
-    ```bash
-    just analyze-targets
-    ```
-*   **Visualize Passes:**
-    ```bash
-    just viz-passes
-    ```
-
-For a full list of commands, run:
 ```bash
-just --list
+just fetch                  # Download telemetry (interactive)
+just fetch --norad 43880    # Download specific satellite
+just process                # Run decode + normalize pipeline (interactive)
+just process --norad 43880  # Process specific satellite
+just analyze-targets        # Regenerate target analysis
+just viz-passes             # Generate pass visualizations
+just --list                 # Show all available commands
 ```
+
+*(If you don't have `just` globally, prefix with `pixi run`, e.g. `pixi run just fetch`)*
+
+---
+
+## 🔧 Adding a New Satellite Decoder
+
+The decoder system uses `satnogs-decoders` (Kaitai Structs) for binary parsing and a registry pattern for satellite-specific logic. To add support for a new satellite:
+
+1. Create `src/gr_sat/decoders/<satellite>.py`
+2. Subclass `BaseDecoder` and implement `decode()` + `adapt()`
+3. Register with `@DecoderRegistry.register(NORAD_ID)`
+4. Import in `src/gr_sat/decoders/__init__.py`
+
+See `src/gr_sat/decoders/uwe4.py` for a complete reference implementation.
 
 ---
 
@@ -97,21 +101,32 @@ just --list
 
 ```text
 .
-├── data/               # Local data storage (ignored by git)
-│   ├── interim/        # Decoded raw telemetry CSVs without modifications
-│   ├── processed/      # Cleaned, scaled "Golden Features" ready for ML
-│   └── raw/            # Raw JSONL fetches from SatNOGS DB API
-├── docs/               # Documentation and analysis outputs
-│   └── figures/        # Generated plots and architectural diagrams
-├── logs/               # Log files from data ingestion pipelines
-├── notebooks/          # Jupyter notebooks for EDA and prototyping (Jupytext)
-├── scripts/            # Executable scripts for data ingestion and processing
-├── src/gr_sat/         # Core library code ("The Shared Core")
-│   └── decoders/       # Telemetry parsing logic (satnogs-decoders)
+├── data/                   # Local data storage (gitignored)
+│   ├── raw/                # Raw JSONL fetches from SatNOGS DB API
+│   ├── interim/            # Decoded telemetry CSVs (all Kaitai fields)
+│   └── processed/          # SI-unit "Golden Features" CSVs (ML-ready)
+├── docs/                   # Documentation and analysis outputs
+│   ├── figures/            # Generated plots and diagrams
+│   └── slides.typ          # Typst presentation slides
+├── logs/                   # Log files from data pipelines
+├── notebooks/              # Jupyter notebooks for EDA and prototyping (Jupytext)
+├── scripts/                # Executable pipeline scripts
+│   ├── fetch_training_data.py  # Stage 0: SatNOGS API → data/raw/
+│   └── process_data.py         # Stage 1+2: raw → interim → processed
+├── src/gr_sat/             # Core library code ("The Shared Core")
+│   ├── telemetry.py        # TelemetryFrame, DecoderRegistry, process_frame()
+│   └── decoders/           # Satellite-specific decoders (Kaitai Structs)
+│       └── uwe4.py         # UWE-4 (NORAD 43880) decoder
 ├── .gemini/
-│   └── GEMINI.md       # Active project context and agent mandates
-├── DETAILS.md          # Technical architecture and system design
-├── justfile            # Task runner configuration (project commands)
-├── pixi.toml           # Environment and dependency management
-└── README.md           # This file
+│   └── GEMINI.md           # Active project context and agent mandates
+├── DETAILS.md              # Technical architecture and system design
+├── justfile                # Task runner configuration
+├── pixi.toml               # Environment and dependency management
+└── README.md               # This file
 ```
+
+### Currently Supported Satellites
+
+| Satellite | NORAD ID | Decoder | Status |
+| :--- | :--- | :--- | :--- |
+| **UWE-4** | 43880 | `decoders/uwe4.py` | ✅ Primary target, ~7 months of data |

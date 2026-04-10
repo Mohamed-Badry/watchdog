@@ -6,15 +6,23 @@ set shell := ["bash", "-c"]
 default:
     @just --list
 
-# --- Phase 1: The Lab (Data Acquisition) ---
+# --- Phase 1: The Lab (Data Pipeline) ---
 
-# Fetch telemetry (Interactive or Batch)
+# Fetch raw telemetry from SatNOGS DB API → data/raw/
 # Usage:
 #   just fetch              -> Interactive Menu
 #   just fetch --all        -> Download all (default 30 days)
 #   just fetch --days 7     -> Interactive (default 7 days)
 fetch +args='':
     pixi run python scripts/fetch_training_data.py {{args}}
+
+# Process raw data through the full pipeline: raw → interim → processed
+# Usage:
+#   just process              -> Interactive Menu
+#   just process --norad 43880 -> Specific satellite
+#   just process --all        -> All satellites with data + decoder
+process +args='':
+    pixi run python scripts/process_data.py {{args}}
 
 # --- Phase 2: Operations (Analysis & Viz) ---
 
@@ -49,3 +57,4 @@ convert script_path:
 clean:
     rm -rf __pycache__ .pytest_cache
     find . -name "*.pyc" -delete
+    find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
