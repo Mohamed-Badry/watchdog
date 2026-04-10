@@ -312,11 +312,153 @@ We built an interactive debugger (`telemetry_inspector`) to verify decoders agai
   #image("figures/decoded_packets.png", height: 85%)
 ]
 
-== Summary & Next Steps
+== Summary of Phase 3
 
-1.  *Targeting:* We have locked onto *UWE-4* (43880) as our primary "Golden Path" target.
-2.  *Pipeline:* The *Data Refinery* is operational, successfully generating over 2,000 clean training frames.
+1.  *Targeting:* Locked onto *UWE-4* (43880) as our primary "Golden Path" target.
+2.  *Pipeline:* The *Data Refinery* is operational, successfully generating structurally clean ML inputs.
 3.  *Data Strategy:* Fetching 180+ days of data to capture *Seasonal/Beta Angle* thermal variations.
 
+= Phase 4: Exploratory Data Analysis & Physics
+
+== The Refinery Output
+
+We successfully consolidated 7 months of UWE-4 raw telemetry.
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 2em,
+  [
+    *Volume Statistics:*
+    - *Date Range:* Aug 2025 – Apr 2026
+    - *Loss:* Filtered out 24% of frames representing communication artifacts (e.g. 5V+ spikes).
+    - *Clean Dataset:* 10,941 ML-Ready Frames
+  ],
+  [
+    *Transformations:*
+    - Native `satnogs-decoders` Kaitai Struct parsing.
+    - Exact SI-Unit Normalization.
+    - Derived physical relationships (`batt_voltage = mean(batt_a, batt_b)`).
+  ]
+)
+
+== Long-Term Macro Trends
+
+#text(size: 16pt)[Visualizing 7 months of continuous telemetry reveals massive seasonal variations in solar charging efficiencies rather than short-term noise.]
+
+#align(center)[
+  #image("figures/timeseries_macro_7month.png", width: 95%)
+]
+
+== The Bimodality Challenge
+
+The most prominent feature of LEO telemetry is orbital Day vs. Night.
+
+#text(size: 16pt)[The `temp_panel_z` subsystem exposes the satellite to direct sunlight. We observe two distinct thermal clusters:]
+#list(
+  [*Eclipse (Night):* Approx. $-15^o C$ to $5^o C$],
+  [*Sunlight (Day):* Approx. $15^o C$ to $35^o C$]
+)
+
+An unsupervised model must naturally learn both "normal" states to avoid false positives during orbital transitions.
+
+== The Bimodality in Data
+
+#align(center)[
+  #image("figures/feature_distributions.png", width: 85%)
+]
+
+== Multivariate Physics & Correlations
+
+When entering eclipse, solar arrays physically cannot generate power. 
+
+#grid(
+  columns: (1fr, 1.2fr),
+  gutter: 1.5em,
+  align(center)[
+    #image("figures/eclipse_scatter.png", width: 100%)
+  ],
+  [
+    #v(1em)
+    *The Modeling Goal:*
+    
+    The AI is tasked with learning these dense non-linear correlations. 
+    
+    A "positive current" during "low panel temp" instantly signals a physical anomaly (e.g. misattribution, sensor failure, or charging malfunction), even if both numbers are individually "within limits".
+  ]
+)
+
+== The Inference Discontinuity
+
+Edge anomaly detection is fundamentally limited by Line-Of-Sight (LOS) availability.
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1.5em,
+  [
+    #v(1em)
+    *Time Gap Distribution:*
+    - Median gap *within* a pass: ~10-15s
+    - Median gap *between* passes: ~10 hours!
+    
+    *Architectural Dictator:*
+    Traditional time-series models (LSTMs) fail because state memory expires between passes. We *must* use stateless inference models that evaluate single frames independently.
+  ],
+  align(center)[
+    #image("figures/time_gap_distribution.png", width: 100%)
+  ]
+)
+
+= Phase 5: Model Selection & The Hybrid Pipeline
+
+== Benchmarking Without Failures
+
+Because *real* spacecraft anomalies are undocumented in our clean set, we benchmark Edge Models using synthetic fault injection on a held-out test set ($20\%$).
+
 #v(1em)
-*Next Milestone:* Train the Autoencoder and run Edge Benchmarks (The Lab Phase 2).
+#list(
+  [*1. Sensor Stuck:* Fix voltage at the median value for 5 frames. (ADC/I2C lockup)],
+  [*2. Panel Failure:* Force `batt_current` to discharge while `temp_panel_z` shows sunlight. (Severed array)],
+  [*3. Thermal Runaway:* Inject $+15^o C$ uniformly into Battery temperatures. (Internal short)]
+)
+
+== Competitive AI Models
+
+We tested 4 unsupervised mathematical models against the synthetic faults.
+
+#align(center)[
+  #image("figures/model_comparison_roc.png", width: 65%)
+]
+
+#v(0.5em)
+*The Standouts:*
+- *Elliptic Envelope:* Peak AUROC ($~0.889$). Masters multivariate covariance detection.
+- *Autoencoder (MSE):* Slightly lower accuracy ($0.852$), but its reconstruction error isolates the exactly failing component (e.g. Current vs Temp).
+
+== The Solution: The Hybrid Pipeline
+
+We combined their strengths into a two-stage live filter.
+
+#task-card("2", "Stage 1: The Detective", 
+  "We need a lightning-fast initial screen.",
+  "Run 'EllipticEnvelope' to compute a binary anomaly score on every incoming frame.",
+  "Achieves > 82% AUROC on edge benchmarks natively."
+)
+
+#v(1em)
+
+#task-card("3", "Stage 2: The Diagnoser", 
+  "The operator needs to know WHAT broke.",
+  "If Stage 1 flags anomalous, pass it into the 'Autoencoder'. Select the node with the highest Mean Squared Error.",
+  "Isolates the root hardware subsystem (e.g. Panel Failure correctly diagnosed 95% of the time)."
+)
+
+== Conclusion: Mission Ready
+
+*The system is ready for live operations:*
+
+1.  *Architecture proven:* Stateless Hybrid Pipeline solves the discontinuity challenges of amateur packet reception.
+2.  *High Efficiency:* Models compile down to `< 1 MB` total filesize and infer in `< 10ms`.
+3.  *Predictable:* By filtering physical impossibilities at the parser level, the ML models maintain a highly stable mathematical baseline.
+
+*Next Step:*
+Integrate the Python `.pkl` models into an interactive Real-Time `marimo` dashboard representing the operator UI.

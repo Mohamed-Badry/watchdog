@@ -45,16 +45,16 @@ The system is split into two distinct environments that share a common logic cor
 #### 2. Preprocessing & Training
 * **Strategy: "Shared Tools, Unique Models"**
     *   **The Problem:** Satellites are physically distinct (different bus voltages, thermal masses). A single "Universal Model" would fail.
-    *   **The Solution:** We use the *Shared Core* to normalize data engineering (SI Units), but we train a **separate Autoencoder instance per NORAD ID**.
-        *   `models/43880.pkl` (UWE-4 Specific Physics).
-* **Algorithm: Self-Supervised Autoencoder**
-    *   **Input:** The current telemetry snapshot (e.g., `[8.2V, 0.15A, 25°C]`).
-    *   **Target:** The Input Itself (Reconstruction).
-    *   **Goal:** The model learns the **correlations** (physics) of the satellite to compress the data through a bottleneck. It learns rules like "High Voltage usually means Positive Solar Current".
-* **Validation Strategy:** **"Injected Physics"**. Since real anomaly labels are rare, we validate the model by synthetically injecting known faults (e.g., voltage drift, sensor noise, stuck values) into clean data to measure detection accuracy.
+    *   **The Solution:** We use the *Shared Core* to normalize data engineering (SI Units), but we train a **separate Unified System per NORAD ID**.
+        *   `models/<norad>_scaler.pkl`, `models/<norad>_vae.pt`
+* **Algorithm: Unified PyTorch Variational Autoencoder (VAE)**
+    *   **Historical Note:** We initially attempted a "Hybrid Pipeline" using `sklearn.covariance.EllipticEnvelope` as a Stage 1 screener. We deprecated it because LEO telemetry physics strictly dictate *Bimodal* operating states (Day/Night). A linear boundary drawing Gaussians was unable to wrap both states without dropping ~50% of the anomaly recalls.
+    *   **The VAE Approach:** A PyTorch VAE mathematically handles non-linear bounds efficiently.
+    *   **Stage 1 (Detection):** Calculate the overall frame reconstruction error (MSE) + Kullback-Leibler Divergence (KLD). If the sum exceeds the 95th percentile threshold learned in training, flag as anomalous.
+    *   **Stage 2 (Diagnosis):** For flagged frames, inspect the per-node Mean Squared Error. The node with the largest error isolates the Root Cause.
 
 #### 3. Interpretability & Benchmarking (The Edge)
-An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide actionable insights by analyzing the **reconstruction error per feature**.
+An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide actionable insights by analyzing the **reconstruction error per feature** in Stage 2.
 
 *   **Logic:** $\text{Contribution} = | \text{Input} - \text{Reconstruction} |$
 *   **Example (Heater Stuck ON):**

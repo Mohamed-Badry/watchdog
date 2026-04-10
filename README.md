@@ -110,9 +110,13 @@ See `src/gr_sat/decoders/uwe4.py` for a complete reference implementation.
 │   └── slides.typ          # Typst presentation slides
 ├── logs/                   # Log files from data pipelines
 ├── notebooks/              # Jupyter notebooks for EDA and prototyping (Jupytext)
+│   ├── telemetry_inspector.py  # Ground truth interactive visual debugger
+│   └── uwe4_pipeline_eda.py    # Multi-scale EDA and model configuration sweeps
 ├── scripts/                # Executable pipeline scripts
 │   ├── fetch_training_data.py  # Stage 0: SatNOGS API → data/raw/
-│   └── process_data.py         # Stage 1+2: raw → interim → processed
+│   ├── process_data.py         # Stage 1+2: raw → interim → processed
+│   ├── train_model.py          # Stage 3: Train Hybrid Watchdog models
+│   └── generate_faults.py      # Stage 4: Benchmark model accuracy via injected faults
 ├── src/gr_sat/             # Core library code ("The Shared Core")
 │   ├── telemetry.py        # TelemetryFrame, DecoderRegistry, process_frame()
 │   └── decoders/           # Satellite-specific decoders (Kaitai Structs)
