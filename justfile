@@ -49,7 +49,3 @@ convert script_path:
 clean:
     rm -rf __pycache__ .pytest_cache
     find . -name "*.pyc" -delete
-
-# Start zellij with the dev layout
-zj:
-    zellij --layout dev_zj.kdl

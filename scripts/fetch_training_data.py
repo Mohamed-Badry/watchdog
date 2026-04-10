@@ -24,7 +24,7 @@ CHUNK_SIZE_DAYS = 1
 
 # Rate Limiting (SatNOGS: ~1 req/sec is safe, or 240/hr = 1 req/15s conservatively)
 # We'll stick to a safe 2s delay between requests to avoid hitting 429s constantly.
-REQUEST_DELAY_SECONDS = 2.0 
+REQUEST_DELAY_SECONDS = 5.0 
 
 # Load Targets from golden_candidates.csv
 # If not available, fallback to a small set.
