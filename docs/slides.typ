@@ -223,10 +223,10 @@ Two distinct environments sharing a single *Shared Core*.
     - *Action:* Train Autoencoder
   ],
   [
-    *B. The Watchdog (Online)*
-    - Detect anomalies live
-    - Source: Antenna -> SDR
-    - *Action:* Real-time Inference
+    *B. The Watchdog (Planned)*
+    - Planned live anomaly detection
+    - Target Source: Antenna -> SDR
+    - *Action:* Online inference service not yet implemented
   ]
 )
 
@@ -243,10 +243,11 @@ Two distinct environments sharing a single *Shared Core*.
   ),
   `batt_voltage`, "Volts", "Standardized from mV/ADC",
   `batt_current`, "Amps", "Charge/Discharge rate",
+  `power_consumption`, "Watts", "Spacecraft power draw",
   `temp_obc`, "Celsius", "Main computer temp",
-  `solar_current`, "Amps", "Panel health & eclipse",
-  `temp_pa`, "Celsius", "PA Temp (Radio stuck ON)",
-  `signal_rssi`, "dBm", "RSSI (Tumble detection)"
+  `temp_batt_a/b`, "Celsius", "Battery thermal health",
+  `temp_panel_z`, "Celsius", "Orbit-phase context",
+  `uptime`, "Seconds", "Time since reset"
 )
 
 = Implementation Logic
@@ -268,9 +269,10 @@ We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal
   ],
   [
     *Current Status:*
-    - Core Logic: *Operational*
+    - Core Logic: *Operational for offline processing*
     - Decoder Ecosystem: *satnogs-decoders*
-    - Coverage: *80+ Satellites*
+    - Coverage: *1 production decoder in-repo (UWE-4)*
+    - Online Runtime: *Planned, not implemented*
   ]
 )
 
@@ -283,15 +285,15 @@ Because real anomaly data is rare, we validate the model using *Synthetic Fault 
   gutter: 1em,
   [
     *Accuracy (Recall / FPR)*
-    1. *Sensor Stuck:* Force static voltage.
-    2. *Panel Failure:* High temp, but negative current.
-    3. *Tumbling:* High-variance noise in panel temps.
+    1. *Panel Failure:* High temp, but negative current.
+    2. *Thermal Runaway:* Inject large positive battery-temp steps.
+    3. *Sensor Stuck:* Historical notebook experiment, not in current shipped benchmark.
   ],
   [
-    *Edge Performance*
-    Must run on Raspberry Pi alongside SDR processing.
-    - *Latency:* $< 10$ ms per frame.
-    - *Memory:* $< 5$ MB model footprint.
+    *Planned Edge Targets*
+    For a future online runtime alongside SDR processing.
+    - *Latency:* target $< 10$ ms per frame.
+    - *Memory:* target $< 5$ MB model footprint.
   ]
 )
 
@@ -408,17 +410,17 @@ Edge anomaly detection is fundamentally limited by Line-Of-Sight (LOS) availabil
   ]
 )
 
-= Phase 5: Model Selection & The Hybrid Pipeline
+= Phase 5: Model Selection History & Current Baseline
 
 == Benchmarking Without Failures
 
-Because *real* spacecraft anomalies are undocumented in our clean set, we benchmark Edge Models using synthetic fault injection on a held-out test set ($20\%$).
+Because *real* spacecraft anomalies are undocumented in our clean set, we benchmark offline models using synthetic fault injection on a held-out test set ($20\%$).
 
 #v(1em)
 #list(
-  [*1. Sensor Stuck:* Fix voltage at the median value for 5 frames. (ADC/I2C lockup)],
-  [*2. Panel Failure:* Force `batt_current` to discharge while `temp_panel_z` shows sunlight. (Severed array)],
-  [*3. Thermal Runaway:* Inject $+15^o C$ uniformly into Battery temperatures. (Internal short)]
+  [*1. Panel Failure:* Force `batt_current` to discharge while `temp_panel_z` shows sunlight. (Severed array)],
+  [*2. Thermal Runaway:* Inject a large positive step into battery temperatures. (Internal short)],
+  [*3. Sensor Stuck:* Historical notebook-only experiment, not part of the current shipped benchmark script.]
 )
 
 == Competitive AI Models
@@ -430,35 +432,28 @@ We tested 4 unsupervised mathematical models against the synthetic faults.
 ]
 
 #v(0.5em)
-*The Standouts:*
-- *Elliptic Envelope:* Peak AUROC ($~0.889$). Masters multivariate covariance detection.
-- *Autoencoder (MSE):* Slightly lower accuracy ($0.852$), but its reconstruction error isolates the exactly failing component (e.g. Current vs Temp).
+*Historical outcome:*
+- *Elliptic Envelope:* useful exploratory baseline, but not retained in the current repository path.
+- *PyTorch VAE:* current repository baseline for training and offline synthetic-fault benchmarking.
 
-== The Solution: The Hybrid Pipeline
+== The Current Repository Baseline
 
-We combined their strengths into a two-stage live filter.
-
-#task-card("2", "Stage 1: The Detective", 
-  "We need a lightning-fast initial screen.",
-  "Run 'EllipticEnvelope' to compute a binary anomaly score on every incoming frame.",
-  "Achieves > 82% AUROC on edge benchmarks natively."
+#task-card("2", "Stage 1: Overall Score", 
+  "The current codebase uses a VAE-only benchmark path.",
+  "Run the VAE and compute MSE + KLD per frame. In the current repo, the operating threshold is still derived inside offline evaluation rather than persisted during training.",
+  "Provides an offline anomaly score for model comparison, not a deployment-ready live threshold."
 )
 
 #v(1em)
 
-#task-card("3", "Stage 2: The Diagnoser", 
-  "The operator needs to know WHAT broke.",
-  "If Stage 1 flags anomalous, pass it into the 'Autoencoder'. Select the node with the highest Mean Squared Error.",
-  "Isolates the root hardware subsystem (e.g. Panel Failure correctly diagnosed 95% of the time)."
+#task-card("3", "Stage 2: Feature Diagnosis", 
+  "We still need per-feature attribution after a frame is flagged.",
+  "Inspect the reconstruction error feature-by-feature and identify the dominant contributor.",
+  "Provides offline subsystem attribution for benchmarked faults."
 )
 
-== Conclusion: Mission Ready
+== Conclusion: Current State
 
-*The system is ready for live operations:*
-
-1.  *Architecture proven:* Stateless Hybrid Pipeline solves the discontinuity challenges of amateur packet reception.
-2.  *High Efficiency:* Models compile down to `< 1 MB` total filesize and infer in `< 10ms`.
-3.  *Predictable:* By filtering physical impossibilities at the parser level, the ML models maintain a highly stable mathematical baseline.
-
-*Next Step:*
-Integrate the Python `.pkl` models into an interactive Real-Time `marimo` dashboard representing the operator UI.
+1.  *Implemented now:* Offline data refinery, VAE training, synthetic-fault benchmarking, and the telemetry inspector.
+2.  *Not yet implemented:* Live receiver/inference/alert runtime and persisted operational thresholds.
+3.  *Next Step:* Turn the current benchmark scoring contract into a reproducible deployment artifact, then build the online watchdog service.

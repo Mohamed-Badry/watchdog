@@ -14,7 +14,7 @@
 
 = Pipeline Architecture
 
-The telemetry processing and inference pipeline operates in sequential stages, transforming raw database exports into normalized machine learning inputs.
+The current repository implements an offline telemetry processing and benchmarking pipeline that transforms raw database exports into normalized machine learning inputs. A live inference runtime is still planned, not implemented.
 
 #let node(title, body) = align(center)[
   #block(
@@ -45,7 +45,7 @@ The telemetry processing and inference pipeline operates in sequential stages, t
 #arrow
 #node([TelemetryVAE Inference], [Pytorch Variational Autoencoder maps correlation losses])
 #arrow
-#node([Anomaly Detector], [Triggers if MSE + KLD > 95th Percentile])
+#node([Anomaly Detector], [Offline benchmark currently derives the operating threshold inside evaluation; deployable threshold persistence is not implemented yet])
 
 #v(2em)
 
@@ -60,22 +60,22 @@ To maintain compatibility across differing satellite hardware platforms, all pro
 
 = Limitations of Temporal Features
 
-Initial architecture iterations attempted to detect "stuck" or frozen sensors by calculating rolling variance windows across consecutive frames. This approach was discarded due to conflicts with baseline satellite hardware physics.
+Initial architecture iterations attempted to detect "stuck" or frozen sensors by calculating rolling variance windows across consecutive frames. That logic was removed from the model input path, but the preprocessing script still emits rolling-variance columns for inspection / legacy analysis.
 
 Low Earth Orbit CubeSats frequently utilize basic Analog-to-Digital Converters (ADCs) with coarse resolution steps (e.g., rigid 1°C gradients). During normal thermal plateau operations, these sensors legitimately report identical sequential integer values over several minutes. This results in a mathematical variance of exactly 0.0.
 
 Because normal ADC step quantization is mathematically indistinguishable from a stuck sensor fault, applying variance-based anomaly rules generated a massive influx of false positives, crippling the pipeline's overall AUROC from 0.78 down to 0.40.
 
-The pipeline now relies exclusively on the Variational Autoencoder (VAE). The VAE focuses on multi-variate correlation anomalies rather than univariate variance, leveraging Kullback-Leibler Divergence (KLD) to map probabilities for structural failures like thermal runaways or panel dropouts.
+The current benchmark pipeline relies on the Variational Autoencoder (VAE). It focuses on multivariate correlation anomalies rather than univariate variance, but its score threshold is still calibrated in evaluation code rather than stored as a training artifact.
 
 #v(1em)
 = Synthetic Fault Benchmarking & Limitations
 
-To validate pipeline accuracy, we inject synthesized physical faults into a withheld ~20% test partition of the chronological telemetry.
+To compare model behavior, the current repository injects synthesized physical faults into a withheld ~20% chronological test partition of the telemetry.
 
-- *Panel Failure:* We selectively override `batt_current` to a negative draw ($-0.3A$) while `temp_panel_z` indicates the satellite is exposed to direct $15^degree C+$ sunlight. The VAE successfully catches this reversed current as a broken physical correlation.
-- *Thermal Runaway:* We artificially surge `temp_batt_a` and `temp_batt_b` by $>10^degree C$ simultaneously, breaking their expected equilibrium with the solar panels and power bus. 
+- *Panel Failure:* We selectively override `batt_current` to a negative draw while `temp_panel_z` indicates direct sunlight.
+- *Thermal Runaway:* We artificially surge `temp_batt_a` and `temp_batt_b`, breaking their expected equilibrium with the solar panels and power bus.
 
-*Deprecated Benchmarks:* In earlier iterations, we included a *Sensor Stuck* fault (freezing a sensor for $N$ frames). However, because perfectly healthy Low-Earth Orbit ADCs natively plateau and exhibit $0.0$ variance during thermal normalisation, the VAE treated the `Sensor Stuck` faults as normal behavior. This artificially bounded our apparent pipeline accuracy.
+*Historical benchmark:* Earlier notebook experiments also included a *Sensor Stuck* fault. That scenario is not part of the current shipped benchmark script.
 
-By strictly scoping our edge evaluation to structural, temporal-independent subsystems (discarding the impossible `Sensor Stuck` benchmark), the VAE natively demonstrates **>0.98 AUROC** on component detection.
+The current benchmark report should be read as comparative offline analysis, not as a deployment-grade live performance certificate: threshold calibration is still evaluation-derived and VAE scoring is still stochastic in evaluation mode.

@@ -2,12 +2,26 @@
 
 # Project Watchdog (gr_sat)
 
-This repository hosts the **Project Watchdog** codebase, an AI-powered system for real-time anomaly detection in amateur satellite telemetry.
+This repository hosts the **Project Watchdog** codebase, currently focused on offline telemetry processing, per-satellite anomaly-model training, and synthetic-fault benchmarking for amateur satellite telemetry.
 
 ## 📚 Key Documentation
 
 *   **[Technical Details & Architecture](DETAILS.md)**: Deep dive into the system's design and "Golden Features".
 *   **[.gemini/GEMINI.md](.gemini/GEMINI.md)**: Active project context and agent instructions.
+
+## Current Repository Status
+
+Implemented today:
+
+*   Offline SatNOGS fetch -> decode -> normalize -> train -> benchmark workflow
+*   Shared telemetry/decoder core for historical packet processing
+*   UWE-4 decoder support and telemetry inspection tooling
+*   Minimal deterministic online watchdog runtime for packet-by-packet inference
+
+Planned, but not yet implemented in this repository:
+
+*   Rich alert transports / dashboards beyond the minimal runtime
+*   Broader live ingress adapters beyond the minimal runtime
 
 ---
 
@@ -56,7 +70,7 @@ The project processes satellite telemetry through three distinct stages. Each st
 
 *   **`data/raw/`**: Original JSONL files fetched directly from the SatNOGS DB API via `scripts/fetch_training_data.py`. One file per day per satellite.
 *   **`data/interim/`**: CSV files with all decoded telemetry fields, extracted exactly as `satnogs-decoders` (Kaitai Structs) parses them — no unit conversion or renaming.
-*   **`data/processed/`**: Finalized CSV files mapped to our SI-unit "Golden Features", cleaned, deduplicated, and ready for model training.
+*   **`data/processed/`**: Finalized CSV files mapped to our SI-unit "Golden Features" and used for model training.
 
 ---
 
@@ -77,6 +91,7 @@ just process                # Run decode + normalize pipeline (interactive)
 just process --norad 43880  # Process specific satellite
 just analyze-targets        # Regenerate target analysis
 just viz-passes             # Generate pass visualizations
+pixi run python scripts/watchdog_runtime.py --norad 43880 --help
 just --list                 # Show all available commands
 ```
 
@@ -115,8 +130,8 @@ See `src/gr_sat/decoders/uwe4.py` for a complete reference implementation.
 ├── scripts/                # Executable pipeline scripts
 │   ├── fetch_training_data.py  # Stage 0: SatNOGS API → data/raw/
 │   ├── process_data.py         # Stage 1+2: raw → interim → processed
-│   ├── train_model.py          # Stage 3: Train Hybrid Watchdog models
-│   └── generate_faults.py      # Stage 4: Benchmark model accuracy via injected faults
+│   ├── train_model.py          # Stage 3: Train per-satellite scaler + VAE model
+│   └── generate_faults.py      # Stage 4: Offline synthetic-fault benchmark
 ├── src/gr_sat/             # Core library code ("The Shared Core")
 │   ├── telemetry.py        # TelemetryFrame, DecoderRegistry, process_frame()
 │   └── decoders/           # Satellite-specific decoders (Kaitai Structs)

@@ -4,6 +4,7 @@ This file captures the outcomes of the April 11, 2026 architecture/code review a
 
 ## Status Key
 
+- `Completed`: finished and documented
 - `Next`: intended immediate work
 - `Planned`: accepted, but not started
 - `Deferred`: intentionally postponed
@@ -20,7 +21,7 @@ This file captures the outcomes of the April 11, 2026 architecture/code review a
 
 ### 1.1 Bring documentation in line with the current implementation
 
-- Status: `Next`
+- Status: `Completed`
 - Why: the current docs overstate what is implemented, and some claims directly conflict with the code.
 - Files implicated:
   - `DETAILS.md`
@@ -29,6 +30,10 @@ This file captures the outcomes of the April 11, 2026 architecture/code review a
   - `docs/slides.typ`
   - `docs/eda_slides.typ`
   - `docs/benchmark_43880.md`
+- Output:
+  - stale live-ready / hybrid-pipeline claims corrected
+  - current benchmark limitations documented
+  - implemented-vs-planned boundary made explicit
 
 ### Doc mismatches to correct
 
@@ -54,7 +59,7 @@ This file captures the outcomes of the April 11, 2026 architecture/code review a
   - benchmark/evaluation only
   - planned but not built
 - An honest description of the current anomaly threshold workflow.
-- A note that operational edge inference is not yet implemented in this repository.
+- A note that only a minimal deterministic edge runtime exists today, while richer ingress/alerting remains planned.
 - Removal of stale hybrid/rolling-feature claims unless they are still intentionally planned.
 
 ## 2. Critical Bugs
@@ -63,7 +68,7 @@ These are accepted as real defects and need explicit implementation plans before
 
 ### 2.1 Timestamp-only deduplication destroys valid telemetry
 
-- Status: `Planned`
+- Status: `Completed`
 - Severity: `Critical`
 - Code:
   - `scripts/process_data.py`
@@ -79,6 +84,12 @@ These are accepted as real defects and need explicit implementation plans before
   - the review found many duplicate timestamps with differing packet contents
 - Planning goal:
   - define a canonical frame identity and deduplication policy
+- Design note:
+  - `docs/critical_bug_plans.md` section 1
+- Implemented scope:
+  - `src/gr_sat/processing.py`
+  - exact-duplicate removal now keys off timestamp + payload fingerprint rather than timestamp alone
+  - same-timestamp distinct payloads are preserved
 - Architectural direction:
   - distinguish exact retransmissions from distinct frames using fields such as:
     - timestamp
@@ -95,7 +106,7 @@ These are accepted as real defects and need explicit implementation plans before
 
 ### 2.2 VAE inference is stochastic in evaluation mode
 
-- Status: `Planned`
+- Status: `Completed`
 - Severity: `Critical`
 - Code:
   - `src/gr_sat/models.py`
@@ -108,6 +119,11 @@ These are accepted as real defects and need explicit implementation plans before
   - operators cannot trust a non-deterministic anomaly pipeline
 - Planning goal:
   - define deterministic operational scoring behavior
+- Design note:
+  - `docs/critical_bug_plans.md` section 2
+- Implemented scope:
+  - `src/gr_sat/models.py`
+  - eval-mode inference now uses deterministic latent means by default
 - Architectural direction:
   - use `mu` directly for deterministic inference in operational mode
   - if stochastic inference is still useful, expose it as explicit Monte Carlo scoring with fixed sample counts and uncertainty reporting
@@ -118,7 +134,7 @@ These are accepted as real defects and need explicit implementation plans before
 
 ### 2.3 Threshold calibration leaks evaluation labels
 
-- Status: `Planned`
+- Status: `Completed`
 - Severity: `Critical`
 - Code:
   - `scripts/generate_faults.py`
@@ -131,6 +147,13 @@ These are accepted as real defects and need explicit implementation plans before
   - the deployed system has no persisted operational threshold artifact
 - Planning goal:
   - define a proper train/validation/test artifact flow
+- Design note:
+  - `docs/critical_bug_plans.md` section 3
+- Implemented scope:
+  - `src/gr_sat/model_artifacts.py`
+  - `scripts/train_model.py`
+  - `scripts/generate_faults.py`
+  - threshold is now calibrated on chronological validation data and persisted in metadata
 - Architectural direction:
   - train on chronological train split
   - calibrate threshold on a clean chronological validation split
@@ -143,7 +166,7 @@ These are accepted as real defects and need explicit implementation plans before
 
 ### 2.4 No actual online watchdog runtime exists
 
-- Status: `Planned`
+- Status: `Completed`
 - Severity: `Critical`
 - Code impact:
   - repository-wide
@@ -156,6 +179,14 @@ These are accepted as real defects and need explicit implementation plans before
   - no alert transport or runtime observability exists
 - Planning goal:
   - define the online architecture before implementation
+- Design note:
+  - `docs/critical_bug_plans.md` section 4
+- Implemented scope:
+  - `src/gr_sat/watchdog.py`
+  - `scripts/watchdog_runtime.py`
+  - deterministic packet-by-packet inference
+  - runtime state machine with `idle`, `receiving`, `gap`, `degraded`, `alerting`
+  - minimal alert sink callback
 - Architectural direction:
   - create a dedicated online inference service with:
     - ingestion adapter
@@ -241,7 +272,7 @@ These are accepted as real defects and need explicit implementation plans before
 
 ### 3.7 Model artifacts do not persist threshold/scoring metadata
 
-- Status: `Deferred`
+- Status: `Completed`
 - Code:
   - `scripts/train_model.py`
   - `scripts/generate_faults.py`
@@ -260,3 +291,10 @@ These are accepted as real defects and need explicit implementation plans before
 
 - Write a design note for the four critical items before touching implementation.
 - Start with deduplication and deterministic inference, since they are the most fundamental to data and scoring correctness.
+
+### Progress Update
+
+- Docs pass completed.
+- Critical bug planning note written in `docs/critical_bug_plans.md`.
+- Critical bug fixes implemented in code.
+- Regression coverage added under `tests/`.

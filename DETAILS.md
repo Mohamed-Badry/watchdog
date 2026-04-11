@@ -1,8 +1,10 @@
 # Project Architecture: AI-Powered Amateur Satellite Ground Station
 
 ## 1. Core Objective
-**Real-Time Anomaly Detection at the Edge.**
-Instead of passive data logging or long-term lifetime prediction, this system acts as a "First Responder." It monitors live telemetry from amateur satellites and flags anomalies (power system faults, tumbling, thermal issues) in real-time.
+**Real-Time Anomaly Detection at the Edge (Target State).**
+Project Watchdog is intended to become a "First Responder" for amateur satellite telemetry, flagging anomalies such as power, thermal, and attitude-related faults during a pass.
+
+**Current repository status:** the offline data pipeline, decoder normalization, model training, synthetic-fault benchmarking, and a minimal deterministic packet-by-packet watchdog runtime are implemented. A richer production runtime with broader ingress adapters and operator UX is still planned.
 
 ---
 
@@ -28,7 +30,9 @@ Based on our Beni Suef ground station and the `satnogs-decoders` library:
 ---
 
 ## 3. High-Level Architecture (The V-Model)
-The system is split into two distinct environments that share a common logic core to ensure consistency.
+The intended system is split into two distinct environments that share a common logic core to ensure consistency.
+
+**Implementation note:** the offline "Lab" path is implemented, and the repository now also contains a minimal deterministic "Watchdog" runtime. The fuller service architecture below remains the target state.
 
 ### A. "The Lab" (Offline Training Pipeline)
 * **Goal:** Learn "Normal" behavior from historical data.
@@ -38,9 +42,10 @@ The system is split into two distinct environments that share a common logic cor
 *   **Tool:** `scripts/fetch_training_data.py` (Interactive CLI).
 *   **Strategy:** "The Lake". We download raw JSON batches (1-day chunks) to `data/raw/`.
 *   **Features:**
-    *   **Fault Tolerant:** Exponential backoff & Resume capability.
+    *   **Fault Tolerant:** Exponential backoff and coarse resume-by-day behavior.
     *   **Rate Limit Aware:** Token bucket delays to respect SatNOGS API limits.
-    *   **Streaming:** Appends to `.jsonl` to prevent RAM spikes.
+    *   **Storage Strategy:** Appends to `.jsonl` files to avoid large in-memory raw dumps during fetch.
+    *   **Current Limitation:** Partial daily chunks are not yet verified for completeness once a non-empty file exists.
 
 #### 2. Preprocessing & Training
 * **Strategy: "Shared Tools, Unique Models"**
@@ -50,7 +55,7 @@ The system is split into two distinct environments that share a common logic cor
 * **Algorithm: Unified PyTorch Variational Autoencoder (VAE)**
     *   **Historical Note:** We initially attempted a "Hybrid Pipeline" using `sklearn.covariance.EllipticEnvelope` as a Stage 1 screener. We deprecated it because LEO telemetry physics strictly dictate *Bimodal* operating states (Day/Night). A linear boundary drawing Gaussians was unable to wrap both states without dropping ~50% of the anomaly recalls.
     *   **The VAE Approach:** A PyTorch VAE mathematically handles non-linear bounds efficiently.
-    *   **Stage 1 (Detection):** Calculate the overall frame reconstruction error (MSE) + Kullback-Leibler Divergence (KLD). If the sum exceeds the 95th percentile threshold learned in training, flag as anomalous.
+    *   **Stage 1 (Detection):** Calculate the overall frame reconstruction error (MSE) + Kullback-Leibler Divergence (KLD). The current repository now calibrates the operating threshold on a chronological validation split during training and persists it alongside the model metadata.
     *   **Stage 2 (Diagnosis):** For flagged frames, inspect the per-node Mean Squared Error. The node with the largest error isolates the Root Cause.
 
 #### 3. Interpretability & Benchmarking (The Edge)
@@ -64,23 +69,32 @@ An opaque "Anomaly Score" (e.g., 0.95) is useless to an operator. We provide act
 
 **Validation Strategy: "Synthetic Fault Injection"**
 Since real anomaly labels are rare in amateur telemetry, we validate the model using a custom script (`generate_faults.py`). We programmatically inject physical failures into a clean test set to measure the model's **Recall** and **False Positive Rate**:
-1.  **Sensor Stuck:** Force voltage to be perfectly static for 5 minutes.
-2.  **Solar Panel Failure:** Temp indicates Sunlight (>15°C), but we artificially force current to remain negative (Discharging).
-3.  **Tumbling:** Inject high-frequency noise into panel temperatures to simulate rapid spinning.
+1.  **Solar Panel Failure:** Temp indicates sunlight (>15°C), but we artificially force current to remain negative (discharging).
+2.  **Thermal Runaway:** We inject a large positive step into the battery temperatures.
+
+*Historical note:* earlier notebook experimentation also included a `Sensor Stuck` scenario, but the current shipped benchmark script does not.
 
 **Edge Performance Metrics:**
-The model is deployed on low-power ground station hardware alongside SDR processors. We benchmark:
+These are target metrics for the planned online runtime, not a statement of current deployment status:
 1.  **Latency:** Target < 10ms inference per frame.
 2.  **Footprint:** Target < 5MB model file size.
 
-### B. "The Watchdog" (Online Inference Pipeline)
+### B. "The Watchdog" (Current Minimal Runtime + Target Online Pipeline)
 * **Goal:** Detect anomalies during a 10-minute satellite pass.
 * **Source:** Local Antenna -> SDR -> `satnogs-decoders`.
-* **Process:**
+* **Current Implemented Runtime:**
+    1. Load a persisted scaler/model/threshold artifact.
+    2. Decode one packet at a time through the shared telemetry core.
+    3. Run deterministic inference on the packet's normalized feature vector.
+    4. Track runtime states: `idle`, `receiving`, `gap`, `degraded`, `alerting`.
+
+* **Target Expanded Process:**
     1. Demodulate packets.
     2. Decode & Normalize using `satnogs-decoders` (Kaitai Structs).
     3. Run Inference using the pre-trained model.
     4. Alert on high reconstruction error.
+
+**Current limitation:** the implemented runtime is intentionally minimal. It does not yet include richer network ingress adapters, advanced alert transport, or a full operator UI.
 
 ---
 
@@ -91,22 +105,25 @@ To handle multiple disparate satellites without chaos, the system enforces stric
 * **Protocol:** We leverage the **`satnogs-decoders`** ecosystem.
 * **Benefit:** Battle-tested Kaitai Structs that already handle a wide variety of amateur satellite formats.
 
-### Semantic Layer: The "Golden Features" (Expanded)
-We define a universal target interface (SI Units) that all satellite data must be mapped to.
+### Semantic Layer: The Current UWE-4 Feature Contract
+The repository currently trains on a UWE-4-centric subset of normalized SI-unit features:
 
 | Feature | Unit | Description |
 | :--- | :--- | :--- |
 | `batt_voltage` | Volts (V) | Standardized from mV or ADC counts. |
 | `batt_current` | Amps (A) | Charge/Discharge rate. |
+| `power_consumption` | Watts (W) | Spacecraft power draw estimate. |
 | `temp_obc` | Celsius (°C) | Main computer temperature. |
-| `solar_current` | Amps (A) | Panel health & eclipse status. |
-| `temp_pa` | Celsius (°C) | Power Amp temp (Radio stuck ON detection). |
-| `signal_rssi` | dBm | Ground-calculated signal strength (Tumble detection). |
+| `temp_batt_a` / `temp_batt_b` | Celsius (°C) | Battery pack temperatures. |
+| `temp_panel_z` | Celsius (°C) | External panel temperature used as orbit-phase context. |
+| `uptime` | Seconds | Time since last reset. |
+
+*Planned expansion:* fields such as `signal_rssi` and other subsystem-specific channels are still architectural targets, not implemented training inputs in the current repo.
 
 ---
 
 ## 5. The Shared Python Core (Implementation Details)
-This module is imported by both the Training scripts and the Live Receiver.
+This module is imported by the training scripts and notebooks today. A future live receiver/runtime can also reuse it.
 
 ### The "Adapter" Pattern
 We use a **Registry** to map Callsigns to specific Decoders and Adapters.
@@ -142,7 +159,7 @@ def process_packet(raw_bytes):
         return ml_vector
 ```
 
-## 6. Development Progress (Updated Feb 2026)
+## 6. Development Progress (Updated Apr 2026)
 
 ### Implemented Components
 
@@ -151,11 +168,16 @@ def process_packet(raw_bytes):
 *   **`DecoderRegistry`:** A singleton registry that automatically registers decoders via decorators (`@DecoderRegistry.register`).
 *   **`process_frame`:** The universal entry point function.
 
-#### 2. Data Refinery (`scripts/decode_uwe4.py`)
-*   **Pipeline:** `Raw JSONL` -> `Dedup` -> `Decode` -> `Normalize` -> `CSV`.
-*   **Status:** Successfully processed UWE-4 (43880) data, yielding over 2,000 ML-ready standardized frames.
+#### 2. Data Refinery (`scripts/process_data.py`)
+*   **Pipeline:** `Raw JSONL` -> `Decode` -> `Normalize` -> `CSV`.
+*   **Status:** Successfully processed UWE-4 (43880) data into a historical processed dataset used for model training and review.
 
-#### 3. Telemetry Inspector (`notebooks/telemetry_inspector.py`)
+#### 3. Model Training + Offline Benchmarking (`scripts/train_model.py`, `scripts/generate_faults.py`)
+*   **Training:** Per-satellite `StandardScaler` + PyTorch `TelemetryVAE`.
+*   **Benchmarking:** Synthetic-fault evaluation for comparative offline model analysis.
+*   **Current Limitation:** The anomaly threshold is still derived inside the benchmark path and is not yet stored as part of a deployable model artifact.
+
+#### 4. Telemetry Inspector (`notebooks/telemetry_inspector.py`)
 *   **Tool:** An interactive Jupyter-based visual debugger.
 *   **Goal:** "Ground Truth" verification. Allows humans to visually correlate raw hex bytes with parsed values to ensure the decoder is not hallucinating.
 *   **Features:**
@@ -163,6 +185,13 @@ def process_packet(raw_bytes):
     *   **Struct View:** Visualization of the intermediate binary parsing steps (ADC counts).
     *   **Telemetry View:** Verification of the final physical values (Volts, Amps).
     *   **Navigation:** Slider-based frame traversal.
+
+### Not Yet Implemented
+
+*   Richer ingress adapters and network-facing live packet receivers
+*   Advanced alert transport beyond the minimal callback/CLI runtime
+*   Operator-facing dashboard / UI integration
+*   Minimal deterministic online watchdog runtime with packet-by-packet scoring and state transitions
 
 ---
 

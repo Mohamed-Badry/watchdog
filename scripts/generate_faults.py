@@ -25,8 +25,9 @@ from rich.table import Table
 from sklearn.metrics import roc_auc_score, roc_curve
 
 import torch
-from gr_sat.models import TelemetryVAE
-from train_model import BASE_FEATURES, ALL_FEATURES
+from gr_sat.ml_config import ALL_FEATURES, BASE_FEATURES
+from gr_sat.model_artifacts import load_model_artifacts, split_chronological
+from gr_sat.models import compute_anomaly_scores
 
 logger.configure(handlers=[
     {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
@@ -45,18 +46,20 @@ def inject_faults(df_test: pd.DataFrame, n_per_fault=100, rng_seed=42):
     # 1. Panel Failure (Short Circuit in Sunlight)
     sunlight_mask = df_faulted["temp_panel_z"] > 15
     sun_idx = np.where(sunlight_mask & (labels == 0))[0]
-    panel_fail_idx = rng.choice(sun_idx, size=min(n_per_fault, len(sun_idx)), replace=False)
-    df_faulted.iloc[panel_fail_idx, df_faulted.columns.get_loc("batt_current")] = -0.8
-    labels[panel_fail_idx] = 1
-    fault_types[panel_fail_idx] = "panel_failure"
+    if len(sun_idx) > 0:
+        panel_fail_idx = rng.choice(sun_idx, size=min(n_per_fault, len(sun_idx)), replace=False)
+        df_faulted.iloc[panel_fail_idx, df_faulted.columns.get_loc("batt_current")] = -0.8
+        labels[panel_fail_idx] = 1
+        fault_types[panel_fail_idx] = "panel_failure"
 
     # 2. Thermal Runaway (Massive Spike Above Orbit Baselines)
     normal_idx = np.where(labels == 0)[0]
-    thermal_idx = rng.choice(normal_idx, size=n_per_fault, replace=False)
-    df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 45.0
-    df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 45.0
-    labels[thermal_idx] = 1
-    fault_types[thermal_idx] = "thermal_runaway"
+    if len(normal_idx) > 0:
+        thermal_idx = rng.choice(normal_idx, size=min(n_per_fault, len(normal_idx)), replace=False)
+        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 45.0
+        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 45.0
+        labels[thermal_idx] = 1
+        fault_types[thermal_idx] = "thermal_runaway"
     
     # Recalculate rolling features on the faulted data
     df_faulted["time_diff_sec"] = df_faulted["timestamp"].diff().dt.total_seconds()
@@ -66,13 +69,13 @@ def inject_faults(df_test: pd.DataFrame, n_per_fault=100, rng_seed=42):
     
     return df_faulted, labels, fault_types
 
-def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types):
+def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types, feature_names=BASE_FEATURES):
     fault_categories = ["panel_failure", "thermal_runaway"]
     accuracy = {ft: {"correct": 0, "flagged": 0} for ft in fault_categories}
     
     for idx in flagged_idx:
         errors = recon_errors[idx]
-        top_feature = BASE_FEATURES[np.argmax(errors)]
+        top_feature = feature_names[np.argmax(errors)]
         actual_fault = fault_types[idx]
         
         if actual_fault != "normal":
@@ -93,13 +96,7 @@ def evaluate(norad_id: str):
     logger.info(f"Evaluating Unified VAE System for NORAD {norad_id}...")
     
     try:
-        scaler = joblib.load(MODELS_DIR / f"{norad_id}_scaler.pkl")
-        
-        # Load Torch VAE
-        vae = TelemetryVAE(input_dim=len(ALL_FEATURES), hidden_dim=12, latent_dim=3)
-        vae.load_state_dict(torch.load(MODELS_DIR / f"{norad_id}_vae.pt", weights_only=True))
-        vae.eval()
-        
+        scaler, vae, metadata = load_model_artifacts(norad_id, MODELS_DIR)
     except FileNotFoundError:
         logger.error("Models not found. Run train_model.py first.")
         return
@@ -111,32 +108,30 @@ def evaluate(norad_id: str):
     extreme_mask = (df["batt_voltage"] > 5.0) | (df["batt_current"].abs() > 1.0)
     df_clean = df[~extreme_mask].copy()
     
-    train_size = int(len(df_clean) * 0.8)
-    df_test = df_clean.iloc[train_size:].copy()
+    split = split_chronological(df_clean)
+    df_test = split.test.copy()
     
     df_faulted, y_true, fault_types = inject_faults(df_test, n_per_fault=150)
-    X_test_scaled = scaler.transform(df_faulted[ALL_FEATURES].values)
+    X_faulted_scaled = scaler.transform(df_faulted[metadata.feature_names].values)
 
     # VAE Inference 
-    # Use only ALL_FEATURES (which is now just BASE_FEATURES) for VAE
-    X_tensor = torch.FloatTensor(X_test_scaled)
+    # Use the persisted training feature order from the artifact metadata.
+    X_tensor = torch.FloatTensor(X_faulted_scaled)
     with torch.no_grad():
         X_recon_vae, mu, logvar = vae(X_tensor)
-        
-    # Calculate Per-Sample Overall MSE (Stage 1 Score)
-    kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-    anomaly_scores = (torch.mean((X_tensor - X_recon_vae)**2, dim=1) + 0.05 * kld).numpy()
+        anomaly_scores = compute_anomaly_scores(
+            X_recon_vae,
+            X_tensor,
+            mu,
+            logvar,
+            kld_weight=metadata.kld_weight,
+        ).numpy()
     
     # ------------------
     # Stage 1: Detector (MAX Loss Score)
     # ------------------
     logger.info("Executing Stage 1: Detection via VAE MSE + KLD Score...")
-    s_min, s_max = anomaly_scores.min(), anomaly_scores.max()
-    anomaly_scores = (anomaly_scores - s_min) / (s_max - s_min) if s_max > s_min else anomaly_scores
-    
-    # Establish the operating threshold (95th percentile of normal frames)
-    normal_scores = anomaly_scores[y_true == 0]
-    operating_threshold = np.percentile(normal_scores, 95)
+    operating_threshold = metadata.threshold
     
     # Trigger Anomaly IF VAE score > threshold
     predicted_anomalies = anomaly_scores > operating_threshold
@@ -150,18 +145,26 @@ def evaluate(norad_id: str):
     # Stage 2: Diagnoser (Node MSE Isolation)
     # ------------------
     logger.info("Executing Stage 2: Feature Diagnosis via VAE node-MSE...")
-    recon_errors_vae = np.abs(X_test_scaled - X_recon_vae.numpy())
-    acc_vae = calculate_diagnosis_accuracy(recon_errors_vae, flagged_idx, fault_types)
+    recon_errors_vae = np.abs(X_faulted_scaled - X_recon_vae.numpy())
+    acc_vae = calculate_diagnosis_accuracy(
+        recon_errors_vae,
+        flagged_idx,
+        fault_types,
+        feature_names=metadata.feature_names,
+    )
 
     console = Console()
     console.print(f"\n[bold green]Unified VAE Benchmark Report — NORAD {norad_id}[/bold green]")
-    console.print(f"Total Test Frames: {len(X_test_scaled)} (Injected Faults: {y_true.sum()})\n")
+    console.print(
+        f"Total Test Frames: {len(X_faulted_scaled)} (Injected Faults: {y_true.sum()})\n"
+    )
     
     table = Table(title="Stage 1: Detection (VAE Max Error)")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="magenta")
     table.add_row("AUROC", f"{auroc:.4f}")
     table.add_row("Recall @ 5% FPR", f"{recall_at_5 * 100:.1f}%")
+    table.add_row("Operating Threshold", f"{operating_threshold:.6f}")
     console.print(table)
     
     diag_table = Table(title=f"Stage 2: Diagnosis (VAE Feature Isolation)")
@@ -179,10 +182,16 @@ def evaluate(norad_id: str):
 
     with open(DOCS_DIR / f"benchmark_{norad_id}.md", "w") as f:
         f.write(f"# Edge Benchmark for NORAD {norad_id}\n\n")
+        f.write(
+            "This report is an offline synthetic-fault benchmark using the persisted "
+            "training artifact threshold. It should be read as comparative evaluation, "
+            "not as proof of a complete live runtime.\n\n"
+        )
         f.write(f"**Unified Architecture:** PyTorch Variational Autoencoder\n\n")
         f.write(f"## Metrics\n")
         f.write(f"- **AUROC:** {auroc:.4f}\n")
         f.write(f"- **Recall @ 5% FPR:** {recall_at_5 * 100:.1f}%\n\n")
+        f.write(f"- **Operating Threshold:** {operating_threshold:.6f}\n\n")
         
         f.write("## Fault Isolation Performance\n")
         f.write(f"| Fault Type | Detected by Stage 1 | Isolated by VAE |\n")

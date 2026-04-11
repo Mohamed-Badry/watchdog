@@ -147,7 +147,7 @@ Edge station inference is strictly constrained by Line-Of-Sight passes.
 
 == The Evaluated AI Models
 
-We benchmarked 4 models against 3 synthetically injected physical faults (`Sensor Stuck`, `Thermal Runaway`, and `Panel Failure`).
+We benchmarked several unsupervised models against synthetic physical faults. The current shipped benchmark script evaluates `Thermal Runaway` and `Panel Failure`; `Sensor Stuck` was an earlier notebook-only experiment.
 
 #align(center)[
   #image("figures/model_comparison_roc.png", width: 65%)
@@ -167,8 +167,8 @@ We benchmarked 4 models against 3 synthetically injected physical faults (`Senso
   "1",
   "Stage 1: Overall Loss Detector",
   "We dumped the EllipticEnvelope entirely.",
-  "Run the VAE. Calculate the sum of its Mean Squared Error (MSE) + Kullback-Leibler Divergence (KLD). If it exceeds the 95th Percentile training threshold, flag anomalous.",
-  "Uses the VAE's intrinsic ability to map non-linear bimodal physics mathematically.",
+  "Run the VAE. Calculate the sum of its Mean Squared Error (MSE) + Kullback-Leibler Divergence (KLD). In the current repository, the operating threshold is still derived inside offline evaluation rather than persisted during training.",
+  "Uses the VAE's intrinsic ability to map non-linear bimodal physics mathematically, but the thresholding path is still benchmark-only.",
 )
 
 #v(1em)
@@ -178,7 +178,7 @@ We benchmarked 4 models against 3 synthetically injected physical faults (`Senso
   "Stage 2: Per-Node Diagnoser",
   "We must isolate what broke during an anomaly.",
   "Inspect the Mean Squared Error node-by-node. The feature with the highest individual MSE represents the hardware failure.",
-  "Successfully spots 89% of Panel Failures on edge benchmarks!",
+  "Provides offline fault-localization signal in the benchmark flow.",
 )
 
 
@@ -186,7 +186,7 @@ We benchmarked 4 models against 3 synthetically injected physical faults (`Senso
 
 == Micro Scale Pass Dynamics (Widget #1)
 
-#text(size: 16pt)[A live time-series tracking variables throughout a specific satellite pass overhead.]
+#text(size: 16pt)[Planned dashboard widget: a time-series view tracking variables throughout a specific satellite pass overhead.]
 
 #align(center)[
   #image("figures/pass_dynamics_micro.png", width: 90%)
@@ -204,10 +204,10 @@ We benchmarked 4 models against 3 synthetically injected physical faults (`Senso
 
 == Final Live Dashboard Strategy
 
-To productize "The Watchdog", we will transition these findings into a unified `marimo` Reactive Notebook for the operator UI.
+To productize "The Watchdog", we would transition these findings into a unified `marimo` reactive notebook or service-backed UI. This dashboard is not yet implemented in the repository.
 
 *Key Dashboard Widgets to build:*
 1. *Live Pass View:* Telemetry graphing in real-time as packets decode.
-2. *Gauge Cluster:* Real-time dials mapping values to historical +/- 3 Sigma bounds.
+2. *Gauge Cluster:* Real-time dials mapping values to historical reference bounds.
 3. *Anomaly Probability Dial:* Stage 1 anomaly score mapped from 0-100%.
 4. *Subsystem Blame Chart:* Stage 2 `Autoencoder` feature-reconstruction radar chart.

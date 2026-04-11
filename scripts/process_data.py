@@ -27,6 +27,7 @@ from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 
 # Import the core — triggers decoder registration via decoders/__init__.py
+from gr_sat.processing import deduplicate_processed_frames
 from gr_sat.telemetry import DecoderRegistry
 import gr_sat.decoders  # noqa: F401
 
@@ -173,11 +174,8 @@ def process_satellite(norad_id: str):
     # Build processed DataFrame
     df_processed = pd.DataFrame(adapted_rows)
 
-    # Deduplicate by timestamp (keep first occurrence)
-    initial_len = len(df_processed)
-    df_processed = df_processed.drop_duplicates(subset=["timestamp"], keep="first")
-    df_processed = df_processed.sort_values("timestamp")
-    dupes = initial_len - len(df_processed)
+    df_processed, dedup_stats = deduplicate_processed_frames(df_processed)
+    dupes = dedup_stats["exact_duplicates_removed"]
     
     # Feature Engineering: Rolling Variances for Time-Series Awareness
     # We split by pass (> 120s gap) so standard deviations don't bleed across 10hr orbit gaps
@@ -197,7 +195,12 @@ def process_satellite(norad_id: str):
 
     logger.success(
         f"Stage 2 complete → [bold]{processed_file}[/] "
-        f"({len(df_processed)} frames, {dupes} dupes removed, {adapt_failures} adapt failures)"
+        f"({len(df_processed)} frames, {dupes} exact dupes removed, {adapt_failures} adapt failures)"
+    )
+    logger.info(
+        "  Dedup Stats: "
+        f"{dedup_stats['same_timestamp_multi_payload_groups']} same-timestamp multi-payload groups preserved | "
+        f"{dedup_stats['same_observation_multi_payload_rows']} rows share an observation_id but differ by payload"
     )
 
     # Summary

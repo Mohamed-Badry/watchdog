@@ -1,0 +1,26 @@
+{
+  "feature_names": [
+    "batt_voltage",
+    "batt_current",
+    "temp_batt_a",
+    "temp_batt_b",
+    "temp_panel_z"
+  ],
+  "hidden_dim": 12,
+  "inference_mode": "deterministic",
+  "kld_weight": 0.05,
+  "latent_dim": 3,
+  "norad_id": "43880",
+  "test_end": "2026-04-10T10:29:54+00:00",
+  "test_rows": 1094,
+  "test_start": "2026-03-22T22:46:24+00:00",
+  "threshold": 0.3377245679497717,
+  "threshold_percentile": 95.0,
+  "train_end": "2026-03-01T11:54:21+00:00",
+  "train_rows": 8750,
+  "train_start": "2025-08-31T22:03:01+00:00",
+  "validation_end": "2026-03-22T22:45:25+00:00",
+  "validation_rows": 1094,
+  "validation_start": "2026-03-01T12:51:23+00:00",
+  "version": 1
+}
