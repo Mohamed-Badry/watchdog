@@ -57,7 +57,8 @@ def inject_faults(
     sun_idx = np.where(sunlight_mask & (labels == 0))[0]
     if len(sun_idx) > 0:
         panel_fail_idx = rng.choice(sun_idx, size=min(n_per_fault, len(sun_idx)), replace=False)
-        df_faulted.iloc[panel_fail_idx, df_faulted.columns.get_loc("batt_current")] = -0.8
+        # A subtle drop in current during sunlight, undetectable by basic thresholding
+        df_faulted.iloc[panel_fail_idx, df_faulted.columns.get_loc("batt_current")] = -0.2
         labels[panel_fail_idx] = 1
         fault_types[panel_fail_idx] = "panel_failure"
 
@@ -65,8 +66,9 @@ def inject_faults(
     normal_idx = np.where(labels == 0)[0]
     if len(normal_idx) > 0:
         thermal_idx = rng.choice(normal_idx, size=min(n_per_fault, len(normal_idx)), replace=False)
-        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 45.0
-        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 45.0
+        # A relatively small thermal jump within natural variance, but breaking correlation
+        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 7.0
+        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 7.0
         labels[thermal_idx] = 1
         fault_types[thermal_idx] = "thermal_runaway"
     

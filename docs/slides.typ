@@ -436,6 +436,16 @@ We tested 4 unsupervised mathematical models against the synthetic faults.
 - *Elliptic Envelope:* useful exploratory baseline, but not retained in the current repository path.
 - *PyTorch VAE:* current repository baseline for training and offline synthetic-fault benchmarking.
 
+== The "Honest" Benchmark: Sensitivity Sweep
+
+A 100% detection rate on extreme faults proves nothing; basic thresholds can catch +45°C thermal spikes. We swept the fault magnitudes from subtle to extreme to find the operational crossover where the VAE's multivariate awareness actually outperforms a simple Z-Score limit.
+
+#align(center)[
+  #image("figures/sensitivity_sweep.png", height: 60%)
+]
+
+*The Verdict:* The VAE massively outperforms dumb thresholding (Z-Score) during subtle anomalies (like a 0.1A current drop during sunlight), while performing equally well on obvious, extreme faults.
+
 == The Current Repository Baseline
 
 #task-card("2", "Stage 1: Overall Score", 

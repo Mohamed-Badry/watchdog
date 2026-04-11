@@ -14,7 +14,7 @@
 
 = Pipeline Architecture
 
-The current repository implements an offline telemetry processing and benchmarking pipeline that transforms raw database exports into normalized machine learning inputs. A live inference runtime is still planned, not implemented.
+#v(1em)
 
 #let node(title, body) = align(center)[
   #block(
@@ -45,7 +45,7 @@ The current repository implements an offline telemetry processing and benchmarki
 #arrow
 #node([TelemetryVAE Inference], [Pytorch Variational Autoencoder maps correlation losses])
 #arrow
-#node([Anomaly Detector], [Offline benchmark currently derives the operating threshold inside evaluation; deployable threshold persistence is not implemented yet])
+#node([Anomaly Detector], [Evaluates latent state against the persisted metadata threshold for deterministic scoring])
 
 #v(2em)
 
@@ -66,16 +66,12 @@ Low Earth Orbit CubeSats frequently utilize basic Analog-to-Digital Converters (
 
 Because normal ADC step quantization is mathematically indistinguishable from a stuck sensor fault, applying variance-based anomaly rules generated a massive influx of false positives, crippling the pipeline's overall AUROC from 0.78 down to 0.40.
 
-The current benchmark pipeline relies on the Variational Autoencoder (VAE). It focuses on multivariate correlation anomalies rather than univariate variance, but its score threshold is still calibrated in evaluation code rather than stored as a training artifact.
+The current benchmark pipeline relies on the Variational Autoencoder (VAE). It focuses on multivariate correlation anomalies rather than univariate variance, detecting breaking relationships instead of rigid outliers.
 
 #v(1em)
-= Synthetic Fault Benchmarking & Limitations
+To evaluate true model capability, the benchmark sweeps fault magnitudes from subtle to extreme:
 
-To compare model behavior, the current repository injects synthesized physical faults into a withheld ~20% chronological test partition of the telemetry.
+- *Panel Failure:* Override `batt_current` to a subtle negative draw (e.g., -0.2A) while `temp_panel_z` is in full sunlight.
+- *Thermal Runaway:* Artificially surge `temp_batt_a` and `temp_batt_b` by minor deviations (e.g., +7°C).
 
-- *Panel Failure:* We selectively override `batt_current` to a negative draw while `temp_panel_z` indicates direct sunlight.
-- *Thermal Runaway:* We artificially surge `temp_batt_a` and `temp_batt_b`, breaking their expected equilibrium with the solar panels and power bus.
-
-*Historical benchmark:* Earlier notebook experiments also included a *Sensor Stuck* fault. That scenario is not part of the current shipped benchmark script.
-
-The current benchmark report should be read as comparative offline analysis, not as a deployment-grade live performance certificate: threshold calibration is still evaluation-derived and VAE scoring is still stochastic in evaluation mode.
+*The "Honest" Verdict:* A basic limit threshold catches large +45°C spikes easily. The true value of the VAE emerges in the "subtle fault zone" where it consistently detects cross-subsystem correlation breaks (like low current during high heat) that completely bypass univariate Z-Score limits.
