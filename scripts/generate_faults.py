@@ -15,7 +15,6 @@ import argparse
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import joblib
 
 from loguru import logger
 from rich.logging import RichHandler
@@ -25,9 +24,14 @@ from rich.table import Table
 from sklearn.metrics import roc_auc_score, roc_curve
 
 import torch
-from gr_sat.ml_config import ALL_FEATURES, BASE_FEATURES
 from gr_sat.model_artifacts import load_model_artifacts, split_chronological
 from gr_sat.models import compute_anomaly_scores
+from gr_sat.processing import annotate_pass_and_cadence_metadata
+from gr_sat.satellite_profiles import (
+    build_baseline_mask,
+    feature_completeness_mask,
+    get_satellite_profile,
+)
 
 logger.configure(handlers=[
     {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
@@ -37,7 +41,12 @@ MODELS_DIR = Path("models")
 PROCESSED_DIR = Path("data/processed")
 DOCS_DIR = Path("docs")
 
-def inject_faults(df_test: pd.DataFrame, n_per_fault=100, rng_seed=42):
+def inject_faults(
+    df_test: pd.DataFrame,
+    profile,
+    n_per_fault: int = 100,
+    rng_seed: int = 42,
+):
     rng = np.random.RandomState(rng_seed)
     df_faulted = df_test.copy()
     labels = np.zeros(len(df_test), dtype=int)
@@ -61,15 +70,19 @@ def inject_faults(df_test: pd.DataFrame, n_per_fault=100, rng_seed=42):
         labels[thermal_idx] = 1
         fault_types[thermal_idx] = "thermal_runaway"
     
-    # Recalculate rolling features on the faulted data
-    df_faulted["time_diff_sec"] = df_faulted["timestamp"].diff().dt.total_seconds()
-    df_faulted["pass_id"] = (df_faulted["time_diff_sec"] > 120).cumsum()
-    df_faulted["volt_rolling_std"] = df_faulted.groupby("pass_id")["batt_voltage"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
-    df_faulted["temp_rolling_std"] = df_faulted.groupby("pass_id")["temp_batt_a"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
-    
-    return df_faulted, labels, fault_types
+    return (
+        annotate_pass_and_cadence_metadata(
+            df_faulted,
+            pass_gap_seconds=profile.pass_gap_seconds,
+            cadence_tolerance_ratio=profile.cadence_tolerance_ratio,
+            cadence_min_tolerance_seconds=profile.cadence_min_tolerance_seconds,
+            rolling_window=profile.rolling_window,
+        ),
+        labels,
+        fault_types,
+    )
 
-def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types, feature_names=BASE_FEATURES):
+def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types, feature_names):
     fault_categories = ["panel_failure", "thermal_runaway"]
     accuracy = {ft: {"correct": 0, "flagged": 0} for ft in fault_categories}
     
@@ -94,6 +107,7 @@ def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types, feature
 
 def evaluate(norad_id: str):
     logger.info(f"Evaluating Unified VAE System for NORAD {norad_id}...")
+    profile = get_satellite_profile(norad_id)
     
     try:
         scaler, vae, metadata = load_model_artifacts(norad_id, MODELS_DIR)
@@ -105,13 +119,15 @@ def evaluate(norad_id: str):
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df = df.sort_values("timestamp")
     
-    extreme_mask = (df["batt_voltage"] > 5.0) | (df["batt_current"].abs() > 1.0)
+    extreme_mask = build_baseline_mask(df, profile)
     df_clean = df[~extreme_mask].copy()
+    complete_mask = feature_completeness_mask(df_clean, metadata.feature_names)
+    df_ready = df_clean[complete_mask].copy()
     
-    split = split_chronological(df_clean)
+    split = split_chronological(df_ready)
     df_test = split.test.copy()
     
-    df_faulted, y_true, fault_types = inject_faults(df_test, n_per_fault=150)
+    df_faulted, y_true, fault_types = inject_faults(df_test, profile, n_per_fault=150)
     X_faulted_scaled = scaler.transform(df_faulted[metadata.feature_names].values)
 
     # VAE Inference 

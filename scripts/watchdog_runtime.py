@@ -27,6 +27,7 @@ def _print_result(result) -> None:
         "threshold": result.threshold,
         "is_anomaly": result.is_anomaly,
         "error": result.error,
+        "failure_code": result.failure_code,
     }
     print(json.dumps(payload))
 

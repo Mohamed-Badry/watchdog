@@ -8,9 +8,10 @@ Key components:
   - telemetry.TelemetryFrame: The universal "Golden Features" DTO (SI units).
   - telemetry.DecoderRegistry: Maps NORAD IDs to decoder classes.
   - telemetry.process_frame: Full pipeline from raw bytes to TelemetryFrame.
+  - telemetry.process_frame_result: Same pipeline with structured diagnostics.
   - decoders/: Satellite-specific decoder implementations.
 """
 
-from .telemetry import TelemetryFrame, DecoderRegistry, process_frame
+from .telemetry import TelemetryFrame, DecoderRegistry, process_frame, process_frame_result
 
-__all__ = ["TelemetryFrame", "DecoderRegistry", "process_frame"]
+__all__ = ["TelemetryFrame", "DecoderRegistry", "process_frame", "process_frame_result"]

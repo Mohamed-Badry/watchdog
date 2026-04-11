@@ -14,7 +14,6 @@ import pandas as pd
 import torch
 
 from gr_sat.ml_config import (
-    ALL_FEATURES,
     DEFAULT_INFERENCE_MODE,
     DEFAULT_KLD_WEIGHT,
     HIDDEN_DIM,
@@ -24,8 +23,9 @@ from gr_sat.ml_config import (
     VALIDATION_SPLIT,
 )
 from gr_sat.models import TelemetryVAE
+from gr_sat.satellite_profiles import DEFAULT_PROFILE
 
-ARTIFACT_VERSION = 1
+ARTIFACT_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -62,6 +62,8 @@ class ModelArtifactMetadata:
     validation_end: str | None
     test_start: str | None
     test_end: str | None
+    feature_contract_version: int = DEFAULT_PROFILE.feature_contract.version
+    diagnosis_feature_names: list[str] | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -83,11 +85,22 @@ class ModelArtifactMetadata:
             "validation_end": self.validation_end,
             "test_start": self.test_start,
             "test_end": self.test_end,
+            "feature_contract_version": self.feature_contract_version,
+            "diagnosis_feature_names": self.diagnosis_feature_names or list(self.feature_names),
         }
 
     @classmethod
     def from_dict(cls, payload: dict) -> "ModelArtifactMetadata":
-        return cls(**payload)
+        hydrated = dict(payload)
+        default_contract_version = 1
+        if list(hydrated.get("feature_names", [])) == list(DEFAULT_PROFILE.feature_contract.feature_names):
+            default_contract_version = DEFAULT_PROFILE.feature_contract.version
+        hydrated.setdefault("feature_contract_version", default_contract_version)
+        hydrated.setdefault(
+            "diagnosis_feature_names",
+            list(hydrated.get("feature_names", [])),
+        )
+        return cls(**hydrated)
 
     @classmethod
     def from_split(
@@ -101,8 +114,10 @@ class ModelArtifactMetadata:
         kld_weight: float = DEFAULT_KLD_WEIGHT,
         threshold_percentile: float = THRESHOLD_PERCENTILE,
         inference_mode: str = DEFAULT_INFERENCE_MODE,
+        feature_contract_version: int = DEFAULT_PROFILE.feature_contract.version,
+        diagnosis_feature_names: list[str] | None = None,
     ) -> "ModelArtifactMetadata":
-        features = list(feature_names or ALL_FEATURES)
+        features = list(feature_names or DEFAULT_PROFILE.feature_contract.feature_names)
         train_start, train_end = _timestamp_bounds(split.train)
         validation_start, validation_end = _timestamp_bounds(split.validation)
         test_start, test_end = _timestamp_bounds(split.test)
@@ -125,6 +140,8 @@ class ModelArtifactMetadata:
             validation_end=validation_end,
             test_start=test_start,
             test_end=test_end,
+            feature_contract_version=feature_contract_version,
+            diagnosis_feature_names=list(diagnosis_feature_names or features),
         )
 
 

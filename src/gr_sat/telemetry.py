@@ -13,7 +13,7 @@ Both stages are handled by satellite-specific decoder classes registered via
 the DecoderRegistry.
 """
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from typing import Dict, Any, Optional, Type
 from datetime import datetime
 from abc import ABC, abstractmethod
@@ -71,6 +71,35 @@ class TelemetryFrame:
         return {f.name for f in fields(cls)}
 
 
+@dataclass(frozen=True)
+class ProcessingFailure:
+    stage: str
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
+class StageOutcome:
+    data: Optional[Dict[str, Any]] = None
+    failure: Optional[ProcessingFailure] = None
+
+    @property
+    def ok(self) -> bool:
+        return self.data is not None and self.failure is None
+
+
+@dataclass(frozen=True)
+class FrameProcessingResult:
+    frame: Optional[TelemetryFrame] = None
+    decoded: Optional[Dict[str, Any]] = None
+    adapted: Optional[Dict[str, Any]] = None
+    failure: Optional[ProcessingFailure] = None
+
+    @property
+    def ok(self) -> bool:
+        return self.frame is not None and self.failure is None
+
+
 class BaseDecoder(ABC):
     """
     Abstract base class for satellite-specific decoders.
@@ -106,6 +135,50 @@ class BaseDecoder(ABC):
         Returns None if required fields are missing.
         """
         ...
+
+    def decode_with_diagnostics(self, payload: bytes) -> StageOutcome:
+        try:
+            decoded = self.decode(payload)
+        except Exception as exc:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="decode",
+                    code="decode_exception",
+                    message=str(exc),
+                )
+            )
+
+        if not decoded:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="decode",
+                    code="decode_failed",
+                    message="Decoder returned no data.",
+                )
+            )
+        return StageOutcome(data=decoded)
+
+    def adapt_with_diagnostics(self, decoded: Dict[str, Any]) -> StageOutcome:
+        try:
+            adapted = self.adapt(decoded)
+        except Exception as exc:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="adapt",
+                    code="adapt_exception",
+                    message=str(exc),
+                )
+            )
+
+        if not adapted:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="adapt",
+                    code="adapt_failed",
+                    message="Adapter returned no data.",
+                )
+            )
+        return StageOutcome(data=adapted)
 
 
 class DecoderRegistry:
@@ -143,12 +216,12 @@ class DecoderRegistry:
         return {nid: dcls.__name__ for nid, dcls in cls._registry.items()}
 
 
-def process_frame(
+def process_frame_result(
     norad_id: int,
     payload: bytes,
     source: str,
     timestamp: datetime,
-) -> Optional[TelemetryFrame]:
+) -> FrameProcessingResult:
     """
     The Universal Adapter — Full pipeline from raw bytes to TelemetryFrame.
 
@@ -160,31 +233,60 @@ def process_frame(
     decoder = DecoderRegistry.get_decoder(norad_id)
 
     if not decoder:
-        logger.warning(f"No decoder registered for NORAD {norad_id}")
-        return None
+        failure = ProcessingFailure(
+            stage="process",
+            code="no_decoder",
+            message=f"No decoder registered for NORAD {norad_id}",
+        )
+        logger.warning(failure.message)
+        return FrameProcessingResult(failure=failure)
 
-    try:
-        # Stage 1: Decode (bytes → raw dict)
-        decoded = decoder.decode(payload)
-        if not decoded:
-            return None
+    decoded_outcome = decoder.decode_with_diagnostics(payload)
+    if not decoded_outcome.ok:
+        return FrameProcessingResult(failure=decoded_outcome.failure)
 
-        # Stage 2: Adapt (raw dict → Golden Features dict)
-        adapted = decoder.adapt(decoded)
-        if not adapted:
-            return None
-
-        # Build TelemetryFrame, only passing fields that exist on the dataclass
-        valid = TelemetryFrame.field_names()
-        filtered = {k: v for k, v in adapted.items() if k in valid}
-
-        return TelemetryFrame(
-            timestamp=timestamp,
-            norad_id=norad_id,
-            source=source,
-            **filtered,
+    adapted_outcome = decoder.adapt_with_diagnostics(decoded_outcome.data)
+    if not adapted_outcome.ok:
+        return FrameProcessingResult(
+            decoded=decoded_outcome.data,
+            failure=adapted_outcome.failure,
         )
 
-    except Exception as e:
-        logger.warning(f"Failed to process frame for NORAD {norad_id}: {e}")
-        return None
+    try:
+        # Build TelemetryFrame, only passing fields that exist on the dataclass
+        valid = TelemetryFrame.field_names()
+        filtered = {k: v for k, v in adapted_outcome.data.items() if k in valid}
+
+        return FrameProcessingResult(
+            frame=TelemetryFrame(
+                timestamp=timestamp,
+                norad_id=norad_id,
+                source=source,
+                **filtered,
+            ),
+            decoded=decoded_outcome.data,
+            adapted=adapted_outcome.data,
+        )
+
+    except Exception as exc:
+        failure = ProcessingFailure(
+            stage="process",
+            code="frame_build_exception",
+            message=str(exc),
+        )
+        logger.warning(f"Failed to process frame for NORAD {norad_id}: {exc}")
+        return FrameProcessingResult(
+            decoded=decoded_outcome.data,
+            adapted=adapted_outcome.data,
+            failure=failure,
+        )
+
+
+def process_frame(
+    norad_id: int,
+    payload: bytes,
+    source: str,
+    timestamp: datetime,
+) -> Optional[TelemetryFrame]:
+    result = process_frame_result(norad_id, payload, source, timestamp)
+    return result.frame

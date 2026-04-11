@@ -228,7 +228,7 @@ These are accepted as real defects and need explicit implementation plans before
 
 ### 3.3 Missing numeric fields are silently converted to physical zeroes
 
-- Status: `Deferred`
+- Status: `Completed`
 - Code:
   - `src/gr_sat/decoders/uwe4.py`
 - Why it still matters:
@@ -236,10 +236,14 @@ These are accepted as real defects and need explicit implementation plans before
   - this can contaminate model training and future live inference
 - Architectural direction:
   - track missingness explicitly rather than coercing to zero
+- Implemented scope:
+  - optional numeric telemetry now remains `None` instead of defaulting to zero
+  - derived combined fields stay `None` unless both source measurements are present
+  - processed rows now carry `missing_raw_fields`, `missing_raw_field_count`, and `frame_is_complete`
 
 ### 3.4 Exception handling loses failure cause detail
 
-- Status: `Deferred`
+- Status: `Completed`
 - Code:
   - `src/gr_sat/telemetry.py`
   - `src/gr_sat/decoders/uwe4.py`
@@ -248,27 +252,42 @@ These are accepted as real defects and need explicit implementation plans before
   - decoder health, bad packets, schema issues, and runtime faults are not separable
 - Architectural direction:
   - use structured failure categories and counters
+- Implemented scope:
+  - `process_frame_result()` now returns structured stage/code/message failures
+  - `UWE4Decoder` classifies decode and adapt failures explicitly
+  - offline processing logs per-code failure breakdowns
+  - watchdog results now expose `failure_code`
 
 ### 3.5 Pass segmentation and cadence handling are simplistic
 
-- Status: `Deferred`
+- Status: `Completed`
 - Code:
   - `scripts/process_data.py`
 - Why it still matters:
   - dropped packets, irregular cadence, and time alignment are only minimally modeled
 - Architectural direction:
   - represent pass/session metadata explicitly instead of using only a fixed `>120s` rule
+- Implemented scope:
+  - pass/cadence annotation moved into shared processing helpers
+  - processed data now retains `pass_id`, per-pass counts, duration, cadence reference, and gap flags
+  - dropped-packet suspects and irregular cadence are computed explicitly
+  - online inference now keeps short rolling history for feature compatibility
 
 ### 3.6 Feature contract is too narrow for the system claims
 
-- Status: `Deferred`
+- Status: `Completed`
 - Code:
   - `scripts/train_model.py`
-  - `DETAILS.md`
+  - `src/gr_sat/satellite_profiles.py`
 - Why it still matters:
   - current features cover only a limited subset of spacecraft behavior
 - Architectural direction:
   - introduce per-satellite manifests and versioned feature contracts
+- Implemented scope:
+  - added `src/gr_sat/satellite_profiles.py` with a versioned UWE-4 feature contract
+  - training and evaluation now load feature sets from the satellite profile instead of hardcoded lists
+  - baseline cleaning rules moved into the profile manifest
+  - artifact metadata now persists `feature_contract_version` and diagnosis features
 
 ### 3.7 Model artifacts do not persist threshold/scoring metadata
 
@@ -298,3 +317,4 @@ These are accepted as real defects and need explicit implementation plans before
 - Critical bug planning note written in `docs/critical_bug_plans.md`.
 - Critical bug fixes implemented in code.
 - Regression coverage added under `tests/`.
+- Remaining major items 3.3 through 3.6 implemented and covered by regression tests.

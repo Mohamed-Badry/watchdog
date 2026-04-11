@@ -18,16 +18,20 @@ Usage:
 
 import json
 import argparse
+from collections import Counter
 import pandas as pd
 from pathlib import Path
-from datetime import datetime
 
 from loguru import logger
 from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 
 # Import the core — triggers decoder registration via decoders/__init__.py
-from gr_sat.processing import deduplicate_processed_frames
+from gr_sat.processing import (
+    annotate_pass_and_cadence_metadata,
+    deduplicate_processed_frames,
+)
+from gr_sat.satellite_profiles import feature_completeness_mask, get_satellite_profile
 from gr_sat.telemetry import DecoderRegistry
 import gr_sat.decoders  # noqa: F401
 
@@ -59,6 +63,16 @@ def load_raw_frames(sat_dir: Path) -> list[dict]:
     return frames
 
 
+def _log_failure_breakdown(stage_name: str, counts: Counter) -> None:
+    if not counts:
+        return
+    breakdown = ", ".join(
+        f"{code}={count}"
+        for code, count in sorted(counts.items())
+    )
+    logger.info(f"{stage_name} failure breakdown: {breakdown}")
+
+
 def process_satellite(norad_id: str):
     """
     Run the full pipeline for a single satellite:
@@ -83,6 +97,12 @@ def process_satellite(norad_id: str):
         )
         return
 
+    try:
+        profile = get_satellite_profile(norad_int)
+    except KeyError as exc:
+        logger.error(str(exc))
+        return
+
     # Load raw data
     raw_records = load_raw_frames(sat_dir)
     if not raw_records:
@@ -97,6 +117,7 @@ def process_satellite(norad_id: str):
     # --- Stage 1: Decode (raw bytes → interim) ---
     interim_rows = []
     decode_failures = 0
+    decode_failure_counts: Counter[str] = Counter()
 
     with Progress(
         SpinnerColumn(),
@@ -119,21 +140,25 @@ def process_satellite(norad_id: str):
 
             try:
                 payload_bytes = bytes.fromhex(hex_payload)
-                decoded = decoder.decode(payload_bytes)
+                decoded_outcome = decoder.decode_with_diagnostics(payload_bytes)
 
-                if decoded:
+                if decoded_outcome.ok:
+                    decoded = dict(decoded_outcome.data)
                     decoded["timestamp"] = timestamp_str
                     decoded["observation_id"] = record.get("observation_id")
                     interim_rows.append(decoded)
                 else:
                     decode_failures += 1
+                    decode_failure_counts[decoded_outcome.failure.code] += 1
 
-            except Exception:
+            except ValueError:
                 decode_failures += 1
+                decode_failure_counts["invalid_hex_payload"] += 1
                 continue
 
     if not interim_rows:
         logger.warning(f"No valid frames decoded for NORAD {norad_id}")
+        _log_failure_breakdown("Decode", decode_failure_counts)
         return
 
     # Build interim DataFrame
@@ -149,26 +174,27 @@ def process_satellite(norad_id: str):
         f"Stage 1 complete → [bold]{interim_file}[/] "
         f"({len(df_interim)} frames, {decode_failures} failures)"
     )
+    _log_failure_breakdown("Decode", decode_failure_counts)
 
     # --- Stage 2: Adapt (interim → processed Golden Features) ---
     adapted_rows = []
     adapt_failures = 0
+    adapt_failure_counts: Counter[str] = Counter()
 
     for _, row in df_interim.iterrows():
-        try:
-            adapted = decoder.adapt(row.to_dict())
-            if adapted:
-                adapted["timestamp"] = row["timestamp"]
-                adapted["observation_id"] = row.get("observation_id")
-                adapted_rows.append(adapted)
-            else:
-                adapt_failures += 1
-        except Exception:
+        adapted_outcome = decoder.adapt_with_diagnostics(row.to_dict())
+        if adapted_outcome.ok:
+            adapted = dict(adapted_outcome.data)
+            adapted["timestamp"] = row["timestamp"]
+            adapted["observation_id"] = row.get("observation_id")
+            adapted_rows.append(adapted)
+        else:
             adapt_failures += 1
-            continue
+            adapt_failure_counts[adapted_outcome.failure.code] += 1
 
     if not adapted_rows:
         logger.warning(f"No frames adapted for NORAD {norad_id}")
+        _log_failure_breakdown("Adapt", adapt_failure_counts)
         return
 
     # Build processed DataFrame
@@ -176,18 +202,26 @@ def process_satellite(norad_id: str):
 
     df_processed, dedup_stats = deduplicate_processed_frames(df_processed)
     dupes = dedup_stats["exact_duplicates_removed"]
-    
-    # Feature Engineering: Rolling Variances for Time-Series Awareness
-    # We split by pass (> 120s gap) so standard deviations don't bleed across 10hr orbit gaps
-    df_processed["time_diff_sec"] = df_processed["timestamp"].diff().dt.total_seconds()
-    df_processed["pass_id"] = (df_processed["time_diff_sec"] > 120).cumsum()
-    
-    # Calculate 3-frame rolling std dev. (Used to detect 'Sensor Stuck' flatlines)
-    df_processed["volt_rolling_std"] = df_processed.groupby("pass_id")["batt_voltage"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
-    df_processed["temp_rolling_std"] = df_processed.groupby("pass_id")["temp_batt_a"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
-    
-    # Drop intermediate processing columns
-    df_processed = df_processed.drop(columns=["time_diff_sec", "pass_id"])
+    df_processed = annotate_pass_and_cadence_metadata(
+        df_processed,
+        pass_gap_seconds=profile.pass_gap_seconds,
+        cadence_tolerance_ratio=profile.cadence_tolerance_ratio,
+        cadence_min_tolerance_seconds=profile.cadence_min_tolerance_seconds,
+        rolling_window=profile.rolling_window,
+    )
+
+    partial_frames = 0
+    if "frame_is_complete" in df_processed.columns:
+        partial_frames = int((~df_processed["frame_is_complete"].fillna(False)).sum())
+
+    train_ready_rows = int(
+        feature_completeness_mask(
+            df_processed,
+            profile.feature_contract.feature_names,
+        ).sum()
+    )
+    irregular_rows = int(df_processed["sampling_irregular"].sum())
+    dropped_packet_rows = int(df_processed["dropped_packet_suspect"].sum())
 
     # Save processed (Golden Features, ML-ready)
     processed_file = PROCESSED_DIR / f"{norad_id}.csv"
@@ -195,13 +229,21 @@ def process_satellite(norad_id: str):
 
     logger.success(
         f"Stage 2 complete → [bold]{processed_file}[/] "
-        f"({len(df_processed)} frames, {dupes} exact dupes removed, {adapt_failures} adapt failures)"
+        f"({len(df_processed)} frames, {dupes} exact dupes removed, {adapt_failures} adapt failures, "
+        f"{partial_frames} partial frames)"
     )
     logger.info(
         "  Dedup Stats: "
         f"{dedup_stats['same_timestamp_multi_payload_groups']} same-timestamp multi-payload groups preserved | "
         f"{dedup_stats['same_observation_multi_payload_rows']} rows share an observation_id but differ by payload"
     )
+    logger.info(
+        "  Cadence Stats: "
+        f"{irregular_rows} irregular cadence rows | "
+        f"{dropped_packet_rows} dropped-packet suspects | "
+        f"{train_ready_rows} rows complete for feature contract v{profile.feature_contract.version}"
+    )
+    _log_failure_breakdown("Adapt", adapt_failure_counts)
 
     # Summary
     logger.info(f"[bold]Pipeline complete for NORAD {norad_id}[/]")

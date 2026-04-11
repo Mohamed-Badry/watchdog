@@ -12,7 +12,7 @@ import torch
 from gr_sat.ml_config import ALL_FEATURES
 from gr_sat.model_artifacts import ModelArtifactMetadata, model_artifact_paths, save_model_metadata
 from gr_sat.models import TelemetryVAE
-from gr_sat.telemetry import TelemetryFrame
+from gr_sat.telemetry import FrameProcessingResult, TelemetryFrame
 from gr_sat.watchdog import (
     OnlineWatchdog,
     STATE_ALERTING,
@@ -34,11 +34,18 @@ def _build_frame(
         timestamp=timestamp,
         norad_id=43880,
         source="live_station",
+        batt_a_voltage=feature_value,
+        batt_b_voltage=feature_value,
+        batt_a_current=feature_value,
+        batt_b_current=feature_value,
         batt_voltage=feature_value,
         batt_current=feature_value,
+        power_consumption=feature_value,
+        temp_obc=feature_value,
         temp_batt_a=feature_value,
         temp_batt_b=feature_value,
         temp_panel_z=feature_value if temp_panel_z is _DEFAULT_PANEL_TEMP else temp_panel_z,
+        uptime=1,
     )
 
 
@@ -47,11 +54,12 @@ class OnlineWatchdogTests(unittest.TestCase):
         tmpdir = tempfile.TemporaryDirectory()
         models_dir = Path(tmpdir.name)
         paths = model_artifact_paths(models_dir, "43880")
+        n_features = len(ALL_FEATURES)
 
-        scaler = StandardScaler().fit(np.array([[-1.0] * 5, [1.0] * 5]))
+        scaler = StandardScaler().fit(np.array([[-1.0] * n_features, [1.0] * n_features]))
         joblib.dump(scaler, paths.scaler)
 
-        model = TelemetryVAE(input_dim=len(ALL_FEATURES), hidden_dim=4, latent_dim=2)
+        model = TelemetryVAE(input_dim=n_features, hidden_dim=4, latent_dim=2)
         for parameter in model.parameters():
             parameter.data.zero_()
         torch.save(model.state_dict(), paths.weights)
@@ -75,6 +83,8 @@ class OnlineWatchdogTests(unittest.TestCase):
             validation_end=None,
             test_start=None,
             test_end=None,
+            feature_contract_version=2,
+            diagnosis_feature_names=list(ALL_FEATURES),
         )
         save_model_metadata(paths.metadata, metadata)
         return tmpdir, OnlineWatchdog.from_artifacts("43880", models_dir=models_dir, gap_timeout_seconds=60)
@@ -84,7 +94,10 @@ class OnlineWatchdogTests(unittest.TestCase):
         self.addCleanup(tmpdir.cleanup)
 
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        with patch("gr_sat.watchdog.process_frame", return_value=_build_frame(packet_time, 0.0)):
+        with patch(
+            "gr_sat.watchdog.process_frame_result",
+            return_value=FrameProcessingResult(frame=_build_frame(packet_time, 0.0)),
+        ):
             result = watchdog.process_packet(b"\x00", packet_time)
 
         self.assertEqual(watchdog.state, STATE_RECEIVING)
@@ -99,7 +112,10 @@ class OnlineWatchdogTests(unittest.TestCase):
         alerts = []
         watchdog.alert_sink = alerts.append
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        with patch("gr_sat.watchdog.process_frame", return_value=_build_frame(packet_time, 2.0)):
+        with patch(
+            "gr_sat.watchdog.process_frame_result",
+            return_value=FrameProcessingResult(frame=_build_frame(packet_time, 2.0)),
+        ):
             result = watchdog.process_packet(b"\x00", packet_time)
 
         self.assertEqual(result.state, STATE_ALERTING)
@@ -111,7 +127,10 @@ class OnlineWatchdogTests(unittest.TestCase):
         self.addCleanup(tmpdir.cleanup)
 
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        with patch("gr_sat.watchdog.process_frame", return_value=_build_frame(packet_time, 0.0)):
+        with patch(
+            "gr_sat.watchdog.process_frame_result",
+            return_value=FrameProcessingResult(frame=_build_frame(packet_time, 0.0)),
+        ):
             watchdog.process_packet(b"\x00", packet_time)
 
         state = watchdog.check_gap(packet_time + timedelta(seconds=61))
@@ -123,18 +142,31 @@ class OnlineWatchdogTests(unittest.TestCase):
 
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
         broken_frame = _build_frame(packet_time, 0.0, temp_panel_z=None)
-        with patch("gr_sat.watchdog.process_frame", return_value=broken_frame):
+        with patch(
+            "gr_sat.watchdog.process_frame_result",
+            return_value=FrameProcessingResult(frame=broken_frame),
+        ):
             result = watchdog.process_packet(b"\x00", packet_time)
 
         self.assertEqual(result.state, STATE_DEGRADED)
         self.assertEqual(result.status, "error")
         self.assertIn("Missing required feature", result.error)
+        self.assertEqual(result.failure_code, "inference_error")
 
     def test_watchdog_reports_idle_before_any_packets(self):
         tmpdir, watchdog = self._build_watchdog(threshold=1.0)
         self.addCleanup(tmpdir.cleanup)
 
         self.assertEqual(watchdog.check_gap(datetime(2026, 1, 1, tzinfo=timezone.utc)), STATE_IDLE)
+
+    def test_watchdog_tracks_feature_contract_metadata(self):
+        tmpdir, watchdog = self._build_watchdog(threshold=1.0)
+        self.addCleanup(tmpdir.cleanup)
+
+        status = watchdog.status()
+
+        self.assertEqual(status["feature_contract_version"], 2)
+        self.assertIn("volt_rolling_std", status["feature_names"])
 
 
 if __name__ == "__main__":

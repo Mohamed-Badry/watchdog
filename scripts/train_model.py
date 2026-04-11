@@ -29,8 +29,6 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 from gr_sat.ml_config import (
-    ALL_FEATURES,
-    BASE_FEATURES,
     DEFAULT_INFERENCE_MODE,
     DEFAULT_KLD_WEIGHT,
     HIDDEN_DIM,
@@ -45,6 +43,11 @@ from gr_sat.model_artifacts import (
     threshold_from_scores,
 )
 from gr_sat.models import TelemetryVAE, compute_anomaly_scores, vae_loss
+from gr_sat.satellite_profiles import (
+    build_baseline_mask,
+    feature_completeness_mask,
+    get_satellite_profile,
+)
 
 logger.configure(handlers=[
     {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
@@ -70,7 +73,7 @@ def score_scaled_frames(vae: TelemetryVAE, X_scaled, kld_weight=DEFAULT_KLD_WEIG
     return scores.numpy()
 
 
-def train_vae(X_train_scaled, norad_id: str, epochs: int = 100):
+def train_vae(X_train_scaled, feature_names: list[str], epochs: int = 100):
     logger.info("Training PyTorch Variational Autoencoder (VAE)...")
     
     # 1. Prepare PyTorch Dataset
@@ -80,7 +83,7 @@ def train_vae(X_train_scaled, norad_id: str, epochs: int = 100):
     
     # 2. Init Model
     vae = TelemetryVAE(
-        input_dim=len(ALL_FEATURES),
+        input_dim=len(feature_names),
         hidden_dim=HIDDEN_DIM,
         latent_dim=LATENT_DIM,
     )
@@ -121,25 +124,34 @@ def train_for_satellite(norad_id: str, epochs: int = 100):
         logger.error(f"Processed data not found at {data_path}")
         return
 
-    logger.info(f"Loading data for NORAD {norad_id}...")
+    profile = get_satellite_profile(norad_id)
+    feature_names = list(profile.feature_contract.feature_names)
+
+    logger.info(
+        f"Loading data for NORAD {norad_id} using feature contract "
+        f"v{profile.feature_contract.version} ({profile.name})..."
+    )
     df = pd.read_csv(data_path)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df = df.sort_values("timestamp")
     
     orig_len = len(df)
-    
-    extreme_mask = (df["batt_voltage"] > 5.0) | (df["batt_current"].abs() > 1.0)
+
+    extreme_mask = build_baseline_mask(df, profile)
     df_clean = df[~extreme_mask].copy()
+    complete_mask = feature_completeness_mask(df_clean, feature_names)
+    df_trainable = df_clean[complete_mask].copy()
     
-    split = split_chronological(df_clean)
+    split = split_chronological(df_trainable)
     df_train = split.train
     df_validation = split.validation
     df_test = split.test
 
-    X_train = df_train[ALL_FEATURES].values
-    X_validation = df_validation[ALL_FEATURES].values
+    X_train = df_train[feature_names].values
+    X_validation = df_validation[feature_names].values
     
     logger.info(f"Cleaned extreme rows: {extreme_mask.sum()}")
+    logger.info(f"Dropped incomplete feature rows: {(~complete_mask).sum()}")
     logger.info(
         "Chronological split: "
         f"train={len(df_train)} | validation={len(df_validation)} | test={len(df_test)}"
@@ -155,7 +167,7 @@ def train_for_satellite(norad_id: str, epochs: int = 100):
     joblib.dump(scaler, artifact_paths.scaler)
 
     # Train PyTorch VAE natively
-    vae = train_vae(X_train_scaled, norad_id, epochs=epochs)
+    vae = train_vae(X_train_scaled, feature_names, epochs=epochs)
     validation_scores = score_scaled_frames(vae, X_validation_scaled)
     threshold = threshold_from_scores(validation_scores, THRESHOLD_PERCENTILE)
 
@@ -166,12 +178,14 @@ def train_for_satellite(norad_id: str, epochs: int = 100):
         norad_id=norad_id,
         split=split,
         threshold=threshold,
-        feature_names=ALL_FEATURES,
+        feature_names=feature_names,
         hidden_dim=HIDDEN_DIM,
         latent_dim=LATENT_DIM,
         kld_weight=DEFAULT_KLD_WEIGHT,
         threshold_percentile=THRESHOLD_PERCENTILE,
         inference_mode=DEFAULT_INFERENCE_MODE,
+        feature_contract_version=profile.feature_contract.version,
+        diagnosis_feature_names=list(profile.feature_contract.diagnosis_feature_names),
     )
     save_model_metadata(artifact_paths.metadata, metadata)
     logger.success(

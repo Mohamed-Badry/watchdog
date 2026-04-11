@@ -2,15 +2,11 @@
 Shared model/training constants for Project Watchdog.
 """
 
-BASE_FEATURES = [
-    "batt_voltage",
-    "batt_current",
-    "temp_batt_a",
-    "temp_batt_b",
-    "temp_panel_z",
-]
+from gr_sat.satellite_profiles import DEFAULT_PROFILE
 
-ALL_FEATURES = BASE_FEATURES
+BASE_FEATURES = list(DEFAULT_PROFILE.feature_contract.diagnosis_feature_names)
+ALL_FEATURES = list(DEFAULT_PROFILE.feature_contract.feature_names)
+DEFAULT_FEATURE_CONTRACT_VERSION = DEFAULT_PROFILE.feature_contract.version
 
 HIDDEN_DIM = 12
 LATENT_DIM = 3

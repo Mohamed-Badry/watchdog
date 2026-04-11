@@ -23,11 +23,17 @@ Unit conversions (raw Kaitai → SI):
 """
 
 from typing import Dict, Any, Optional
+import math
 
 import satnogsdecoders.decoder as dec
 from satnogsdecoders.decoder.uwe4 import Uwe4
 
-from gr_sat.telemetry import BaseDecoder, DecoderRegistry
+from gr_sat.telemetry import (
+    BaseDecoder,
+    DecoderRegistry,
+    ProcessingFailure,
+    StageOutcome,
+)
 
 
 @DecoderRegistry.register(43880)
@@ -41,8 +47,23 @@ class UWE4Decoder(BaseDecoder):
 
     # Fields required to validate a successful decode
     REQUIRED_FIELDS = {"beacon_payload_uptime", "beacon_payload_batt_a_voltage"}
+    NUMERIC_FIELD_MAP = {
+        "beacon_payload_batt_a_voltage": ("batt_a_voltage", 1000.0),
+        "beacon_payload_batt_b_voltage": ("batt_b_voltage", 1000.0),
+        "beacon_payload_batt_a_current": ("batt_a_current", 1000.0),
+        "beacon_payload_batt_b_current": ("batt_b_current", 1000.0),
+        "beacon_payload_power_consumption": ("power_consumption", 1000.0),
+        "beacon_payload_obc_temp": ("temp_obc", 1.0),
+        "beacon_payload_batt_a_temp": ("temp_batt_a", 1.0),
+        "beacon_payload_batt_b_temp": ("temp_batt_b", 1.0),
+        "beacon_payload_panel_pos_z_temp": ("temp_panel_z", 1.0),
+        "beacon_payload_uptime": ("uptime", 1.0),
+    }
 
     def decode(self, payload: bytes) -> Optional[Dict[str, Any]]:
+        return self.decode_with_diagnostics(payload).data
+
+    def decode_with_diagnostics(self, payload: bytes) -> StageOutcome:
         """
         Parse raw bytes using the UWE-4 Kaitai struct.
 
@@ -52,21 +73,51 @@ class UWE4Decoder(BaseDecoder):
         """
         try:
             struct = Uwe4.from_bytes(payload)
+        except Exception as exc:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="decode",
+                    code="kaitai_parse_error",
+                    message=str(exc),
+                )
+            )
+
+        try:
             data = dec.get_fields(struct)
+        except Exception as exc:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="decode",
+                    code="field_extraction_error",
+                    message=str(exc),
+                )
+            )
 
-            if not data:
-                return None
+        if not data:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="decode",
+                    code="empty_decode",
+                    message="Decoder returned an empty field map.",
+                )
+            )
 
-            # Validate: ensure critical beacon fields are present
-            if not self.REQUIRED_FIELDS.issubset(data.keys()):
-                return None
+        missing_fields = sorted(self.REQUIRED_FIELDS - data.keys())
+        if missing_fields:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="decode",
+                    code="missing_required_fields",
+                    message=", ".join(missing_fields),
+                )
+            )
 
-            return data
-
-        except Exception:
-            return None
+        return StageOutcome(data=data)
 
     def adapt(self, decoded: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        return self.adapt_with_diagnostics(decoded).data
+
+    def adapt_with_diagnostics(self, decoded: Dict[str, Any]) -> StageOutcome:
         """
         Map raw UWE-4 Kaitai fields to SI-unit Golden Features.
 
@@ -84,34 +135,81 @@ class UWE4Decoder(BaseDecoder):
           - batt_current = sum(batt_a_current, batt_b_current)
         """
         try:
-            get = decoded.get
+            return StageOutcome(data=self._adapt_payload(decoded))
+        except ValueError as exc:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="adapt",
+                    code="invalid_numeric_value",
+                    message=str(exc),
+                )
+            )
+        except Exception as exc:
+            return StageOutcome(
+                failure=ProcessingFailure(
+                    stage="adapt",
+                    code="adapt_exception",
+                    message=str(exc),
+                )
+            )
 
-            # --- Individual battery values (mV/mA → V/A) ---
-            batt_a_v = get("beacon_payload_batt_a_voltage", 0) / 1000.0
-            batt_b_v = get("beacon_payload_batt_b_voltage", 0) / 1000.0
-            batt_a_i = get("beacon_payload_batt_a_current", 0) / 1000.0
-            batt_b_i = get("beacon_payload_batt_b_current", 0) / 1000.0
+    def _adapt_payload(self, decoded: Dict[str, Any]) -> Dict[str, Any]:
+        get = decoded.get
+        adapted: Dict[str, Any] = {
+            "src_callsign": get("src_callsign"),
+            "dest_callsign": get("dest_callsign"),
+        }
+        missing_raw_fields = []
 
-            return {
-                # Identifiers
-                "src_callsign": get("src_callsign"),
-                "dest_callsign": get("dest_callsign"),
-                # Power (SI units)
-                "batt_a_voltage": batt_a_v,
-                "batt_b_voltage": batt_b_v,
-                "batt_a_current": batt_a_i,
-                "batt_b_current": batt_b_i,
-                "batt_voltage": (batt_a_v + batt_b_v) / 2.0,
-                "batt_current": batt_a_i + batt_b_i,
-                "power_consumption": get("beacon_payload_power_consumption", 0) / 1000.0,
-                # Thermal (already °C)
-                "temp_obc": get("beacon_payload_obc_temp"),
-                "temp_batt_a": get("beacon_payload_batt_a_temp"),
-                "temp_batt_b": get("beacon_payload_batt_b_temp"),
-                "temp_panel_z": get("beacon_payload_panel_pos_z_temp"),
-                # Status
-                "uptime": get("beacon_payload_uptime"),
-            }
+        for raw_field, (target_field, scale) in self.NUMERIC_FIELD_MAP.items():
+            converted = self._scaled_optional_number(decoded, raw_field, scale)
+            if converted is None:
+                missing_raw_fields.append(raw_field)
+            adapted[target_field] = converted
 
-        except Exception:
+        adapted["batt_voltage"] = self._mean_if_complete(
+            adapted["batt_a_voltage"],
+            adapted["batt_b_voltage"],
+        )
+        adapted["batt_current"] = self._sum_if_complete(
+            adapted["batt_a_current"],
+            adapted["batt_b_current"],
+        )
+        if adapted["uptime"] is not None:
+            adapted["uptime"] = int(adapted["uptime"])
+        adapted["missing_raw_fields"] = "|".join(missing_raw_fields) if missing_raw_fields else None
+        adapted["missing_raw_field_count"] = len(missing_raw_fields)
+        adapted["frame_is_complete"] = len(missing_raw_fields) == 0
+        return adapted
+
+    @staticmethod
+    def _mean_if_complete(left: Optional[float], right: Optional[float]) -> Optional[float]:
+        if left is None or right is None:
             return None
+        return (left + right) / 2.0
+
+    @staticmethod
+    def _sum_if_complete(left: Optional[float], right: Optional[float]) -> Optional[float]:
+        if left is None or right is None:
+            return None
+        return left + right
+
+    @staticmethod
+    def _scaled_optional_number(
+        decoded: Dict[str, Any],
+        field_name: str,
+        scale: float,
+    ) -> Optional[float]:
+        value = decoded.get(field_name)
+        if value is None:
+            return None
+
+        if isinstance(value, float) and math.isnan(value):
+            return None
+
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{field_name} is not numeric: {value!r}") from exc
+
+        return numeric_value / scale

@@ -108,3 +108,79 @@ def deduplicate_processed_frames(df_processed: pd.DataFrame) -> tuple[pd.DataFra
         "same_observation_multi_payload_rows": same_observation_multi_payload_rows,
     }
     return deduplicated, stats
+
+
+def _median_positive_cadence_seconds(timestamps: pd.Series) -> float:
+    diffs = timestamps.diff().dt.total_seconds()
+    positive_diffs = diffs[diffs > 0]
+    if positive_diffs.empty:
+        return float("nan")
+    return float(positive_diffs.median())
+
+
+def annotate_pass_and_cadence_metadata(
+    df_processed: pd.DataFrame,
+    pass_gap_seconds: float,
+    cadence_tolerance_ratio: float = 0.5,
+    cadence_min_tolerance_seconds: float = 5.0,
+    rolling_window: int = 3,
+) -> pd.DataFrame:
+    if df_processed.empty:
+        return df_processed.copy()
+
+    working = df_processed.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"])
+    working = working.sort_values("timestamp").reset_index(drop=True)
+
+    working["seconds_since_prev"] = working["timestamp"].diff().dt.total_seconds()
+    working["seconds_to_next"] = (
+        working["timestamp"].shift(-1) - working["timestamp"]
+    ).dt.total_seconds()
+    working["pass_id"] = (
+        working["seconds_since_prev"].gt(pass_gap_seconds).fillna(False).cumsum()
+    ).astype(int)
+    working["pass_frame_index"] = working.groupby("pass_id").cumcount().astype(int)
+    working["pass_frame_count"] = (
+        working.groupby("pass_id")["timestamp"].transform("size").astype(int)
+    )
+    working["pass_duration_sec"] = working.groupby("pass_id")["timestamp"].transform(
+        lambda timestamps: float((timestamps.max() - timestamps.min()).total_seconds())
+        if len(timestamps) > 1
+        else 0.0
+    )
+    working["pass_median_cadence_sec"] = working.groupby("pass_id")["timestamp"].transform(
+        _median_positive_cadence_seconds
+    )
+    working["cadence_reference_sec"] = working["pass_median_cadence_sec"]
+
+    cadence_tolerance = (
+        working["cadence_reference_sec"]
+        .mul(cadence_tolerance_ratio)
+        .clip(lower=cadence_min_tolerance_seconds)
+    )
+    has_reference = working["cadence_reference_sec"].notna() & working["cadence_reference_sec"].gt(0)
+    within_pass = working["seconds_since_prev"].notna() & working["seconds_since_prev"].le(pass_gap_seconds)
+
+    working["sampling_irregular"] = (
+        within_pass
+        & has_reference
+        & (working["seconds_since_prev"] - working["cadence_reference_sec"]).abs().gt(cadence_tolerance)
+    )
+    working["dropped_packet_suspect"] = (
+        within_pass
+        & has_reference
+        & working["seconds_since_prev"].gt(working["cadence_reference_sec"] + cadence_tolerance)
+    )
+    working["same_timestamp_collision"] = within_pass & working["seconds_since_prev"].eq(0)
+
+    if "batt_voltage" in working.columns:
+        working["volt_rolling_std"] = working.groupby("pass_id")["batt_voltage"].transform(
+            lambda series: series.rolling(rolling_window, min_periods=1).std().fillna(0.0)
+        )
+
+    if "temp_batt_a" in working.columns:
+        working["temp_rolling_std"] = working.groupby("pass_id")["temp_batt_a"].transform(
+            lambda series: series.rolling(rolling_window, min_periods=1).std().fillna(0.0)
+        )
+
+    return working

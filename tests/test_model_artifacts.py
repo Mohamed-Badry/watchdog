@@ -43,18 +43,16 @@ class ModelArtifactTests(unittest.TestCase):
             models_dir = Path(tmpdir)
             norad_id = "99999"
             paths = model_artifact_paths(models_dir, norad_id)
+            n_features = len(ALL_FEATURES)
+            first_row = np.arange(1.0, n_features + 1.0)
+            second_row = first_row + 1.0
 
             scaler = StandardScaler().fit(
-                np.array(
-                    [
-                        [1.0, 2.0, 3.0, 4.0, 5.0],
-                        [2.0, 3.0, 4.0, 5.0, 6.0],
-                    ]
-                )
+                np.vstack([first_row, second_row])
             )
             joblib.dump(scaler, paths.scaler)
 
-            model = TelemetryVAE(input_dim=len(ALL_FEATURES), hidden_dim=4, latent_dim=2)
+            model = TelemetryVAE(input_dim=n_features, hidden_dim=4, latent_dim=2)
             torch.save(model.state_dict(), paths.weights)
 
             metadata = ModelArtifactMetadata(
@@ -76,6 +74,8 @@ class ModelArtifactTests(unittest.TestCase):
                 validation_end="2026-01-01T08:00:00+00:00",
                 test_start="2026-01-01T09:00:00+00:00",
                 test_end="2026-01-01T09:00:00+00:00",
+                feature_contract_version=2,
+                diagnosis_feature_names=list(ALL_FEATURES),
             )
             save_model_metadata(paths.metadata, metadata)
 
@@ -87,6 +87,7 @@ class ModelArtifactTests(unittest.TestCase):
 
             self.assertEqual(loaded_metadata.threshold, metadata.threshold)
             self.assertEqual(loaded_bundle_metadata.feature_names, list(ALL_FEATURES))
+            self.assertEqual(loaded_bundle_metadata.feature_contract_version, 2)
             self.assertEqual(loaded_model.fc1.in_features, len(ALL_FEATURES))
             self.assertAlmostEqual(
                 loaded_scaler.mean_[0],
