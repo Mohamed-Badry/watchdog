@@ -83,7 +83,7 @@ class OnlineWatchdogTests(unittest.TestCase):
             validation_end=None,
             test_start=None,
             test_end=None,
-            feature_contract_version=2,
+            feature_contract_version=3,
             diagnosis_feature_names=list(ALL_FEATURES),
         )
         save_model_metadata(paths.metadata, metadata)
@@ -165,8 +165,9 @@ class OnlineWatchdogTests(unittest.TestCase):
 
         status = watchdog.status()
 
-        self.assertEqual(status["feature_contract_version"], 2)
-        self.assertIn("volt_rolling_std", status["feature_names"])
+        self.assertEqual(status["feature_contract_version"], 3)
+        self.assertIn("batt_voltage", status["feature_names"])
+        self.assertNotIn("volt_rolling_std", status["feature_names"])
 
 
 if __name__ == "__main__":

@@ -1,34 +1,18 @@
 {
   "diagnosis_feature_names": [
-    "batt_a_voltage",
-    "batt_b_voltage",
-    "batt_a_current",
-    "batt_b_current",
     "batt_voltage",
     "batt_current",
-    "power_consumption",
-    "temp_obc",
     "temp_batt_a",
     "temp_batt_b",
-    "temp_panel_z",
-    "volt_rolling_std",
-    "temp_rolling_std"
+    "temp_panel_z"
   ],
-  "feature_contract_version": 2,
+  "feature_contract_version": 3,
   "feature_names": [
-    "batt_a_voltage",
-    "batt_b_voltage",
-    "batt_a_current",
-    "batt_b_current",
     "batt_voltage",
     "batt_current",
-    "power_consumption",
-    "temp_obc",
     "temp_batt_a",
     "temp_batt_b",
-    "temp_panel_z",
-    "volt_rolling_std",
-    "temp_rolling_std"
+    "temp_panel_z"
   ],
   "hidden_dim": 12,
   "inference_mode": "deterministic",
@@ -38,7 +22,7 @@
   "test_end": "2026-04-11T16:38:05+00:00",
   "test_rows": 1103,
   "test_start": "2026-03-23T10:57:34+00:00",
-  "threshold": 0.605880618095398,
+  "threshold": 0.2894188165664673,
   "threshold_percentile": 95.0,
   "train_end": "2026-03-02T00:44:29+00:00",
   "train_rows": 8817,

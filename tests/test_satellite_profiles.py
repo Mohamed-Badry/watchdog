@@ -13,9 +13,10 @@ class SatelliteProfileTests(unittest.TestCase):
     def test_uwe4_profile_exposes_versioned_feature_contract(self):
         profile = get_satellite_profile(43880)
 
-        self.assertEqual(profile.feature_contract.version, 2)
-        self.assertIn("power_consumption", profile.feature_contract.feature_names)
-        self.assertIn("volt_rolling_std", profile.feature_contract.feature_names)
+        self.assertEqual(profile.feature_contract.version, 3)
+        self.assertIn("batt_voltage", profile.feature_contract.feature_names)
+        self.assertIn("temp_panel_z", profile.feature_contract.feature_names)
+        self.assertNotIn("volt_rolling_std", profile.feature_contract.feature_names)
 
     def test_baseline_and_completeness_masks_are_explicit(self):
         profile = get_satellite_profile(43880)
@@ -73,7 +74,8 @@ class SatelliteProfileTests(unittest.TestCase):
         complete_mask = feature_completeness_mask(df, profile.feature_contract.feature_names)
 
         self.assertEqual(baseline_mask.tolist(), [False, True, False])
-        self.assertEqual(complete_mask.tolist(), [True, True, False])
+        # All 3 rows have the 5 Golden Features present; batt_a_voltage=None is not in the contract
+        self.assertEqual(complete_mask.tolist(), [True, True, True])
 
 
 if __name__ == "__main__":
