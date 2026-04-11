@@ -304,10 +304,12 @@ print(f"     These will be used as 'real anomaly candidates' for validation.")
 
 # %%
 # 3.1 Eclipse vs Sunlight physics scatter
+plot_df = df[~((df["batt_voltage"] > 5) | (df["batt_current"].abs() > 1.0))]
+
 fig, ax = plt.subplots(figsize=(10, 7))
 scatter = ax.scatter(
-    df["temp_panel_z"], df["batt_current"],
-    c=df["batt_voltage"], cmap="magma", alpha=0.5, s=8, edgecolors="none",
+    plot_df["temp_panel_z"], plot_df["batt_current"],
+    c=plot_df["batt_voltage"], cmap="magma", alpha=0.5, s=8, edgecolors="none",
 )
 ax.axvline(15, color="cyan", linestyle="--", linewidth=1.5, label="Eclipse Boundary (~15°C)")
 ax.axhline(0, color="white", linestyle="-", linewidth=0.8, alpha=0.5)
@@ -320,7 +322,7 @@ ax.set_title("Physics Verification: Day/Night Operational States\n"
 ax.legend(loc="upper left")
 
 save_fig(fig, "eclipse_scatter")
-plt.show()
+plt.show(block=False)
 
 # Print summary
 sunlight = df[df["temp_panel_z"] > 15]

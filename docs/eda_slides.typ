@@ -72,10 +72,11 @@
 
 == Pipeline Integrity & Feature Distributions
 
-Our core dataset spans 7 months of clean SI-unit data. We actively filter out known physical impossibilities early (e.g. 8V battery spikes) because they are communications errors, not physics anomalies.
+#text(size: 14pt)[Our core dataset spans 7 months of clean SI-unit data. We actively filter out known physical impossibilities early (e.g. 8V battery spikes) because they are communications errors, not physics anomalies.]
+
 
 #align(center)[
-  #image("figures/feature_distributions.png", width: 85%)
+  #image("figures/feature_distributions.png", width: 75%)
 ]
 
 = 2. Deep-Dive Exploratory Data Analysis
@@ -83,11 +84,11 @@ Our core dataset spans 7 months of clean SI-unit data. We actively filter out kn
 == Long-Term Macro Trends (7 Months)
 
 #text(
-  size: 16pt,
+  size: 14pt,
 )[Over the 7-month dataset, we see extreme seasonality in satellite thermodynamics and charge cycles. The baselines shift massively over the year.]
 
 #align(center)[
-  #image("figures/timeseries_macro_7month.png", width: 95%)
+  #image("figures/timeseries_macro_7month.png", width: 75%)
 ]
 
 == The Bimodality Challenge (Day vs. Eclipse)
@@ -108,7 +109,7 @@ Our core dataset spans 7 months of clean SI-unit data. We actively filter out kn
   ],
 )
 
-== Principal Component Analysis (Latent Structure)
+== Principal Component Analysis
 
 #text(
   size: 16pt,
@@ -177,7 +178,7 @@ We benchmarked 4 models against 3 synthetically injected physical faults (`Senso
   "Stage 2: Per-Node Diagnoser",
   "We must isolate what broke during an anomaly.",
   "Inspect the Mean Squared Error node-by-node. The feature with the highest individual MSE represents the hardware failure.",
-  "Successfully spots 100% of Thermal Runaways on edge benchmarks!",
+  "Successfully spots 89% of Panel Failures on edge benchmarks!",
 )
 
 
@@ -208,5 +209,5 @@ To productize "The Watchdog", we will transition these findings into a unified `
 *Key Dashboard Widgets to build:*
 1. *Live Pass View:* Telemetry graphing in real-time as packets decode.
 2. *Gauge Cluster:* Real-time dials mapping values to historical +/- 3 Sigma bounds.
-3. *Anomaly Probability Dial:* Stage 1 `EllipticEnvelope` score mapped from 0-100%.
+3. *Anomaly Probability Dial:* Stage 1 anomaly score mapped from 0-100%.
 4. *Subsystem Blame Chart:* Stage 2 `Autoencoder` feature-reconstruction radar chart.
