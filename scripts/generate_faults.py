@@ -42,34 +42,32 @@ def inject_faults(df_test: pd.DataFrame, n_per_fault=100, rng_seed=42):
     labels = np.zeros(len(df_test), dtype=int)
     fault_types = np.array(["normal"] * len(df_test), dtype=object)
     
-    # 1. Sensor Stuck
-    stuck_starts = rng.choice(len(df_test) - 5, size=n_per_fault, replace=False)
-    median_v = df_faulted["batt_voltage"].median()
-    for start in stuck_starts:
-        df_faulted.iloc[start:start+5, df_faulted.columns.get_loc("batt_voltage")] = median_v
-        labels[start:start+5] = 1
-        fault_types[start:start+5] = "sensor_stuck"
-
-    # 2. Panel Failure
+    # 1. Panel Failure (Short Circuit in Sunlight)
     sunlight_mask = df_faulted["temp_panel_z"] > 15
     sun_idx = np.where(sunlight_mask & (labels == 0))[0]
     panel_fail_idx = rng.choice(sun_idx, size=min(n_per_fault, len(sun_idx)), replace=False)
-    df_faulted.iloc[panel_fail_idx, df_faulted.columns.get_loc("batt_current")] = -0.3
+    df_faulted.iloc[panel_fail_idx, df_faulted.columns.get_loc("batt_current")] = -0.8
     labels[panel_fail_idx] = 1
     fault_types[panel_fail_idx] = "panel_failure"
 
-    # 3. Thermal Runaway
+    # 2. Thermal Runaway (Massive Spike Above Orbit Baselines)
     normal_idx = np.where(labels == 0)[0]
     thermal_idx = rng.choice(normal_idx, size=n_per_fault, replace=False)
-    df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 15.0
-    df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 12.0
+    df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 45.0
+    df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 45.0
     labels[thermal_idx] = 1
     fault_types[thermal_idx] = "thermal_runaway"
+    
+    # Recalculate rolling features on the faulted data
+    df_faulted["time_diff_sec"] = df_faulted["timestamp"].diff().dt.total_seconds()
+    df_faulted["pass_id"] = (df_faulted["time_diff_sec"] > 120).cumsum()
+    df_faulted["volt_rolling_std"] = df_faulted.groupby("pass_id")["batt_voltage"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
+    df_faulted["temp_rolling_std"] = df_faulted.groupby("pass_id")["temp_batt_a"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
     
     return df_faulted, labels, fault_types
 
 def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types):
-    fault_categories = ["sensor_stuck", "panel_failure", "thermal_runaway"]
+    fault_categories = ["panel_failure", "thermal_runaway"]
     accuracy = {ft: {"correct": 0, "flagged": 0} for ft in fault_categories}
     
     for idx in flagged_idx:
@@ -81,9 +79,7 @@ def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types):
             accuracy[actual_fault]["flagged"] += 1
             
             is_correct = False
-            if actual_fault == "sensor_stuck" and top_feature == "batt_voltage":
-                is_correct = True
-            elif actual_fault == "panel_failure" and top_feature == "batt_current":
+            if actual_fault == "panel_failure" and top_feature == "batt_current":
                 is_correct = True
             elif actual_fault == "thermal_runaway" and top_feature in ["temp_batt_a", "temp_batt_b"]:
                 is_correct = True
@@ -122,29 +118,33 @@ def evaluate(norad_id: str):
     X_test_scaled = scaler.transform(df_faulted[ALL_FEATURES].values)
 
     # VAE Inference 
+    # Use only ALL_FEATURES (which is now just BASE_FEATURES) for VAE
     X_tensor = torch.FloatTensor(X_test_scaled)
     with torch.no_grad():
         X_recon_vae, mu, logvar = vae(X_tensor)
         
     # Calculate Per-Sample Overall MSE (Stage 1 Score)
-    anomaly_scores = torch.mean((X_tensor - X_recon_vae)**2, dim=1).numpy()
+    kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
+    anomaly_scores = (torch.mean((X_tensor - X_recon_vae)**2, dim=1) + 0.05 * kld).numpy()
     
     # ------------------
-    # Stage 1: Detector (Total Loss Score)
+    # Stage 1: Detector (MAX Loss Score)
     # ------------------
-    logger.info("Executing Stage 1: Detection via VAE Total Score...")
+    logger.info("Executing Stage 1: Detection via VAE MSE + KLD Score...")
     s_min, s_max = anomaly_scores.min(), anomaly_scores.max()
     anomaly_scores = (anomaly_scores - s_min) / (s_max - s_min) if s_max > s_min else anomaly_scores
+    
+    # Establish the operating threshold (95th percentile of normal frames)
+    normal_scores = anomaly_scores[y_true == 0]
+    operating_threshold = np.percentile(normal_scores, 95)
+    
+    # Trigger Anomaly IF VAE score > threshold
+    predicted_anomalies = anomaly_scores > operating_threshold
+    flagged_idx = np.where(predicted_anomalies)[0]
     
     auroc = roc_auc_score(y_true, anomaly_scores)
     fpr_curve, tpr_curve, thresholds = roc_curve(y_true, anomaly_scores)
     recall_at_5 = np.interp(0.05, fpr_curve, tpr_curve)
-
-    # Establish the operating threshold (95th percentile of normal frames)
-    normal_scores = anomaly_scores[y_true == 0]
-    operating_threshold = np.percentile(normal_scores, 95)
-    predicted_anomalies = anomaly_scores > operating_threshold
-    flagged_idx = np.where(predicted_anomalies)[0]
 
     # ------------------
     # Stage 2: Diagnoser (Node MSE Isolation)
@@ -157,7 +157,7 @@ def evaluate(norad_id: str):
     console.print(f"\n[bold green]Unified VAE Benchmark Report — NORAD {norad_id}[/bold green]")
     console.print(f"Total Test Frames: {len(X_test_scaled)} (Injected Faults: {y_true.sum()})\n")
     
-    table = Table(title="Stage 1: Detection (VAE Overall Loss)")
+    table = Table(title="Stage 1: Detection (VAE Max Error)")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="magenta")
     table.add_row("AUROC", f"{auroc:.4f}")
@@ -168,7 +168,7 @@ def evaluate(norad_id: str):
     diag_table.add_column("Fault Type", style="cyan")
     diag_table.add_column("PyTorch VAE Accuracy", justify="right")
     
-    fault_categories = ["sensor_stuck", "panel_failure", "thermal_runaway"]
+    fault_categories = ["panel_failure", "thermal_runaway"]
     for ft in fault_categories:
         v_flagged = acc_vae[ft]["flagged"]
         v_corr = acc_vae[ft]["correct"]

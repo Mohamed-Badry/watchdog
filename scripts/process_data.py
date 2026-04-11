@@ -178,6 +178,18 @@ def process_satellite(norad_id: str):
     df_processed = df_processed.drop_duplicates(subset=["timestamp"], keep="first")
     df_processed = df_processed.sort_values("timestamp")
     dupes = initial_len - len(df_processed)
+    
+    # Feature Engineering: Rolling Variances for Time-Series Awareness
+    # We split by pass (> 120s gap) so standard deviations don't bleed across 10hr orbit gaps
+    df_processed["time_diff_sec"] = df_processed["timestamp"].diff().dt.total_seconds()
+    df_processed["pass_id"] = (df_processed["time_diff_sec"] > 120).cumsum()
+    
+    # Calculate 3-frame rolling std dev. (Used to detect 'Sensor Stuck' flatlines)
+    df_processed["volt_rolling_std"] = df_processed.groupby("pass_id")["batt_voltage"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
+    df_processed["temp_rolling_std"] = df_processed.groupby("pass_id")["temp_batt_a"].transform(lambda x: x.rolling(3, min_periods=1).std().fillna(0))
+    
+    # Drop intermediate processing columns
+    df_processed = df_processed.drop(columns=["time_diff_sec", "pass_id"])
 
     # Save processed (Golden Features, ML-ready)
     processed_file = PROCESSED_DIR / f"{norad_id}.csv"

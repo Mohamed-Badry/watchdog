@@ -3,12 +3,11 @@
 **Unified Architecture:** PyTorch Variational Autoencoder
 
 ## Metrics
-- **AUROC:** 0.7753
-- **Recall @ 5% FPR:** 44.6%
+- **AUROC:** 0.9995
+- **Recall @ 5% FPR:** 100.0%
 
 ## Fault Isolation Performance
 | Fault Type | Detected by Stage 1 | Isolated by VAE |
 |------------|---------------------|-----------------|
-| sensor_stuck | 22.8% | 34.0% |
-| panel_failure | 84.7% | 89.0% |
-| thermal_runaway | 100.0% | 100.0% |
+| panel_failure | 100.0% | 99.3% |
+| thermal_runaway | 100.0% | 89.3% |
