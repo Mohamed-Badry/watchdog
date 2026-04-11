@@ -24,7 +24,27 @@ fetch +args='':
 process +args='':
     pixi run python scripts/process_data.py {{args}}
 
-# --- Phase 2: Operations (Analysis & Viz) ---
+# Train per-satellite scaler + VAE + persisted metadata artifact
+# Usage:
+#   just train --norad 43880
+#   just train --norad 43880 --epochs 150
+train +args='':
+    pixi run python scripts/train_model.py {{args}}
+
+# Run offline synthetic-fault benchmark for a trained satellite artifact
+# Usage:
+#   just benchmark --norad 43880
+benchmark +args='':
+    pixi run python scripts/generate_faults.py {{args}}
+
+# End-to-end model loop for one satellite (train -> benchmark)
+# Usage:
+#   just train-benchmark 43880 100
+train-benchmark norad='43880' epochs='100':
+    pixi run python scripts/train_model.py --norad {{norad}} --epochs {{epochs}}
+    pixi run python scripts/generate_faults.py --norad {{norad}}
+
+# --- Phase 2: Operations (Analysis, Viz, Runtime) ---
 
 # Regenerate target analysis and selection
 analyze-targets:
@@ -36,6 +56,17 @@ viz-passes:
 
 # Run the full visualization pipeline (Select -> Visualize)
 regenerate-all: analyze-targets viz-passes
+
+# Minimal deterministic online watchdog runtime
+# Usage:
+#   just watchdog --norad 43880 --help
+#   just watchdog --norad 43880 --payload-hex "AABB..." --timestamp "2026-01-01T00:00:00Z"
+watchdog +args='':
+    pixi run python scripts/watchdog_runtime.py {{args}}
+
+# Run regression tests
+test:
+    pixi run python -m unittest discover -s tests -v
 
 # --- Utilities ---
 
