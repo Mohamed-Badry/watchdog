@@ -15,7 +15,7 @@
   config-colors(
     primary: color-primary,
     secondary: color-secondary,
-  )
+  ),
 )
 
 #set text(font: "New Computer Modern", size: 20pt)
@@ -28,8 +28,8 @@
     inset: 1em,
     radius: 4pt,
     width: 100%,
-    stroke: none, 
-    text(size: 0.8em, font: "FiraCode Nerd Font Mono", content)
+    stroke: none,
+    text(size: 0.8em, font: "FiraCode Nerd Font Mono", content),
   )
 }
 
@@ -50,14 +50,14 @@
       columns: (auto, 1fr),
       gutter: 0.8em,
       strong("Goal:"), text(fill: luma(40%))[#context_str],
-      strong("Logic:"), text(fill: luma(40%))[#instructions]
+      strong("Logic:"), text(fill: luma(40%))[#instructions],
     )
     #v(0.6em)
     #block(
-      fill: color-primary.lighten(90%), 
-      inset: 0.8em, 
-      radius: 4pt, 
-      width: 100%
+      fill: color-primary.lighten(90%),
+      inset: 0.8em,
+      radius: 4pt,
+      width: 100%,
     )[
       #text(fill: color-primary, weight: "bold", size: 0.9em)[Result:] #text(size: 0.9em)[#deliverable]
     ]
@@ -70,15 +70,15 @@
 
 == Mission Objective
 
-*Real-Time Anomaly Detection at the Edge*
+*Real-Time Anomaly Detection*
 
-Instead of passive data logging, this system acts as a "Proactive Early Warning System" for amateur satellites.
+Instead of just logging data, this system provides early warnings for satellite failures.
 
 #v(1em)
 *Key Capabilities:*
-- *Universal Decoding:* Leveraging `satnogs-decoders` (Kaitai Structs).
-- *Schema Normalization:* Mapping heterogeneous raw telemetry to SI units.
-- *Synthetic Fault Injection:* Validating detection using simulated physical failures.
+- *Universal Decoding:* Uses `satnogs-decoders` (Kaitai Structs).
+- *Standardization:* Converts raw telemetry to standard units (V, A, °C).
+- *Validation:* Tests detection with simulated physical failures.
 
 == The Problem vs. The Solution
 
@@ -88,7 +88,7 @@ Instead of passive data logging, this system acts as a "Proactive Early Warning 
     gutter: 1.5em,
     block(
       fill: color-secondary.lighten(90%),
-      // height: 21em,
+      height: 19em,
       inset: 1em,
       radius: 4pt,
       width: 100%,
@@ -103,61 +103,80 @@ Instead of passive data logging, this system acts as a "Proactive Early Warning 
         - *Static Thresholds:* Simple limits fail to catch complex, multivariate failures (e.g., thermal runaway during eclipse).
         #v(0.1em)
         - *Scale:* No operator can monitor 300+ live downlinks 24/7.
-      ]
+      ],
     ),
     block(
       fill: color-primary.lighten(90%),
-      // height: 21em,
+      height: 19em,
       inset: 1em,
       radius: 4pt,
       width: 100%,
       stroke: (left: 4pt + color-primary),
       [
-        *Our Solution: The Edge Watchdog*
+        *Our Solution: The Watchdog*
         #v(0.5em)
-        Deploying an *Unsupervised ML Model* at the Ground Station.
+        Running an *Unsupervised ML Model* on the ground station.
         #v(0.5em)
-        - *Zero Latency:* Inference happens *during* the reception window.
+        - *Real-Time:* Analyzes data as it is received.
         #v(0.1em)
-        - *Context Aware:* Learns correlations (e.g., "High Current" is normal *only* if "TX is Active").
+        - *Context Aware:* Learns correlations (e.g., high current is only normal when charging).
         #v(0.1em)
-        - *Data Efficient:* Trains on "Normal" data (abundant), doesn't require rare "Failure" labels.
-      ]
-    )
+        - *Data Efficient:* Trains on normal data, no "failure" labels needed.
+      ],
+    ),
   )
 ]
 
 = Phase 1: The Selection Funnel
 
-== The Selection Criteria
+== Selection Criteria
 
-To build a reliable detector, we need reliable data. We filtered the entire amateur fleet (338+ satellites).
+To build a reliable detector, we need reliable data. We filter the entire amateur fleet through five critical layers to identify our "Golden Targets."
 
 #v(1em)
 #list(
   [*Status:* Must be confirmed 'Alive' in SatNOGS DB.],
-  [*Band:* 433-438 MHz (70cm Amateur Band).],
-  [*Modulation:* High-rate 9600 bps GMSK/GFSK (Modern Standard).],
-  [*Visibility:* High-elevation passes (>30°) over Beni Suef.],
-  [*Support:* Must be explicitly supported by `satnogs-decoders` (Kaitai).]
+  [*Band:* 433-438 MHz (70cm Amateur Band) for antenna compatibility.],
+  [*Modulation:* High-rate 9600 bps FSK/GFSK for high-fidelity signal profiles.],
+  [*Support:* Explicitly supported by `satnogs-decoders` (Kaitai) for automated parsing.],
+  [*Visibility:* High-elevation passes (>30°) for clean, noise-free reception.],
 )
 
-== Analysis Result: The Golden Cohort
+== Stage 1: The Fleet Landscape
+
+We analyzed 149 active satellites in the target band to identify dominant communication standards.
 
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1fr, 1.2fr),
   gutter: 1em,
   [
-    We identified *12 candidates* that match the technical criteria and have decoders.
-    
-    *Dominant Standard:* 9600 bps GFSK.
-    
-    This ensures our receiver pipeline works for maximum targets with `satnogs-decoders`.
+    *Observations:*
+    - Huge variety in modulation types.
+    - Many legacy satellites use low-rate AFSK or CW.
+    - No single "universal" standard exists across the entire fleet.
   ],
   align(center + horizon)[
     #image("figures/modulation_distribution.png", width: 100%)
-  ]
+  ],
 )
+
+== Stage 2: Technical Filtering
+
+We narrow the funnel by applying technical constraints required for edge anomaly detection.
+
+#v(0.5em)
+#table(
+  columns: (auto, 1fr, auto),
+  inset: 10pt,
+  align: horizon,
+  table.header([*Funnel Step*], [*Constraint*], [*Remaining*]),
+  "1. Bandwidth", "70cm Amateur (433-438 MHz)", "149",
+  "2. Decodeable", "Explicitly supported by `satnogs-decoders`", "7",
+  "3. High Rate", "9600 bps GMSK/GFSK/FSK", "2",
+)
+
+#v(0.5em)
+*Result:* We converged on a "Golden Cohort" of 2 targets that provide high-fidelity telemetry for ML training.
 
 = Phase 2: Operational Planning
 
@@ -165,24 +184,30 @@ To build a reliable detector, we need reliable data. We filtered the entire amat
 
 Pass count isn't enough. We rank satellites by the *total duration* they spend above 30° elevation over 48 hours.
 
-#task-card("1", "Satellite Scoring", 
+#task-card(
+  "1",
+  "Satellite Scoring",
   "Maximize data collection opportunity",
   [Sum(Duration of all passes > 30°)],
-  "Top Operational Targets"
+  "Top Operational Targets",
 )
 
-== The Winners (Top Targets)
+== Stage 3: Operational Convergence
 
-These satellites offer the highest *Operational Efficiency* for our ground station.
+Ranked by "Total Observable Time" over Beni Suef (>30° Elevation).
 
 #table(
   columns: (1fr, auto, auto, auto),
   inset: 8pt,
   align: horizon,
   table.header([*Satellite*], [*Passes (48h)*], [*Total Mins*], [*Max El*]),
-  "UWE-4", "3", "7.5 m", "50°",
-  "BugSat-1 (Dropped)*", "3", "9.5 m", "85°",
+  "INSPIRESat-1", "4", "7.8 m", "85.8°",
+  "UWE-4", "2", "5.8 m", "87.4°",
 )
+
+#v(0.5em)
+*Why UWE-4?*
+Despite having fewer passes than INSPIRESat-1, UWE-4 is our primary "Golden Path" due to its rich, multi-sensor telemetry (Panel temps, Battery currents, OBC health) which is essential for complex anomaly detection.
 
 #v(1em)
 *\*Data Engineering Reality Check:* BugSat-1 was dropped despite high visibility due to undocumented protocol variations (`US37` payload header) causing Kaitai parser failures. ML requires clean data; UWE-4 provides perfect compatibility and rich thermal/power telemetry.
@@ -222,7 +247,7 @@ Two distinct environments sharing a single *Shared Core*.
     - Planned live anomaly detection
     - Target Source: Antenna -> SDR
     - *Action:* Online inference service not yet implemented
-  ]
+  ],
 )
 
 == Standardization: The Golden Features
@@ -233,16 +258,14 @@ Two distinct environments sharing a single *Shared Core*.
   columns: (auto, auto, 1fr),
   inset: 10pt,
   align: horizon,
-  table.header(
-    [*Feature*], [*Unit*], [*Description*]
-  ),
+  table.header([*Feature*], [*Unit*], [*Description*]),
   `batt_voltage`, "Volts", "Standardized from mV/ADC",
   `batt_current`, "Amps", "Charge/Discharge rate",
   `power_consumption`, "Watts", "Spacecraft power draw",
   `temp_obc`, "Celsius", "Main computer temp",
   `temp_batt_a/b`, "Celsius", "Battery thermal health",
   `temp_panel_z`, "Celsius", "Orbit-phase context",
-  `uptime`, "Seconds", "Time since reset"
+  `uptime`, "Seconds", "Time since reset",
 )
 
 = Implementation Logic
@@ -257,10 +280,10 @@ We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal
   gutter: 1em,
   [
     *Pipeline Steps:*
-    1.  *Ingest:* Read raw hex frames (SatNOGS/SDR).
-    2.  *Parse:* Kaitai Structs via `satnogs-decoders`.
-    3.  *Normalize:* Convert binary fields to SI Units (V, A, °C).
-    4.  *Validate:* Check against physical limits.
+    1. *Ingest:* Read raw hex frames (SatNOGS/SDR).
+    2. *Parse:* Kaitai Structs via `satnogs-decoders`.
+    3. *Normalize:* Convert binary fields to SI Units (V, A, °C).
+    4. *Validate:* Check against physical limits.
   ],
   [
     *Current Status:*
@@ -268,7 +291,7 @@ We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal
     - Decoder Ecosystem: *satnogs-decoders*
     - Coverage: *1 production decoder in-repo (UWE-4)*
     - Online Runtime: *Planned, not implemented*
-  ]
+  ],
 )
 
 == Validation & Edge Benchmarking
@@ -289,12 +312,12 @@ Because real anomaly data is rare, we validate the model using *Synthetic Fault 
     For a future online runtime alongside SDR processing.
     - *Latency:* target $< 10$ ms per frame.
     - *Memory:* target $< 5$ MB model footprint.
-  ]
+  ],
 )
 
 == Data Verification (UWE-4)
 
-Telemetry extraction from UWE-4 (NORAD 43880). 
+Telemetry extraction from UWE-4 (NORAD 43880).
 Perfect mapping from `satnogs-decoders` to our Golden Features (Volts, Amps, °C).
 
 #align(center)[
@@ -311,9 +334,9 @@ We built an interactive debugger (`telemetry_inspector`) to verify decoders agai
 
 == Summary of Phase 3
 
-1.  *Targeting:* Locked onto *UWE-4* (43880) as our primary "Golden Path" target.
-2.  *Pipeline:* The *Data Refinery* is operational, successfully generating structurally clean ML inputs.
-3.  *Data Strategy:* Fetching 180+ days of data to capture *Seasonal/Beta Angle* thermal variations.
+1. *Targeting:* Locked onto *UWE-4* (43880) as our primary target.
+2. *Pipeline:* Processing is operational, successfully generating structurally clean ML inputs.
+3. *Data Strategy:* Fetching 180+ days of data to capture seasonal variations.
 
 = Phase 4: Exploratory Data Analysis & Physics
 
@@ -335,28 +358,32 @@ We successfully consolidated 7 months of UWE-4 raw telemetry.
     - Native `satnogs-decoders` Kaitai Struct parsing.
     - Exact SI-Unit Normalization.
     - Derived physical relationships (`batt_voltage = mean(batt_a, batt_b)`).
-  ]
+  ],
 )
 
 == Long-Term Macro Trends
 
-#text(size: 16pt)[Visualizing 7 months of continuous telemetry reveals massive seasonal variations in solar charging efficiencies rather than short-term noise.]
+#text(
+  size: 16pt,
+)[Visualizing 7 months of continuous telemetry reveals massive seasonal variations in solar charging efficiencies rather than short-term noise.]
 
 #align(center)[
   #image("figures/timeseries_macro_7month.png", width: 95%)
 ]
 
-== The Bimodality Challenge
+== The Day/Night Orbit Cycle
 
-The most prominent feature of LEO telemetry is orbital Day vs. Night.
+The most prominent feature of LEO telemetry is the orbital Day vs. Night cycle.
 
-#text(size: 16pt)[The `temp_panel_z` subsystem exposes the satellite to direct sunlight. We observe two distinct thermal clusters:]
+#text(
+  size: 16pt,
+)[The solar panel temperature (`temp_panel_z`) exposes the satellite's state. We observe two distinct thermal clusters:]
 #list(
   [*Eclipse (Night):* Approx. $-15^o C$ to $5^o C$],
-  [*Sunlight (Day):* Approx. $15^o C$ to $35^o C$]
+  [*Sunlight (Day):* Approx. $15^o C$ to $35^o C$],
 )
 
-An unsupervised model must naturally learn both "normal" states to avoid false positives during orbital transitions.
+An unsupervised model must learn both "normal" states to avoid false alarms during orbital transitions.
 
 == The Bimodality in Data
 
@@ -366,7 +393,7 @@ An unsupervised model must naturally learn both "normal" states to avoid false p
 
 == Multivariate Physics & Correlations
 
-When entering eclipse, solar arrays physically cannot generate power. 
+When entering eclipse, solar arrays physically cannot generate power.
 
 #grid(
   columns: (1fr, 1.2fr),
@@ -377,16 +404,16 @@ When entering eclipse, solar arrays physically cannot generate power.
   [
     #v(1em)
     *The Modeling Goal:*
-    
-    The AI is tasked with learning these dense non-linear correlations. 
-    
+
+    The AI is tasked with learning these dense non-linear correlations.
+
     A "positive current" during "low panel temp" instantly signals a physical anomaly (e.g. misattribution, sensor failure, or charging malfunction), even if both numbers are individually "within limits".
-  ]
+  ],
 )
 
-== The Inference Discontinuity
+== Reception Gaps & Real-Time Constraints
 
-Edge anomaly detection is fundamentally limited by Line-Of-Sight (LOS) availability.
+Anomaly detection is limited by Line-Of-Sight (LOS) availability.
 
 #grid(
   columns: (1fr, 1fr),
@@ -396,13 +423,13 @@ Edge anomaly detection is fundamentally limited by Line-Of-Sight (LOS) availabil
     *Time Gap Distribution:*
     - Median gap *within* a pass: ~10-15s
     - Median gap *between* passes: ~10 hours!
-    
-    *Architectural Dictator:*
-    Traditional time-series models (LSTMs) fail because state memory expires between passes. We *must* use stateless inference models that evaluate single frames independently.
+
+    *Constraints:*
+    Traditional time-series models (LSTMs) fail because state memory expires between passes. We use stateless models that evaluate frames independently.
   ],
   align(center)[
     #image("figures/time_gap_distribution.png", width: 100%)
-  ]
+  ],
 )
 
 = Phase 5: Model Selection History & Current Baseline
@@ -415,7 +442,7 @@ Because *real* spacecraft anomalies are undocumented in our clean set, we benchm
 #list(
   [*1. Panel Failure:* Force `batt_current` to discharge while `temp_panel_z` shows sunlight. (Severed array)],
   [*2. Thermal Runaway:* Inject a large positive step into battery temperatures. (Internal short)],
-  [*3. Sensor Stuck:* Historical notebook-only experiment, not part of the current shipped benchmark script.]
+  [*3. Sensor Stuck:* Historical notebook-only experiment, not part of the current shipped benchmark script.],
 )
 
 == Competitive AI Models
@@ -443,22 +470,26 @@ A 100% detection rate on extreme faults proves nothing; basic thresholds can cat
 
 == The Current Repository Baseline
 
-#task-card("2", "Stage 1: Overall Score", 
+#task-card(
+  "2",
+  "Stage 1: Overall Score",
   "The current codebase uses a VAE-only benchmark path.",
   "Run the VAE and compute MSE + KLD per frame. In the current repo, the operating threshold is still derived inside offline evaluation rather than persisted during training.",
-  "Provides an offline anomaly score for model comparison, not a deployment-ready live threshold."
+  "Provides an offline anomaly score for model comparison, not a deployment-ready live threshold.",
 )
 
 #v(1em)
 
-#task-card("3", "Stage 2: Feature Diagnosis", 
+#task-card(
+  "3",
+  "Stage 2: Feature Diagnosis",
   "We still need per-feature attribution after a frame is flagged.",
   "Inspect the reconstruction error feature-by-feature and identify the dominant contributor.",
-  "Provides offline subsystem attribution for benchmarked faults."
+  "Provides offline subsystem attribution for benchmarked faults.",
 )
 
 == Conclusion: Current State
 
-1.  *Implemented now:* Offline data refinery, VAE training, synthetic-fault benchmarking, and the telemetry inspector.
-2.  *Not yet implemented:* Live receiver/inference/alert runtime and persisted operational thresholds.
-3.  *Next Step:* Turn the current benchmark scoring contract into a reproducible deployment artifact, then build the online watchdog service.
+1. *Implemented now:* Offline data refinery, VAE training, synthetic-fault benchmarking, and the telemetry inspector.
+2. *Not yet implemented:* Live receiver/inference/alert runtime and persisted operational thresholds.
+3. *Next Step:* Turn the current benchmark scoring contract into a reproducible deployment artifact, then build the online watchdog service.

@@ -161,90 +161,95 @@ def get_primary_freq(freq_list):
             return f
     return np.nan
 
-active_supported['all_freqs'] = active_supported['downlink'].apply(parse_frequencies)
-active_supported['primary_freq'] = active_supported['all_freqs'].apply(get_primary_freq)
+# Apply frequency parsing to ALL active satellites first
+active_sats['all_freqs'] = active_sats['downlink'].apply(parse_frequencies)
+active_sats['primary_freq'] = active_sats['all_freqs'].apply(get_primary_freq)
 
-# 4. Band Filter (433-438 MHz)
-target_band = active_supported[(active_supported['primary_freq'] >= 433.0) & (active_supported['primary_freq'] <= 438.0)].copy()
+# 4. Band Filter (433-438 MHz) - THE FLEET COHORT
+fleet_in_band = active_sats[(active_sats['primary_freq'] >= 433.0) & (active_sats['primary_freq'] <= 438.0)].copy()
 
-print(f"Satellites in 433-438 MHz Band (Supported): {len(target_band)}")
+print(f"Total Active Satellites in 70cm Band: {len(fleet_in_band)}")
 # %% [markdown]
 # ## 4. Modulation Analysis
 # Normalize the messy mode strings to find the "Standard".
 
 # %% 
 def normalize_mode(mode_str):
-    if pd.isna(mode_str):
+    if pd.isna(mode_str) or mode_str == "":
         return "Unknown", "Unknown"
     
-    m = str(mode_str).lower()
+    m = str(mode_str).upper()
     
-    # Baud Rate
-    if any(x in m for x in ['9k6', '9600']):
-        rate = '9600'
-    elif any(x in m for x in ['1k2', '1200']):
-        rate = '1200'
-    elif any(x in m for x in ['4k8', '4800']):
-        rate = '4800'
-    elif any(x in m for x in ['19k2', '19200']):
-        rate = '19200'
-    else:
-        rate = 'Other'
-        
-    # Modulation Type
+    # Modulation Class Extraction (Robust)
+    # We look for common standards
+    mod_classes = ["GMSK", "GFSK", "MSK", "FSK", "AFSK", "BPSK", "QPSK", "CW", "LORA"]
     found_mods = []
-    if 'gmsk' in m:
-        found_mods.append('GMSK')
-    if 'gfsk' in m:
-        found_mods.append('GFSK')
-    if 'afsk' in m:
-        found_mods.append('AFSK')
-    if 'bpsk' in m:
-        found_mods.append('BPSK')
-    if 'fsk' in m and 'gfsk' not in m and 'afsk' not in m: # Prevent FSK from matching GFSK/AFSK if they were already matched, though 'fsk' is in 'gfsk'
-        # Actually, let's just use regex or word boundaries, or just simple 'fsk' check but exclude if it's part of another word.
-        # Simple fix: just check if 'fsk' is in the string, but if 'gfsk' or 'afsk' is the ONLY reason 'fsk' is there, it's tricky.
-        # Let's just check for 'fsk' and ensure it's not double-counting.
-        # A better way is to check for standalone 'fsk'.
-        pass
-
-    # Let's rewrite the modulation detection to be more robust
-    mods = []
-    import re
-    if re.search(r'\bgmsk\b', m): mods.append('GMSK')
-    if re.search(r'\bgfsk\b', m): mods.append('GFSK')
-    if re.search(r'\bafsk\b', m): mods.append('AFSK')
-    if re.search(r'\bbpsk\b', m): mods.append('BPSK')
-    if re.search(r'\bfsk\b', m): mods.append('FSK')
-    if re.search(r'\bcw\b', m) and len(m) < 10: mods.append('CW')
-    if re.search(r'\blora\b', m): mods.append('LoRa')
-    
-    mod = '/'.join(mods) if mods else 'Other'
+    for mod in mod_classes:
+        if re.search(rf'\b{mod}\b', m):
+            found_mods.append(mod)
+            
+    mod = '/'.join(found_mods) if found_mods else "Other"
+            
+    # Baud Rate Extraction (Robust)
+    rate = "Other"
+    # Matches "9600bps", "9600 bps", "9k6", etc.
+    baud_match = re.search(r'(\d+(?:\.\d+)?(?:k\d*)?)\s*bps', m, re.I)
+    if not baud_match:
+        # Try generic number match if followed by bps or common baud indicators
+        baud_match = re.search(r'(\d+(?:k\d*)?)(?=\s*(?:bps|baud|baudrate))', m, re.I)
+        
+    if baud_match:
+        raw = baud_match.group(1).lower()
+        if 'k' in raw:
+            parts = raw.split('k')
+            try:
+                base = float(parts[0]) if parts[0] else 1.0
+                dec = float("0." + parts[1]) if len(parts) > 1 and parts[1] else 0.0
+                rate = str(int((base + dec) * 1000))
+            except ValueError:
+                rate = "Other"
+        else:
+            try:
+                rate = str(int(float(raw)))
+            except ValueError:
+                rate = "Other"
+    elif "9K6" in m: rate = "9600"
+    elif "1K2" in m: rate = "1200"
+    elif "4K8" in m: rate = "4800"
         
     return rate, mod
 
-target_band[['baud', 'modulation']] = target_band['mode'].apply(
-    lambda x: pd.Series(normalize_mode(x))
-)
-target_band['combined_mode'] = target_band['baud'] + " " + target_band['modulation']
-
 # %% [markdown]
-# ## 5. Visualizing the Landscape
+# ## 5. Funnel Step 1: The Fleet Landscape
+# We analyze the entire active fleet in the target band to understand the prevailing standards.
 
 # %% 
-# Top Modes
-plt.figure(figsize=(12, 6))
-mode_counts = target_band['combined_mode'].value_counts().head(10)
-sns.barplot(x=mode_counts.values, y=mode_counts.index, hue=mode_counts.index, legend=False)
-plt.title("Active Satellites: Top Downlink Modes (433-438 MHz)")
-plt.xlabel("Count")
+# Normalize modes for the entire fleet
+fleet_in_band[['baud', 'modulation']] = fleet_in_band['mode'].apply(
+    lambda x: pd.Series(normalize_mode(x))
+)
+fleet_in_band['combined_mode'] = fleet_in_band['baud'] + " " + fleet_in_band['modulation']
+
+# Overall Modulation Distribution (Broad view)
+plt.figure(figsize=(12, 8))
+mode_counts = fleet_in_band['combined_mode'].value_counts()
+top_modes = mode_counts.head(15) 
+
+sns.barplot(x=top_modes.values, y=top_modes.index, hue=top_modes.index, palette="flare", legend=False)
+plt.title(f"Funnel Stage 1: Modulation Landscape of the 70cm Fleet (n={len(fleet_in_band)})")
+plt.xlabel("Satellite Count")
+plt.ylabel("Modulation & Baud Rate")
+plt.tight_layout()
 plt.savefig(FIG_DIR / 'modulation_distribution.png', bbox_inches='tight', dpi=150)
 plt.show()
 
+print(f"Total satellites in band: {len(fleet_in_band)}")
+print(f"Unique downlink modes in fleet: {fleet_in_band['combined_mode'].nunique()}")
+
 # Frequency Distribution
 plt.figure(figsize=(12, 5))
-sns.histplot(target_band['primary_freq'], bins=40, kde=True, color='teal')
-plt.title("Active Satellites: Frequency Distribution")
+sns.histplot(fleet_in_band['primary_freq'], bins=40, kde=True, color='teal')
+plt.title(f"Funnel Stage 1: Frequency Distribution of the 70cm Fleet (n={len(fleet_in_band)})")
 plt.xlabel("Frequency (MHz)")
 plt.axvline(437.0, color='red', linestyle='--', label='Center (437 MHz)')
 plt.legend()
@@ -252,14 +257,20 @@ plt.savefig(FIG_DIR / 'frequency_distribution.png', bbox_inches='tight', dpi=150
 plt.show()
 
 # %% [markdown]
-# ## 6. The Golden Candidates
-# We select satellites that are:
-# 1.  **Alive** (Verified by SatNOGS).
-# 2.  **9600 bps** (High data rate).
-# 3.  **GMSK/GFSK/FSK** (Common demodulator).
+# ## 6. Funnel Step 2: Technical Constraints (Kaitai Support)
+# We filter for satellites that have official `satnogs-decoders` support, ensuring we can actually process the data.
 
 # %% 
-target_mods = ['9600 GMSK', '9600 GFSK', '9600 FSK']
+# Narrow down to supported satellites
+target_band = fleet_in_band[fleet_in_band['supported']].copy()
+print(f"Satellites with Decoder Support: {len(target_band)}")
+
+# %% [markdown]
+# ## 7. Funnel Step 3: High-Quality Targets
+# We narrow down to high-rate standards (9600 bps) with common modulations (FSK/GFSK/GMSK).
+
+# %% 
+target_mods = ['9600 GFSK', '9600 FSK', '9600 GMSK']
 cohort = target_band[target_band['combined_mode'].isin(target_mods)].sort_values('primary_freq')
 
 # Prioritize those with SatNOGS status 'alive' over 'unknown'
