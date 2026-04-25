@@ -37,10 +37,19 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Paths ---
-INTERIM_PATH = Path("../data/interim/43880.csv")
-PROCESSED_PATH = Path("../data/processed/43880.csv")
-FIGURES_DIR = Path("../docs/figures")
+if Path("data").exists():
+    DATA_DIR = Path("data")
+    FIGURES_DIR = Path("docs/figures")
+else:
+    DATA_DIR = Path("../data")
+    FIGURES_DIR = Path("../docs/figures")
+
+INTERIM_DIR = DATA_DIR / "interim"
+PROCESSED_DIR = DATA_DIR / "processed"
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+
+INTERIM_PATH = INTERIM_DIR / "43880.csv"
+PROCESSED_PATH = PROCESSED_DIR / "43880.csv"
 
 # --- ML Features (established in prior EDA) ---
 ML_FEATURES = ["batt_voltage", "batt_current", "temp_batt_a", "temp_batt_b", "temp_panel_z"]

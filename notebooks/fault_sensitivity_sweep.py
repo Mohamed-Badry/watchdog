@@ -45,8 +45,17 @@ from gr_sat.satellite_profiles import (
     get_satellite_profile,
 )
 
-MODELS_DIR = Path("models")
-PROCESSED_DIR = Path("data/processed")
+if Path("data").exists():
+    DATA_DIR = Path("data")
+    MODELS_DIR = Path("models")
+    FIG_DIR = Path("docs/figures")
+else:
+    DATA_DIR = Path("../data")
+    MODELS_DIR = Path("../models")
+    FIG_DIR = Path("../docs/figures")
+
+PROCESSED_DIR = DATA_DIR / "processed"
+FIG_DIR.mkdir(parents=True, exist_ok=True)
 NORAD_ID = "43880"
 
 # %% [markdown]
@@ -209,9 +218,9 @@ ax.grid(True, alpha=0.3)
 
 plt.suptitle("VAE vs. Z-Score Baseline: Where Does the Model Earn Its Keep?", fontsize=13, fontweight="bold")
 plt.tight_layout()
-plt.savefig("docs/figures/sensitivity_sweep.png", dpi=150, bbox_inches="tight")
+plt.savefig(FIG_DIR / "sensitivity_sweep.png", dpi=150, bbox_inches="tight")
 plt.show()
-print("Saved to docs/figures/sensitivity_sweep.png")
+print(f"Saved to {FIG_DIR}/sensitivity_sweep.png")
 
 # %% [markdown]
 # ## Recall @ 5% FPR Curves
@@ -242,9 +251,9 @@ ax.grid(True, alpha=0.3)
 
 plt.suptitle("Operational Recall at Fixed 5% False Positive Rate", fontsize=13, fontweight="bold")
 plt.tight_layout()
-plt.savefig("docs/figures/sensitivity_recall.png", dpi=150, bbox_inches="tight")
+plt.savefig(FIG_DIR / "sensitivity_recall.png", dpi=150, bbox_inches="tight")
 plt.show()
-print("Saved to docs/figures/sensitivity_recall.png")
+print(f"Saved to {FIG_DIR}/sensitivity_recall.png")
 
 # %% [markdown]
 # ## Summary Table

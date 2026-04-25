@@ -203,11 +203,6 @@ When to operate the ground station (Next 48 Hours).
   #image("figures/timeline_schedule.png", height: 80%)
 ]
 
-== Phase 3: System Architecture (Update to satnogsdecoders/kaitai structs)
-
-#align(center)[
-  #image("figures/systemArch_compressed.png", height: 100%)
-]
 
 == The V-Model Strategy
 
