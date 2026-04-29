@@ -329,7 +329,7 @@ Perfect mapping from `satnogs-decoders` to our Golden Features (Volts, Amps, °C
 We built an interactive debugger (`telemetry_inspector`) to verify decoders against real historical data.
 
 #align(center)[
-  #image("figures/decoded_packets.png", height: 85%)
+  #image("figures/decoded_packets.png", height: 75%)
 ]
 
 == Summary of Phase 3
@@ -368,7 +368,7 @@ We successfully consolidated 7 months of UWE-4 raw telemetry.
 )[Visualizing 7 months of continuous telemetry reveals massive seasonal variations in solar charging efficiencies rather than short-term noise.]
 
 #align(center)[
-  #image("figures/timeseries_macro_7month.png", width: 95%)
+  #image("figures/timeseries_macro_7month.png", width: 75%)
 ]
 
 == The Day/Night Orbit Cycle
@@ -450,10 +450,10 @@ Because *real* spacecraft anomalies are undocumented in our clean set, we benchm
 We tested 4 unsupervised mathematical models against the synthetic faults.
 
 #align(center)[
-  #image("figures/model_comparison_roc.png", width: 65%)
+  #image("figures/model_comparison_roc.png", width: 60%)
 ]
 
-#v(0.5em)
+// #v(0.5em)
 *Historical outcome:*
 - *Elliptic Envelope:* useful exploratory baseline, but not retained in the current repository path.
 - *PyTorch VAE:* current repository baseline for training and offline synthetic-fault benchmarking.
