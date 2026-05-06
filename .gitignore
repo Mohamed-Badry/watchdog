@@ -7,24 +7,36 @@ __pycache__
 .env
 logs/
 
+# ── Frontend ──
 frontend/.svelte-kit/
 frontend/build/
 frontend/node_modules/
 frontend/.tmp/
 
+# ── Data & artifacts (large / user-specific) ──
 gp.php
 data/
 satellite-recordings/
 scrap_data/
+models/
+
+# ── Docs build outputs ──
 docs/figures/
 docs/*.html
 docs/*.pdf
 
-# Jupyter
+# ── Jupyter ──
 .ipynb_checkpoints/
 notebooks/*.ipynb
 
-# Python Packaging
+# ── Python packaging ──
 *.egg-info/
 dist/
 build/
+.ruff_cache/
+
+# ── Docker persistent data ──
+# Named volumes live outside the tree, but in case of local overrides:
+db/data/
+mosquitto/data/
+mosquitto/log/

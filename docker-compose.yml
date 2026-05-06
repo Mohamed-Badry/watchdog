@@ -1,10 +1,16 @@
+# Project Watchdog — Docker Compose Dev Stack
+#
+# Credentials & config are read from .env (auto-loaded by Compose).
+# Copy .env.example → .env and fill in your values.
+# The ${VAR:-default} syntax provides fallbacks so `docker compose up`
+# works even without an .env file.
+
 services:
   broker:
     image: eclipse-mosquitto:2.1.2-alpine
     container_name: watchdog_broker
     ports:
       - "1883:1883"
-      - "9001:9001"
     volumes:
       - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
@@ -17,15 +23,16 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: watchdog
-      POSTGRES_PASSWORD: watchdog_pass
-      POSTGRES_DB: watchdog_db
+      POSTGRES_USER: ${POSTGRES_USER:-watchdog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-watchdog_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-watchdog_db}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U watchdog -d watchdog_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-watchdog} -d ${POSTGRES_DB:-watchdog_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
     volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
       - timescaledb_data:/var/lib/postgresql/data
     restart: unless-stopped
 
@@ -37,12 +44,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://watchdog:watchdog_pass@db:5432/watchdog_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-watchdog}:${POSTGRES_PASSWORD:-watchdog_pass}@db:5432/${POSTGRES_DB:-watchdog_db}
       MQTT_BROKER_URL: broker
       MQTT_BROKER_PORT: "1883"
     volumes:
       - ./src/api:/app/src/api
       - ./src/gr_sat:/app/src/gr_sat
+      - ./models:/app/models:ro
     depends_on:
       db:
         condition: service_healthy
@@ -61,7 +69,7 @@ services:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
     environment:
-      PUBLIC_API_URL: http://localhost:8000
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
     depends_on:
       - backend
     restart: unless-stopped

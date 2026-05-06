@@ -12,37 +12,46 @@
 *   **Notebooks:** Use `jupytext` to manage scripts as notebooks. Always prefer editing `.py` files and converting/syncing them.
 *   **Slides:** Use `typst` for presentations (`docs/slides.typ`). Keep slides up to date with progress.
 *   **Python:** Version 3.11. Use `loguru` for logging (never stdlib `logging`).
+*   **Frontend:** Svelte 5 + Tailwind v4 + Bun. Use semantic CSS token classes (`text-ink`, `bg-panel`, etc.) — never hardcode Tailwind color values like `text-slate-700`.
+*   **Docker Secrets:** All credentials use `${VAR:-default}` in `docker-compose.yml`, sourced from `.env`. Never hardcode secrets in compose or Dockerfiles.
 *   **Documentation:** ALWAYS update relevant documentation (e.g., `DETAILS.md`, `README.md`, `docs/slides.typ`) to ensure it remains consistent with code changes.
 *   **Paths:**
     *   `src/gr_sat/`: Library code (Shared Core, Telemetry Models).
     *   `src/gr_sat/decoders/`: Satellite-specific decoders (Kaitai Structs).
+    *   `src/api/`: FastAPI backend scaffold and Dockerfile.
+    *   `src/simulator/`: Replay simulator scaffold and Dockerfile.
+    *   `frontend/`: Bun + SvelteKit + Tailwind v4 web UI.
+    *   `db/init/`: SQL schema init scripts (mounted into TimescaleDB).
     *   `scripts/`: Executable pipelines (Data ingestion/processing).
     *   `data/`: Data storage (Gitignored).
+    *   `models/`: Trained model artifacts (Gitignored).
     *   `docs/`: User-facing documentation and slides.
 *   **Commits:** Follow conventional commits (e.g., `feat: add telemetry parser`, `fix: correct orbit calculation`).
 
 ## 3. Active Context (Memory)
-*   **Current Phase:** Transitioning from "The Refinery" → "The Lab" (ML Training).
+*   **Current Phase:** Web stack development — building the Docker-based 5-service architecture.
 *   **Recent Accomplishments:**
-    *   Consolidated decoder architecture: `BaseDecoder` ABC with `decode()` + `adapt()` stages.
-    *   Implemented UWE-4 decoder (`src/gr_sat/decoders/uwe4.py`) using Kaitai Structs.
-    *   Unified data pipeline: `scripts/process_data.py` produces both `data/interim/` and `data/processed/`.
-    *   Removed dead code (go32 decoder, SatellitePipeline, probe_ao73, bugsat scripts).
-    *   Ingested 7+ months of UWE-4 data (Aug 2025 → Apr 2026): **10,941 ML-ready frames**.
-    *   Completed EDA with finalized 5-feature training vector.
+    *   Completed offline ML pipeline: fetch → decode → normalize → train → benchmark.
+    *   UWE-4 (NORAD 43880) trained VAE model with calibrated threshold (0.295 @ 95th percentile).
+    *   Scaffolded 5-service Docker Compose stack: broker, db, backend, frontend, simulator.
+    *   Implemented Tailwind v4 `@theme` token system with `prefers-color-scheme: dark` overrides.
+    *   Created TimescaleDB init schema with two hypertables: `raw_frames` + `telemetry_frames`.
+    *   Centralized Docker secrets via `${VAR:-default}` pattern in compose, sourced from `.env`.
 *   **Current Blockers/Tasks:**
-    *   Build `scripts/train_model.py` — Train the Autoencoder ("The Lab").
-    *   Build `scripts/generate_faults.py` — Synthetic Fault Injection benchmarking.
-    *   Benchmark for Edge Deployment (Latency/Memory).
+    *   Implement backend MQTT subscriber + DB writer (`mqtt_client.py`, `database.py`).
+    *   Implement simulator replay loop (`replay.py`).
+    *   Build REST/WebSocket API endpoints for frontend consumption.
+    *   Build frontend dashboard components (telemetry charts, anomaly feed).
 
 ## 4. Key Workflows
 *   **Fetch Data:** `just fetch` (Interactive) or `just fetch --norad 43880` (Specific).
 *   **Process Data:** `just process` (Interactive) or `just process --norad 43880` (Specific).
+*   **Train Model:** `just train --norad 43880` (Train scaler + VAE + metadata artifact).
+*   **Benchmark:** `just benchmark --norad 43880` (Synthetic fault injection).
+*   **Docker Stack:** `docker compose up --build` (All 5 services).
 *   **Analyze Targets:** `just analyze-targets` (Filters candidates to "The Golden Cohort").
 *   **Visualize Passes:** `just viz-passes` (Generates Skyplots/Gantt charts).
-*   **Regenerate All Analysis:** `just regenerate-all`.
 *   **Sync Notebooks:** `just sync-notebooks` (Updates all `.ipynb` from `.py` in `notebooks/`).
-*   **Convert Script:** `just convert notebooks/script.py` (Converts a single script to notebook).
 
 ## 5. Data Pipeline Architecture
 Three-stage pipeline matching `data/` directory structure:
@@ -70,22 +79,34 @@ data/processed/{norad_id}.csv   SI-unit "Golden Features" (ML-ready)
     *   UWE-4 (NORAD 43880) — `src/gr_sat/decoders/uwe4.py` — Primary target.
 
 ## 7. ML Strategy (The Lab)
-*   **Architecture:** Autoencoder (Self-Supervised).
-    *   **Input:** Normalized TelemetryFrame (SI Units).
+*   **Architecture:** Variational Autoencoder (VAE, Self-Supervised).
+    *   **Input:** Normalized TelemetryFrame (SI Units, 5-dim vector).
     *   **Output:** Reconstructed Telemetry.
+    *   **Loss:** MSE + β·KLD (β = 0.05).
 *   **Model Management:** "Shared Tools, Unique Models".
     *   **Training Script:** Generic (`train_model.py`).
-    *   **Artifacts:** Specific per NORAD ID (e.g., `models/43880.pkl`).
+    *   **Artifacts:** Per NORAD ID (`models/<norad>_vae.pt`, `_scaler.pkl`, `_metadata.json`).
+    *   **Threshold:** Calibrated at 95th percentile on chronological validation split, persisted in metadata.
 *   **Interpretability:** Feature Contribution Analysis.
     *   **Metric:** Absolute Error per Feature (`|Input - Reconstruction|`).
-    *   **Goal:** Pinpoint the *specific subsystem* causing the anomaly.
-*   **Validation & Benchmarking (The Edge):**
-    *   **Accuracy Benchmark:** "Synthetic Fault Injection". Since labeled anomaly data is rare, we programmatically inject physical faults (e.g., Sensor Stuck, Tumbling/High Variance, Solar Panel Failure) into a clean test set and measure the model's Recall and False Positive Rate.
-    *   **Performance Benchmark:** Measure inference Latency (target < 10ms per frame) and Memory Footprint (model size in MB) to ensure it can run on a Raspberry Pi/Ground Station PC alongside `gr_satellites`.
+*   **Validation:** Synthetic Fault Injection (`generate_faults.py`).
 
-## 8. EDA Insights & ML Plan (UWE-4)
-*   **Data Quality (Zero Variance):** The `temp_obc` feature is perfectly clean but stuck at 17°C (zero variance). It MUST be dropped before training to prevent `StandardScaler` from dividing by zero and crashing.
-*   **Time-Series Dynamics (Bursty Data):** The median time between frames is ~18 seconds, but the maximum gap is ~11 hours (due to limited ground station passes). **Conclusion:** Rolling window or sequence models (like LSTM) are inappropriate due to extreme temporal discontinuity. A stateless Feed-Forward Autoencoder processing each frame independently is required.
-*   **Physics over Statistics:** Standard statistical tests (IQR) flagged ~40% of the battery current data as "outliers". Deeper physical correlation revealed this is simply the bimodal state of the satellite: Charging during sunlight (Panel > 15°C) and discharging during eclipse (Panel < 15°C). We will NOT clip these "outliers".
-*   **Feature Selection:** The final training vector will be 5-dimensional: `[batt_voltage, batt_current, temp_batt_a, temp_batt_b, temp_panel_z]`.
-*   **Scaling Strategy:** Use `StandardScaler` (Z-score normalization) to center the bimodal distributions correctly for the Autoencoder.
+## 8. Docker Architecture
+Five services orchestrated by `docker-compose.yml`:
+1. **broker** — Mosquitto MQTT (:1883)
+2. **db** — TimescaleDB (:5432) with init schema at `db/init/001_schema.sql`
+3. **backend** — FastAPI + Uvicorn (:8000), subscribes to broker, writes to db
+4. **frontend** — Bun + SvelteKit (:5173), consumes backend REST/WS
+5. **simulator** — Replays `data/raw/` into broker for testing
+
+## 9. Frontend Design System
+*   **Tokens:** Defined via `@theme` in `app.css`, used as Tailwind utilities (`text-ink`, `bg-panel`, `border-border`, etc.).
+*   **Dark mode:** `prefers-color-scheme: dark` media query overrides CSS custom properties.
+*   **Color palette:** Brand (#B12142), Muted (#6C7A96), Ink (#111827/light, #F8FAFC/dark).
+
+## 10. EDA Insights & ML Plan (UWE-4)
+*   **Data Quality (Zero Variance):** `temp_obc` is stuck at 17°C — dropped before training.
+*   **Bursty Data:** Median gap ~18s, max ~11h. Stateless feed-forward VAE, not sequence models.
+*   **Bimodal Physics:** Battery current is bimodal (charge/discharge) — NOT outliers.
+*   **Feature Selection:** 5-dimensional: `[batt_voltage, batt_current, temp_batt_a, temp_batt_b, temp_panel_z]`.
+*   **Scaling:** StandardScaler (Z-score normalization).

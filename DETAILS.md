@@ -175,7 +175,7 @@ def process_packet(raw_bytes):
 #### 3. Model Training + Offline Benchmarking (`scripts/train_model.py`, `scripts/generate_faults.py`)
 *   **Training:** Per-satellite `StandardScaler` + PyTorch `TelemetryVAE`.
 *   **Benchmarking:** Synthetic-fault evaluation for comparative offline model analysis.
-*   **Current Limitation:** The anomaly threshold is still derived inside the benchmark path and is not yet stored as part of a deployable model artifact.
+*   **Threshold Persistence:** The anomaly threshold is calibrated on a chronological validation split during training and persisted in the model metadata artifact (`models/<norad>_metadata.json`).
 
 #### 4. Telemetry Inspector (`notebooks/telemetry_inspector.py`)
 *   **Tool:** An interactive Jupyter-based visual debugger.
