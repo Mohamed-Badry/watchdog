@@ -21,18 +21,18 @@
 
 <section class="space-y-8">
   <div class="space-y-3">
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">Dashboard shell</p>
-    <h1 class="text-4xl font-semibold tracking-tight text-slate-950">Operational monitoring surface</h1>
-    <p class="max-w-3xl text-base leading-7 text-slate-700">
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Dashboard shell</p>
+    <h1 class="text-4xl font-semibold tracking-tight text-ink">Operational monitoring surface</h1>
+    <p class="max-w-3xl text-base leading-7 text-ink-2">
       This route is scaffolded and ready for the live WebSocket and REST plumbing. The layout matches the intended operator view without pretending the backend features are already implemented.
     </p>
   </div>
 
   <div class="grid gap-4 md:grid-cols-2">
     {#each cards as card}
-      <article class="rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-6 shadow-[var(--shadow-panel)] backdrop-blur">
-        <p class="text-sm font-semibold text-[var(--color-brand)]">{card.title}</p>
-        <p class="mt-3 text-sm leading-7 text-slate-700">{card.detail}</p>
+      <article class="rounded-[1.75rem] border border-border bg-panel p-6 shadow-panel backdrop-blur">
+        <p class="text-sm font-semibold text-brand">{card.title}</p>
+        <p class="mt-3 text-sm leading-7 text-ink-2">{card.detail}</p>
       </article>
     {/each}
   </div>
