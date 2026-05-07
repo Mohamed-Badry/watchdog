@@ -33,7 +33,8 @@
   // Interaction Geometry
   let antennaMaxDist = $derived(isLight ? 375 : 300);
   let antennaBeamWidth = $derived(isLight ? 125 : 150);
-  let antennaSignalFadeScale = $derived(isLight ? 1.5 : 1.0);
+  let antennaSignalFadeScale = $derived(isLight ? 2.0 : 1.0);
+  let antennaBaseFadeScale = $derived(isLight ? 1.8 : 1.0); // Linear multiplier (e.g., 1.5 = fades out 50% further away)
 
   // Show the antenna field on landing + team, not on dashboard
   const showAntennaBg = $derived(!$page.url.pathname.startsWith("/dashboard"));
@@ -56,6 +57,7 @@
     maxDist={antennaMaxDist}
     beamWidth={antennaBeamWidth}
     signalFadeScale={antennaSignalFadeScale}
+    antennaFadeScale={antennaBaseFadeScale}
   />
 {/if}
 <div class="min-h-screen">

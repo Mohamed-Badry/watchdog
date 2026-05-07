@@ -33,6 +33,7 @@ uniform float u_signal_packet_freq;
 uniform float u_signal_packet_speed;
 uniform float u_signal_width;
 uniform float u_signal_fade_scale;
+uniform float u_antenna_fade_scale;
 
 float hash(vec2 p) {
     return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -65,7 +66,8 @@ void main() {
     float dist = length(delta);
     
     // Hard Cull (Move off-screen if too far)
-    if (dist > u_max_dist) {
+    float max_cull = u_max_dist * max(1.0, u_antenna_fade_scale);
+    if (dist > max_cull) {
         gl_Position = vec4(-2.0, -2.0, 0.0, 1.0);
         return;
     }
@@ -109,7 +111,7 @@ void main() {
     // Pass local coordinates for SDF drawing in Fragment Shader
     v_local_pos = vec2(sx, sy);
     v_dist_to_mouse = dist;
-    v_opacity_factor = (1.0 - smoothstep(0.0, u_max_dist, dist));
+    v_opacity_factor = 1.0; // Handled in fragment shader now
     v_random_val = hash(grid_pos);
 }
 
@@ -207,20 +209,20 @@ void main() {
     // Glow/Active state based on mouse proximity
     float proximity = 1.0 - smoothstep(0.0, u_max_dist * 0.8, v_dist_to_mouse);
     vec3 shape_col = mix(u_color_off, u_color_on, proximity * proximity);
-    
-    // Bloom effect (distance field glow)
-    float bloom = smoothstep(5.0, 0.0, d_shape) * 0.3 * proximity;
-    
-    vec3 final_col = shape_col + bloom;
-    float final_alpha = alpha_shape + bloom;
 
-    // Add signal beam
-    final_col = mix(final_col, u_beam_color, a_wave);
-    final_alpha = max(final_alpha, a_wave);
+    vec3 base_col = shape_col;
+    float base_alpha = alpha_shape;
+    
+    // Linear tunable global distance fades
+    float ant_fade = 1.0 - smoothstep(0.0, u_max_dist * u_antenna_fade_scale, v_dist_to_mouse);
+    float beam_fade = 1.0 - smoothstep(0.0, u_max_dist + 50.0, v_dist_to_mouse);
 
-    // Apply global opacity (fade-in) and instance visibility
-    final_alpha *= v_opacity_factor;
-    final_alpha *= u_opacity;
+    float final_ant_alpha = base_alpha * ant_fade;
+    float final_beam_alpha = a_wave * beam_fade;
+    
+    // Mix the base antenna color with the beam color
+    vec3 final_col = mix(base_col, u_beam_color, final_beam_alpha);
+    float final_alpha = max(final_ant_alpha, final_beam_alpha) * u_opacity;
 
     if (final_alpha < 0.01) { discard; }
     fragColor = vec4(final_col, final_alpha);

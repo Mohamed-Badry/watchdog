@@ -57,6 +57,7 @@
     signalPacketSpeed = 3.0,
     signalWidth = 0.75,
     signalFadeScale = 1.5,
+    antennaFadeScale = 1.0,
   } = $props();
 
   // ── Derived RGB ──────────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@
   let locSignalPacketSpeed: WebGLUniformLocation | null;
   let locSignalWidth: WebGLUniformLocation | null;
   let locSignalFadeScale: WebGLUniformLocation | null;
+  let locAntennaFadeScale: WebGLUniformLocation | null;
 
   // ── Pointer tracking (passive, window-wide) ──────────────────────────────────
 
@@ -271,6 +273,8 @@
       gl.uniform1f(locSignalPacketSpeed, signalPacketSpeed);
     if (locSignalWidth) gl.uniform1f(locSignalWidth, signalWidth);
     if (locSignalFadeScale) gl.uniform1f(locSignalFadeScale, signalFadeScale);
+    if (locAntennaFadeScale)
+      gl.uniform1f(locAntennaFadeScale, antennaFadeScale);
 
     gl.bindVertexArray(vao);
     gl.enable(gl.BLEND);
@@ -286,7 +290,7 @@
   onMount(() => {
     gl = canvas.getContext("webgl2", {
       alpha: true,
-      antialias: false,
+      antialias: true,
       powerPreference: "high-performance",
     });
     if (!gl) {
@@ -334,6 +338,10 @@
     );
     locSignalWidth = gl.getUniformLocation(program, "u_signal_width");
     locSignalFadeScale = gl.getUniformLocation(program, "u_signal_fade_scale");
+    locAntennaFadeScale = gl.getUniformLocation(
+      program,
+      "u_antenna_fade_scale",
+    );
 
     // Unit quad
     vao = gl.createVertexArray();
@@ -369,8 +377,7 @@
 <canvas
   bind:this={canvas}
   use:trackPointer
-  style="touch-action: none; mix-blend-mode: {lightMode
-    ? 'multiply'
-    : 'screen'};"
+  style="touch-action: none;
+  mix-blend-mode: {lightMode ? 'multiply' : 'screen'};"
   class="fixed inset-0 -z-10 h-full w-full"
 ></canvas>
