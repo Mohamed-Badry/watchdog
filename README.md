@@ -18,6 +18,7 @@ Implemented today:
 *   Shared telemetry/decoder core for historical packet processing
 *   UWE-4 decoder support and telemetry inspection tooling
 *   Minimal deterministic online watchdog runtime for packet-by-packet inference
+*   FastAPI dashboard REST endpoints for service status, satellite/model summaries, recent telemetry, recent anomalies, and throughput buckets
 *   Docker Compose development stack with pinned service and Python runtime versions
 *   Bun + SvelteKit + Tailwind frontend scaffold with a committed Bun lockfile
 
@@ -111,6 +112,23 @@ just --list                 # Show all available commands
 ```
 
 *(If you don't have `just` globally, prefix with `pixi run`, e.g. `pixi run just fetch`)*
+
+## Backend Dashboard API
+
+The FastAPI backend now exposes the initial dashboard-home data contracts from the local processed CSV/model artifacts:
+
+*   `GET /api/status` — API/database/artifact status and dashboard links.
+*   `GET /api/dashboard/summary` — service cards, totals, active satellites, recent anomalies, and throughput sparkline buckets.
+*   `GET /api/satellites` and `GET /api/satellites/{norad_id}` — dataset, decoder, feature-contract, and model health summaries.
+*   `GET /api/telemetry/recent?norad_id=43880&limit=20` — recent frames with `features`, `quality`, and `model` sections.
+*   `GET /api/anomalies/recent?norad_id=43880&limit=20` — recent anomaly records sorted newest-first.
+*   `GET /api/telemetry/throughput?norad_id=43880&bucket=day&limit=30` — bucketed frame/anomaly counts.
+
+Run regression coverage with:
+
+```bash
+pixi run just test
+```
 
 ---
 

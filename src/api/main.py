@@ -1,13 +1,107 @@
-from fastapi import FastAPI
+from __future__ import annotations
 
-app = FastAPI(
-    title="gr_sat Watchdog API",
-    description="FastAPI Backend for Satellite Telemetry Streaming and ML Inference"
-)
+import os
+from typing import Literal
 
-@app.get("/")
-def read_root():
-    return {
-        "status": "online",
-        "message": "Backend scaffolding complete. Ready to build the API endpoints!"
-    }
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+
+try:
+    from .dashboard_data import DashboardDataRepository
+except ImportError:  # pragma: no cover - used when uvicorn runs from src/api
+    from dashboard_data import DashboardDataRepository
+
+
+def _cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
+    data = repository or DashboardDataRepository()
+    app = FastAPI(
+        title="gr_sat Watchdog API",
+        description="FastAPI backend for satellite telemetry dashboard data.",
+        version="0.1.0",
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins(),
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/")
+    async def read_root() -> dict:
+        return {
+            "status": "online",
+            "message": "gr_sat Watchdog API is online.",
+            "links": {
+                "status": "/api/status",
+                "dashboard_summary": "/api/dashboard/summary",
+                "satellites": "/api/satellites",
+                "recent_telemetry": "/api/telemetry/recent",
+                "recent_anomalies": "/api/anomalies/recent",
+                "throughput": "/api/telemetry/throughput",
+            },
+        }
+
+    @app.get("/api/status")
+    async def status() -> dict:
+        return data.status_payload()
+
+    @app.get("/api/dashboard/summary")
+    async def dashboard_summary() -> dict:
+        return data.dashboard_summary()
+
+    @app.get("/api/satellites")
+    async def satellites() -> dict:
+        summaries = data.satellite_summaries()
+        return {
+            "count": len(summaries),
+            "satellites": summaries,
+        }
+
+    @app.get("/api/satellites/{norad_id}")
+    async def satellite_detail(norad_id: int) -> dict:
+        try:
+            return data.satellite_summary(norad_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get("/api/telemetry/recent")
+    async def recent_telemetry(
+        norad_id: int | None = None,
+        limit: int = Query(default=20, ge=1, le=200),
+    ) -> dict:
+        try:
+            return data.recent_frames(norad_id=norad_id, limit=limit)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get("/api/anomalies/recent")
+    async def recent_anomalies(
+        norad_id: int | None = None,
+        limit: int = Query(default=20, ge=1, le=200),
+    ) -> dict:
+        try:
+            return data.recent_anomalies(norad_id=norad_id, limit=limit)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get("/api/telemetry/throughput")
+    async def telemetry_throughput(
+        norad_id: int | None = None,
+        bucket: Literal["hour", "day"] = "day",
+        limit: int = Query(default=30, ge=1, le=365),
+    ) -> dict:
+        try:
+            return data.throughput(norad_id=norad_id, bucket=bucket, limit=limit)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return app
+
+
+app = create_app()

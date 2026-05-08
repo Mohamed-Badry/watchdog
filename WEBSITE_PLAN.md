@@ -180,6 +180,16 @@ The `(landing)/+layout.svelte` will mount a `<canvas>` element fixed to the back
 - Create dashboard home with placeholder cards
 - Implement `database.py` and `GET /api/status`
 
+Implemented backend API contracts:
+- `GET /api/status` returns API/database/artifact component health, dashboard endpoint links, and supported satellite identity metadata.
+- `GET /api/dashboard/summary` returns the dashboard-home payload: service status, total frame/anomaly/pass counts, active satellites, recent anomalies, and throughput buckets.
+- `GET /api/satellites` and `GET /api/satellites/{norad_id}` expose dataset coverage, feature-contract details, decoder identity, and model artifact health.
+- `GET /api/telemetry/recent` returns recent frames in a stable `{timestamp, norad_id, source, features, quality, model}` structure.
+- `GET /api/anomalies/recent` returns recent anomaly records sorted newest-first.
+- `GET /api/telemetry/throughput` returns hour/day buckets with frame and anomaly counts for sparkline rendering.
+
+Current data source: local `data/processed/{norad_id}.csv` plus `models/{norad_id}_metadata.json`, scaler, and VAE artifacts. The same response shapes are intended to be backed by TimescaleDB once live persistence is implemented.
+
 ### Phase 2 — Live Pipeline
 - Implement MQTT subscriber → decode → score → persist
 - Implement `WS /api/ws/telemetry`
