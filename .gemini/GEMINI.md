@@ -29,7 +29,7 @@
 *   **Commits:** Follow conventional commits (e.g., `feat: add telemetry parser`, `fix: correct orbit calculation`).
 
 ## 3. Active Context (Memory)
-*   **Current Phase:** Web stack development — building the Docker-based 5-service architecture.
+*   **Current Phase:** Dashboard architecture — Phase 1 (Foundation). Restructuring frontend routes and building the dashboard shell.
 *   **Recent Accomplishments:**
     *   Completed offline ML pipeline: fetch → decode → normalize → train → benchmark.
     *   UWE-4 (NORAD 43880) trained VAE model with calibrated threshold (0.295 @ 95th percentile).
@@ -37,11 +37,23 @@
     *   Implemented Tailwind v4 `@theme` token system with `prefers-color-scheme: dark` overrides.
     *   Created TimescaleDB init schema with two hypertables: `raw_frames` + `telemetry_frames`.
     *   Centralized Docker secrets via `${VAR:-default}` pattern in compose, sourced from `.env`.
-*   **Current Blockers/Tasks:**
-    *   Implement backend MQTT subscriber + DB writer (`mqtt_client.py`, `database.py`).
-    *   Implement simulator replay loop (`replay.py`).
-    *   Build REST/WebSocket API endpoints for frontend consumption.
-    *   Build frontend dashboard components (telemetry charts, anomaly feed).
+    *   **Approved comprehensive dashboard plan** with API contracts for all sub-pages.
+*   **Current Sprint (Phase 1 — Foundation):**
+    *   Restructure frontend routes into `(landing)` and `(dashboard)` route groups.
+    *   Build `DashboardLayout` with sidebar + footer (no antenna bg, no Overview/Team tabs).
+    *   Create dashboard home with placeholder cards.
+    *   Implement `database.py` and `GET /api/status`.
+*   **Dashboard Sub-Pages (Planned):**
+    *   `/dashboard` — Home (service status, recent anomalies, throughput sparkline).
+    *   `/dashboard/operations` — Pass prediction, skyplots, scheduling (Skyfield).
+    *   `/dashboard/live` — Live packet watcher, decode pipeline visualization (WebSocket).
+    *   `/dashboard/insights` — EDA charts, telemetry explorer, PCA.
+    *   `/dashboard/ml` — VAE vs Z-Score sensitivity, ROC, latent space, threshold tuning.
+*   **Upcoming Phases:**
+    *   Phase 2: Live Pipeline (MQTT subscriber, WS endpoint, PipelineVisualizer).
+    *   Phase 3: Operations (Skyfield pass predictor service).
+    *   Phase 4: Insights & ML Lab (aggregation queries, sensitivity sweep service).
+    *   Phase 5: Polish (responsive, skeletons, error boundaries).
 
 ## 4. Key Workflows
 *   **Fetch Data:** `just fetch` (Interactive) or `just fetch --norad 43880` (Specific).

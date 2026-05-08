@@ -77,31 +77,46 @@ gr_sat/
 ├── data/                   # Existing data
 ├── docs/                   # Diagrams and documentation
 ├── scripts/                # Existing offline ML scripts
-├── docker-compose.yml      # NEW: Orchestrates all 5 containers
+├── docker-compose.yml      # Orchestrates all 5 containers
 ├── src/
 │   ├── gr_sat/             # Existing Core Library
-│   ├── api/                # NEW: FastAPI Backend
+│   ├── api/                # FastAPI Backend
 │   │   ├── Dockerfile
 │   │   ├── main.py         # REST/WebSocket endpoints
 │   │   ├── mqtt_client.py  # Subscribes to broker, triggers ML inference
-│   │   └── database.py     # SQLModel/SQLAlchemy connection
-│   └── simulator/          # NEW: Antenna mock
+│   │   ├── database.py     # SQLAlchemy async connection
+│   │   └── routers/        # Modular endpoint groups
+│   │       ├── status.py
+│   │       ├── operations.py
+│   │       ├── insights.py
+│   │       ├── ml.py
+│   │       └── websocket.py
+│   └── simulator/          # Antenna mock
 │       ├── Dockerfile
 │       └── replay.py       # Reads data/raw/ and publishes to MQTT
-├── frontend/               # NEW: SvelteKit Project
+├── frontend/               # SvelteKit Project
 │   ├── Dockerfile          # Uses oven/bun base image
-│   ├── bun.lockb           # Replaces package-lock.json
+│   ├── bun.lock
 │   ├── src/
 │   │   ├── app.html        # Main HTML shell
-│   │   ├── routes/         # Page components (+page.svelte)
-│   │   │   ├── +layout.svelte # Global shell & WebGL Background
-│   │   │   ├── +page.svelte   # Landing Page
-│   │   │   ├── dashboard/     # Dashboard & sub-services
-│   │   │   └── team/          # Team Introduction Page
-│   │   └── lib/            # Shared components & styles
-│   │       ├── components/ # Shadcn UI blocks
-│   │       └── theme/      # CSS Variables and theme logic
-│   └── tailwind.config.js  # Dual-color Theme definitions
+│   │   ├── routes/
+│   │   │   ├── +layout.svelte     # Root: theme toggle, app.css
+│   │   │   ├── (landing)/         # Route group: antenna bg, top nav
+│   │   │   │   ├── +layout.svelte
+│   │   │   │   ├── +page.svelte   # Landing hero
+│   │   │   │   └── team/+page.svelte
+│   │   │   └── (dashboard)/       # Route group: sidebar, footer
+│   │   │       ├── +layout.svelte
+│   │   │       └── dashboard/
+│   │   │           ├── +page.svelte       # Dashboard home
+│   │   │           ├── operations/        # Pass prediction, skyplots
+│   │   │           ├── live/              # Live packet watcher
+│   │   │           ├── insights/          # EDA & telemetry explorer
+│   │   │           └── ml/               # VAE vs Z-Score, model health
+│   │   └── lib/
+│   │       ├── components/    # Shared + page-specific components
+│   │       └── shaders/       # WebGL shader sources
+│   └── tailwind.config.js     # Dual-color Theme definitions
 └── README.md
 ```
 
@@ -111,49 +126,75 @@ gr_sat/
 
 The UI will be designed around a **Dual-Color Light/Dark Theme** driven by CSS variables to ensure strict modularity and easy white-labeling. 
 
-### A. Modularity Strategy
-- **`+layout.svelte`:** This root layout file will wrap every page. It will inject the global navbar, manage the Light/Dark mode state, inject the WebGL background, and provide CSS variables to all child pages.
-- **CSS Variables:** Colors, logos, and team names will be defined in a centralized `src/lib/theme/config.ts` and injected as CSS variables (e.g., `--color-primary`, `--team-name`). This ensures that swapping the team identity or color scheme reflects instantly across the entire app without hunting down hardcoded values.
+### A. Navigation Architecture
+The site uses **two distinct layout shells**:
+
+1. **Landing Shell** (`(landing)` route group): For `/` and `/team`.
+   - Top navbar with Overview / Team tabs.
+   - Holographic antenna WebGL background.
+   - Striking "Enter Dashboard →" CTA button on the landing hero.
+
+2. **Dashboard Shell** (`(dashboard)` route group): For `/dashboard/**`.
+   - **No** Overview/Team tabs in the header.
+   - Collapsible sidebar with sub-page links: Operations, Live, Insights, ML Lab.
+   - Footer with links back to Overview/Team/GitHub.
+   - Logo click returns to landing (`/`).
+   - No antenna background (dashboard has its own data-focused aesthetic).
 
 ### B. Color Palette
 Derived from the academic Typst templates, adapting to web conventions:
 - **Primary Accent:** Pinkish Red (`#B12142`) - Used for highlights, active states, and H1 banners.
 - **Secondary Accent:** Muted Slate Gray (`#6C7A96`) - Used for secondary text, borders, and sub-headers.
 - **Light Mode Base:** Near-white (`#F8FAFC`) with dark text (`#111827`).
-- **Dark Mode Base:** Deep Slate (`#0F172A`) with light text (`#F8FAFC`).
+- **Dark Mode Base:** AMOLED black (`#000000`) with light text (`#F8FAFC`).
 
-### C. Visual Components & Typography
-We will build Svelte components (`.svelte`) that mimic the Typst academic styling but feel native to the web:
-- **H1 Banners:** "Pill-shaped" sticky headers with the Primary color background and white bold text, using rounded corners (e.g., `rounded-r-2xl rounded-l-none`).
-- **H2 Sections:** Bold Primary colored text with an underline stretching across the container (`border-b border-slate`).
-- **H3 Subsections:** Subtle left-bordered containers with a light background.
-- **Callout Blocks (Cards):**
-  - **Definitions/Theorems:** Cards with colored backgrounds (lightened versions of Primary/Secondary colors in light mode) and thick left-borders.
-  - **Q&A Blocks:** Alternating slate background cards to distinguish between questions and answers clearly.
-
-### D. WebGL Background Integration
-The `+layout.svelte` will mount a `<canvas>` element fixed to the background (`z-index: -1`). 
+### C. WebGL Background Integration
+The `(landing)/+layout.svelte` will mount a `<canvas>` element fixed to the background (`z-index: -1`). 
 - **Effect:** A grid of antennas that orient themselves to point towards the user's mouse cursor.
 - **Animation:** They will shoot a small oscillating signal (using the Primary/Secondary CSS variables for colorization).
-- **Performance:** Rendered via WebGL (e.g., Three.js or native WebGL) ensuring it does not block the Svelte UI thread.
-
-### E. Page Structure
-1. **`/` (Landing Page):** 
-   - Focused on marketing the graduation project.
-   - Highlighting the WebGL background.
-   - Clear Call-to-Action to enter the Dashboard.
-2. **`/dashboard` (Live Monitoring):**
-   - The core telemetry grid.
-   - Sub-pages (e.g., `/dashboard/ml-metrics`, `/dashboard/other-services`) for teammates to plug in their respective work.
-   - Real-time WebSockets feed, Orbit Tracking, and PyTorch inference charts.
-3. **`/team` (About Us):**
-   - Academic-style introductions, team pictures, roles, and faculty acknowledgment (matching the BSU/NSST logo styles from the Typst cover page).
+- **Performance:** Rendered via WebGL ensuring it does not block the Svelte UI thread.
+- **Scope:** Only active on landing/team pages — disabled inside dashboard.
 
 ---
 
-## 7. Execution Steps (How to Proceed)
+## 7. Dashboard Architecture
 
-1. **Scaffold Docker:** Create the `docker-compose.yml` defining the network, TimescaleDB, and Mosquitto Broker.
-2. **Build the Simulator:** Create the Python script that reads `data/raw/` and publishes JSON to Mosquitto.
-3. **Build Backend (FastAPI):** Write the async Python API that subscribes to the broker, runs inference, writes to TimescaleDB, and broadcasts via WebSockets.
-4. **Build Frontend (SvelteKit + Bun):** Initialize Svelte 5 with Bun + Tailwind, configure the Dual-Color theme CSS variables, set up `+layout.svelte` with the WebGL canvas, and build the route skeletons.
+> **Full specification with API contracts, data shapes, and component hierarchy:**
+> See `dashboard_plan.md` (artifact) for the complete dashboard blueprint.
+
+### Summary of Dashboard Sub-Pages:
+
+1. **Dashboard Home** (`/dashboard`) — Service status grid, active satellites, recent anomalies, throughput sparkline.
+2. **Operations** (`/dashboard/operations`) — Pass prediction, skyplots, timeline Gantt, satellite rankings. Powered by Skyfield.
+3. **Live Watcher** (`/dashboard/live`) — Real-time packet decode visualization, feature gauges, anomaly score timeline. Powered by WebSocket.
+4. **EDA & Insights** (`/dashboard/insights`) — Historical telemetry explorer, distributions, eclipse scatter, correlation heatmap, PCA projection.
+5. **ML Lab** (`/dashboard/ml`) — VAE vs Z-Score sensitivity curves, ROC comparisons, score distributions, latent space visualization, threshold tuning.
+
+---
+
+## 8. Execution Phases
+
+### Phase 1 — Foundation (Current)
+- Restructure frontend routes into `(landing)` and `(dashboard)` groups
+- Build DashboardLayout with sidebar + footer
+- Create dashboard home with placeholder cards
+- Implement `database.py` and `GET /api/status`
+
+### Phase 2 — Live Pipeline
+- Implement MQTT subscriber → decode → score → persist
+- Implement `WS /api/ws/telemetry`
+- Build PipelineVisualizer (animated decode flow)
+- Wire simulator → broker → backend → frontend end-to-end
+
+### Phase 3 — Operations
+- Port pass prediction logic into backend service
+- Build skyplot, schedule table, timeline Gantt
+
+### Phase 4 — Insights & ML Lab
+- Implement aggregation queries for EDA
+- Port sensitivity sweep into backend
+- Build all insight + ML frontend components
+
+### Phase 5 — Polish
+- Responsive sidebar, loading skeletons, error boundaries
+- Theme verification, performance audit
