@@ -3,6 +3,8 @@
   import type { PageData } from './$types';
   import { untrack } from 'svelte';
 
+  import AnomalyTimelinePlot from '$lib/components/charts/AnomalyTimelinePlot.svelte';
+
   let { data }: { data: PageData } = $props();
 
   let satellites = $derived(data.satellites || []);
@@ -17,7 +19,7 @@
 
   async function fetchRecent() {
     loading = true;
-    const apiUrl = env.PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
     let url = `${apiUrl}/api/telemetry/recent?limit=${limit}`;
     if (noradId !== 'all') {
       url += `&norad_id=${noradId}`;
@@ -84,8 +86,8 @@
   {:else}
     <div class="flex flex-wrap items-end gap-6 rounded-[1.5rem] border border-border bg-panel p-6 shadow-panel backdrop-blur">
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
-        <select bind:value={noradId} class="rounded-xl border border-border bg-surface px-4 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
+        <label for="live-sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
+        <select id="live-sat-select" bind:value={noradId} class="rounded-xl border border-border bg-surface px-4 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
           <option value="all">All Satellites</option>
           {#each satellites as sat}
             <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
@@ -94,14 +96,25 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-semibold uppercase tracking-wider text-ink-3">Feed Size</label>
-        <select bind:value={limit} class="rounded-xl border border-border bg-surface px-4 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
+        <label for="live-feed-size" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Feed Size</label>
+        <select id="live-feed-size" bind:value={limit} class="rounded-xl border border-border bg-surface px-4 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
           <option value={10}>Last 10 Frames</option>
           <option value={25}>Last 25 Frames</option>
           <option value={50}>Last 50 Frames</option>
         </select>
       </div>
     </div>
+
+    <!-- Anomaly Score Timeline -->
+    {#if frames.length > 0}
+      {@const timelineFrames = frames.filter((f: any) => f.model?.anomaly_score != null).map((f: any) => ({ timestamp: f.timestamp, anomaly_score: f.model.anomaly_score, is_anomaly: f.model.is_anomaly }))}
+      {#if timelineFrames.length > 0}
+        <div class="chart-card">
+          <p class="chart-card-title">Anomaly Score Timeline</p>
+          <AnomalyTimelinePlot frames={timelineFrames} threshold={frames[0]?.model?.threshold ?? 0.3} />
+        </div>
+      {/if}
+    {/if}
 
     <!-- Feed -->
     <div class="space-y-4">

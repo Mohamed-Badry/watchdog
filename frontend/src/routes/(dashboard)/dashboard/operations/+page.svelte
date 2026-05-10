@@ -3,6 +3,8 @@
   import { env } from '$env/dynamic/public';
   import { untrack } from 'svelte';
 
+  import PassTimelinePlot from '$lib/components/charts/PassTimelinePlot.svelte';
+
   let { data }: { data: PageData } = $props();
 
   let satellites = $derived(data.satellites || []);
@@ -17,7 +19,7 @@
 
   async function fetchPassPredictions() {
     loading = true;
-    const apiUrl = env.PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
     let url = `${apiUrl}/api/operations/passes?ground_station=${groundStation}&lookahead_hours=${lookaheadHours}&min_elevation=${minElevation}`;
     
     try {
@@ -62,8 +64,8 @@
   {:else}
     <div class="flex flex-wrap items-end gap-6 rounded-[1.5rem] border border-border bg-panel p-6 shadow-panel backdrop-blur lg:p-8">
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-semibold uppercase tracking-wider text-ink-3">Ground Station</label>
-        <select bind:value={groundStation} class="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
+        <label for="ops-gs-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Ground Station</label>
+        <select id="ops-gs-select" bind:value={groundStation} class="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
           <option value="cairo">GS-Alpha (Cairo, EG)</option>
           <option value="berlin">GS-Beta (Berlin, DE)</option>
           <option value="tokyo">GS-Gamma (Tokyo, JP)</option>
@@ -71,8 +73,8 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-semibold uppercase tracking-wider text-ink-3">Lookahead Window</label>
-        <select bind:value={lookaheadHours} class="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
+        <label for="ops-lookahead-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Lookahead Window</label>
+        <select id="ops-lookahead-select" bind:value={lookaheadHours} class="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
           <option value={12}>Next 12 Hours</option>
           <option value={24}>Next 24 Hours</option>
           <option value={48}>Next 48 Hours</option>
@@ -81,8 +83,8 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-semibold uppercase tracking-wider text-ink-3">Min Elevation (deg)</label>
-        <select bind:value={minElevation} class="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
+        <label for="ops-elevation-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Min Elevation (deg)</label>
+        <select id="ops-elevation-select" bind:value={minElevation} class="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand">
           <option value={0}>0° (Horizon)</option>
           <option value={10}>10°</option>
           <option value={20}>20°</option>
@@ -107,51 +109,11 @@
         {:else}
           {@const now = new Date()}
           {@const endTime = new Date(now.getTime() + lookaheadHours * 3600 * 1000)}
-          {@const durationMs = lookaheadHours * 3600 * 1000}
-          {@const uniqueSats = [...new Set(passes.map(p => p.satellite))]}
           
-          <!-- Timeline Gantt Chart -->
+          <!-- SveltePlot Timeline -->
           <div class="border-b border-border bg-surface/30 p-6 lg:p-8">
             <h3 class="text-sm font-semibold uppercase tracking-wider text-ink-3 mb-6">Pass Schedule Timeline</h3>
-            
-            <div class="relative mt-2">
-              <!-- Grid Background -->
-              <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                 {#each uniqueSats as _}
-                   <div class="flex-1 border-b border-border/50"></div>
-                 {/each}
-              </div>
-              
-              <!-- Satellites / Rows -->
-              <div class="relative space-y-4">
-                 {#each uniqueSats as sat, rowIdx}
-                   <div class="relative h-8 w-full flex items-center">
-                      <!-- Sat Name -->
-                      <div class="absolute -left-2 top-1/2 -translate-y-1/2 -translate-x-full text-xs font-medium text-ink-2 mr-4 whitespace-nowrap">{sat}</div>
-                      <!-- Passes -->
-                      {#each passes.filter(p => p.satellite === sat) as pass}
-                         {@const leftPct = Math.max(0, (pass.aos.getTime() - now.getTime()) / durationMs) * 100}
-                         {@const widthPct = Math.min(100 - leftPct, (pass.los.getTime() - pass.aos.getTime()) / durationMs * 100)}
-                         {#if leftPct < 100 && widthPct > 0}
-                           <div 
-                             class="absolute top-1 bottom-1 rounded-md bg-brand shadow-[0_0_8px_rgba(177,33,66,0.6)] opacity-90 transition-all hover:opacity-100 hover:scale-105 cursor-pointer flex items-center justify-center overflow-hidden"
-                             style="left: {leftPct}%; width: {widthPct}%; min-width: 4px;"
-                             title="{pass.satellite} pass: {pass.aos.toLocaleTimeString()} - {pass.los.toLocaleTimeString()} (Elev: {pass.max_elevation}°)"
-                           >
-                           </div>
-                         {/if}
-                      {/each}
-                   </div>
-                 {/each}
-              </div>
-              
-              <!-- Time Axis -->
-              <div class="mt-4 flex justify-between text-[0.6rem] font-medium tracking-wider text-ink-3 uppercase border-t border-border pt-2">
-                 <span>Now</span>
-                 <span>+{Math.floor(lookaheadHours/2)}h</span>
-                 <span>+{lookaheadHours}h</span>
-              </div>
-            </div>
+            <PassTimelinePlot {passes} {now} {endTime} />
           </div>
 
           <table class="w-full text-left text-sm">

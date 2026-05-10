@@ -162,6 +162,9 @@ The `(landing)/+layout.svelte` will mount a `<canvas>` element fixed to the back
 > **Full specification with API contracts, data shapes, and component hierarchy:**
 > See `dashboard_plan.md` (artifact) for the complete dashboard blueprint.
 
+> **Visualization layer migration plan (LayerChart → SveltePlot):**
+> See [`frontend/DASHBOARD_SVELTEPLOT_PLAN.md`](frontend/DASHBOARD_SVELTEPLOT_PLAN.md) for the granular, 5-phase refactoring execution plan covering every chart component, data transforms, theming, and interactivity.
+
 ### Summary of Dashboard Sub-Pages:
 
 1. **Dashboard Home** (`/dashboard`) — Service status grid, active satellites, recent anomalies, throughput sparkline.

@@ -21,7 +21,7 @@
 
 <div class="flex min-h-screen bg-surface text-ink transition-colors">
   <!-- Sidebar -->
-  <aside class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-panel shadow-panel backdrop-blur transition-transform md:translate-x-0 {sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:static md:flex md:w-64">
+  <aside class="fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border bg-panel shadow-panel backdrop-blur transition-transform md:translate-x-0 {sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:h-screen md:flex md:w-64">
     <div class="flex h-16 items-center justify-between border-b border-border px-6">
       <a class="text-lg font-semibold tracking-[0.18em] text-brand uppercase" href="/">
         Watchdog
@@ -29,7 +29,7 @@
       <button class="md:hidden text-ink hover:text-brand transition-colors" onclick={toggleSidebar}>✕</button>
     </div>
     
-    <nav class="flex-1 space-y-1 p-4">
+    <nav class="flex-1 space-y-1 overflow-y-auto p-4">
       {#each sidebarLinks as link}
         <a
           href={link.href}

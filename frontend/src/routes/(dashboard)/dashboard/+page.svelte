@@ -1,10 +1,39 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { onMount, onDestroy } from 'svelte';
+  import { env } from '$env/dynamic/public';
+  import SparklinePlot from '$lib/components/charts/SparklinePlot.svelte';
   
   let { data }: { data: PageData } = $props();
   
-  let summary = $derived(data.summary);
-  let error = $derived(data.error);
+  let summary = $state(data.summary);
+  let error = $state(data.error);
+
+  $effect(() => {
+    summary = data.summary;
+    error = data.error;
+  });
+
+  let interval: ReturnType<typeof setInterval>;
+
+  onMount(() => {
+    interval = setInterval(async () => {
+      const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
+      try {
+        const res = await fetch(`${apiUrl}/api/dashboard/summary`);
+        if (res.ok) {
+          summary = await res.json();
+          error = undefined;
+        }
+      } catch (e: any) {
+        console.error("Dashboard polling error", e);
+      }
+    }, 5000);
+  });
+
+  onDestroy(() => {
+    if (interval) clearInterval(interval);
+  });
 </script>
 
 {#if error}
@@ -13,7 +42,7 @@
     <p class="mt-2 text-sm">{error}</p>
   </div>
 {:else if summary}
-  <section class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+  <section class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
     <div class="space-y-3">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">System Overview</p>
       <h1 class="text-4xl font-semibold tracking-tight text-ink">Dashboard Home</h1>
@@ -25,17 +54,36 @@
     <!-- Totals -->
     <div class="grid gap-4 md:grid-cols-4">
       {#each [
-        { label: 'Active Satellites', value: summary.totals.satellite_count },
-        { label: 'Total Frames', value: summary.totals.frame_count.toLocaleString() },
-        { label: 'Anomalies Detected', value: summary.totals.anomaly_count.toLocaleString() },
-        { label: 'Total Passes', value: summary.totals.pass_count.toLocaleString() }
+        { label: 'Active Satellites', value: summary.totals.satellite_count, icon: '🛰' },
+        { label: 'Total Frames', value: summary.totals.frame_count.toLocaleString(), icon: '📡' },
+        { label: 'Anomalies Detected', value: summary.totals.anomaly_count.toLocaleString(), icon: '⚠' },
+        { label: 'Total Passes', value: summary.totals.pass_count.toLocaleString(), icon: '🌍' }
       ] as stat}
-        <article class="flex flex-col rounded-[1.75rem] border border-border bg-panel p-6 shadow-panel backdrop-blur transition-all hover:-translate-y-1 hover:border-brand/30 hover:shadow-lg">
+        <article class="group relative overflow-hidden rounded-[1.75rem] border border-border bg-panel p-6 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-lg">
+          <div class="absolute -right-4 -top-4 text-4xl opacity-[0.06] transition-opacity group-hover:opacity-[0.12]">{stat.icon}</div>
           <p class="text-sm font-medium text-ink-3">{stat.label}</p>
           <p class="mt-3 text-3xl font-semibold text-brand tracking-tight">{stat.value}</p>
         </article>
       {/each}
     </div>
+
+    <!-- Throughput Sparkline -->
+    {#if summary.throughput_buckets && summary.throughput_buckets.length > 0}
+      <div class="chart-card">
+        <p class="chart-card-title">Throughput (24h)</p>
+        <div class="flex items-end gap-6">
+          <div class="flex-1">
+            <SparklinePlot data={summary.throughput_buckets} width={600} height={56} />
+          </div>
+          <div class="flex flex-col items-end gap-1 shrink-0 text-right">
+            <span class="text-2xl font-semibold tracking-tight text-ink">
+              {summary.throughput_buckets.reduce((s: number, b: any) => s + b.frame_count, 0).toLocaleString()}
+            </span>
+            <span class="text-xs text-ink-3">total frames</span>
+          </div>
+        </div>
+      </div>
+    {/if}
 
     <div class="grid gap-8 lg:grid-cols-3">
       <!-- Service Status -->
@@ -99,16 +147,20 @@
       <h2 class="text-lg font-medium tracking-tight text-ink">Recent Anomalies</h2>
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {#each summary.recent_anomalies as anomaly}
-          <div class="group rounded-[1.5rem] border border-brand/20 bg-brand/5 p-6 transition-all hover:-translate-y-1 hover:border-brand/40 hover:bg-brand/10 hover:shadow-lg">
-            <div class="flex items-center justify-between">
-              <span class="rounded-md bg-brand/20 px-2 py-1 text-xs font-semibold tracking-widest text-brand">NORAD {anomaly.norad_id}</span>
-              <span class="text-xs text-ink-3">{new Date(anomaly.timestamp).toLocaleString()}</span>
+          <div class="group relative overflow-hidden rounded-[1.5rem] border border-brand/20 bg-brand/5 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:bg-brand/10 hover:shadow-lg">
+            <!-- Subtle glow accent -->
+            <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-brand/10 blur-2xl transition-opacity group-hover:bg-brand/20"></div>
+            <div class="relative">
+              <div class="flex items-center justify-between">
+                <span class="rounded-md bg-brand/20 px-2 py-1 text-xs font-semibold tracking-widest text-brand">NORAD {anomaly.norad_id}</span>
+                <span class="text-xs text-ink-3">{new Date(anomaly.timestamp).toLocaleString()}</span>
+              </div>
+              <div class="mt-5 flex items-baseline gap-2">
+                <span class="text-3xl font-bold tracking-tight text-ink transition-colors group-hover:text-brand">{anomaly.score?.toFixed(2) || 'N/A'}</span>
+                <span class="text-sm font-medium text-ink-3">score</span>
+              </div>
+              <p class="mt-2 text-xs font-medium text-ink-2">Threshold: {anomaly.threshold?.toFixed(2) || 'N/A'}</p>
             </div>
-            <div class="mt-5 flex items-baseline gap-2">
-              <span class="text-3xl font-bold tracking-tight text-ink transition-colors group-hover:text-brand">{anomaly.score?.toFixed(2) || 'N/A'}</span>
-              <span class="text-sm font-medium text-ink-3">score</span>
-            </div>
-            <p class="mt-2 text-xs font-medium text-ink-2">Threshold: {anomaly.threshold?.toFixed(2) || 'N/A'}</p>
           </div>
         {/each}
         {#if summary.recent_anomalies.length === 0}

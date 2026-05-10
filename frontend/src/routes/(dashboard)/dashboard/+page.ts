@@ -2,7 +2,7 @@ import type { PageLoad } from './$types';
 import { env } from '$env/dynamic/public';
 
 export const load: PageLoad = async ({ fetch }) => {
-    const apiUrl = env.PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
     
     try {
         const [summaryRes, statusRes] = await Promise.all([

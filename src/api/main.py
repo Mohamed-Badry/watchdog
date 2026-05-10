@@ -83,7 +83,7 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
     @app.get("/api/telemetry/recent")
     async def recent_telemetry(
         norad_id: int | None = None,
-        limit: int = Query(default=20, ge=1, le=200),
+        limit: int = Query(default=20, ge=1, le=10000),
     ) -> dict:
         try:
             return data.recent_frames(norad_id=norad_id, limit=limit)

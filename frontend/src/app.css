@@ -64,3 +64,96 @@ body {
 ::selection {
   background: rgba(177, 33, 66, 0.20);
 }
+
+/* ── SveltePlot theme bridge ──
+   Deep integration with project design tokens. */
+:root {
+  --svelteplot-bg: transparent;
+}
+
+/* Axis lines, ticks, grid — respect theme */
+.svelteplot-plot {
+  font-family: "IBM Plex Sans", "IBM Plex Mono", monospace;
+}
+
+.svelteplot-plot text {
+  fill: var(--color-ink-3);
+  font-size: 10px;
+}
+
+.svelteplot-plot .tick line,
+.svelteplot-plot .domain {
+  stroke: var(--color-border);
+}
+
+/* Grid lines - subtler */
+.svelteplot-plot .grid line {
+  stroke: var(--color-border);
+  stroke-opacity: 0.5;
+}
+
+/* Axis labels - slightly brighter */
+.svelteplot-plot .axis-label {
+  fill: var(--color-ink-2);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Hover crosshair styles */
+.svelteplot-plot .crosshair line {
+  stroke: var(--color-brand);
+  stroke-opacity: 0.5;
+  stroke-dasharray: 3 3;
+}
+
+/* Tooltip styling */
+.svelteplot-tooltip {
+  background: var(--color-panel) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  color: var(--color-ink) !important;
+  font-size: 11px !important;
+  padding: 8px 12px !important;
+}
+
+/* ── Chart card container helper ── */
+.chart-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-panel);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+  border-color: rgba(177, 33, 66, 0.2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(177, 33, 66, 0.08);
+}
+
+.chart-card-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-ink-3);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-card-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--color-brand);
+  opacity: 0.7;
+}

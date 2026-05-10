@@ -289,27 +289,86 @@ class DashboardDataRepository:
         norad_id: int | None = None,
     ) -> dict[str, Any]:
         from datetime import datetime, timedelta, timezone
+        from skyfield.api import load, wgs84
+
         now = datetime.now(timezone.utc)
         
-        if ground_station not in ["cairo", "berlin", "tokyo"]:
+        stations = {
+            "cairo": {"lat": 29.0661, "lon": 31.0994, "elev": 32.0},
+            "berlin": {"lat": 52.5200, "lon": 13.4050, "elev": 34.0},
+            "tokyo": {"lat": 35.6762, "lon": 139.6503, "elev": 40.0},
+        }
+
+        if ground_station not in stations:
             raise ValueError(f"Unknown ground station: {ground_station}")
+
+        st_data = stations[ground_station]
+        gs = wgs84.latlon(st_data["lat"], st_data["lon"], elevation_m=st_data["elev"])
 
         if norad_id:
             sats = [self.satellite_summary(norad_id)]
         else:
             sats = self.satellite_summaries()
 
+        ts = load.timescale()
+        t0 = ts.from_datetime(now)
+        t1 = ts.from_datetime(now + timedelta(hours=lookahead_hours))
+        
+        # Load Celestrak TLEs using skyfield
+        url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
+        try:
+            tle_file = load.tle_file(url)
+            by_id = {sat.model.satnum: sat for sat in tle_file}
+        except Exception:
+            by_id = {}
+
         passes = []
-        for i, sat in enumerate(sats):
-            base_time = now + timedelta(hours=((i * 2.5) % lookahead_hours))
-            passes.append({
-                "satellite": sat["name"],
-                "norad_id": sat["norad_id"],
-                "aos": _timestamp_iso(base_time),
-                "los": _timestamp_iso(base_time + timedelta(minutes=10)),
-                "max_elevation": min_elevation + 15.0,
-                "direction": "N->S"
-            })
+        for sat_info in sats:
+            sat_id = sat_info["norad_id"]
+            if sat_id not in by_id:
+                continue
+            
+            sat = by_id[sat_id]
+            t, events = sat.find_events(gs, t0, t1, altitude_degrees=0.0)
+            
+            for i in range(len(events)):
+                if events[i] == 1:  # culmination
+                    t_peak = t[i]
+                    alt, az, dist = (sat - gs).at(t_peak).altaz()
+                    
+                    if alt.degrees >= min_elevation:
+                        t_rise = None
+                        for j in range(i, -1, -1):
+                            if events[j] == 0:
+                                t_rise = t[j]
+                                break
+                        
+                        t_set = None
+                        for j in range(i, len(events)):
+                            if events[j] == 2:
+                                t_set = t[j]
+                                break
+                        
+                        if t_rise is not None and t_set is not None:
+                            # Determine general direction
+                            start_az = (sat - gs).at(t_rise).altaz()[1].degrees
+                            end_az = (sat - gs).at(t_set).altaz()[1].degrees
+                            
+                            # Simple heuristic for direction
+                            direction = "N->S" if end_az > start_az else "S->N"
+                            if abs(start_az - end_az) > 180: # cross 360
+                                direction = "S->N" if end_az < start_az else "N->S"
+                                
+                            passes.append({
+                                "satellite": sat_info["name"],
+                                "norad_id": sat_id,
+                                "aos": _timestamp_iso(t_rise.utc_datetime()),
+                                "los": _timestamp_iso(t_set.utc_datetime()),
+                                "max_elevation": round(alt.degrees, 1),
+                                "direction": direction
+                            })
+                            
+        passes.sort(key=lambda p: p["aos"])
             
         return {
             "ground_station": ground_station,
