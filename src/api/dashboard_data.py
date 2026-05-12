@@ -411,56 +411,70 @@ class DashboardDataRepository:
     def frames_for(self, norad_id: int) -> pd.DataFrame:
         sat_id = int(norad_id)
         
-        try:
-            try:
-                from .database import get_engine
-                from .models import TelemetryFrame, RawFrame
-            except ImportError:
-                from database import get_engine
-                from models import TelemetryFrame, RawFrame
-            from sqlmodel import Session, select
-            
-            engine = get_engine()
-            if engine:
-                with Session(engine) as session:
-                    statement = select(TelemetryFrame, RawFrame).join(RawFrame, TelemetryFrame.raw_frame_id == RawFrame.id).where(TelemetryFrame.norad_id == sat_id).order_by(TelemetryFrame.timestamp.asc())
-                    results = session.exec(statement).all()
-                    
-                if results:
-                    rows = []
-                    for tf, rf in results:
-                        row = {
-                            "timestamp": tf.timestamp,
-                            "norad_id": tf.norad_id,
-                            "station_id": rf.station_id,
-                            "raw_frame": rf.raw_frame,
-                            "snr": rf.snr,
-                            "anomaly_score": tf.anomaly_score,
-                            "is_anomaly": tf.is_anomaly,
-                            "missing_fields": tf.missing_fields
-                        }
-                        if isinstance(tf.features, dict):
-                            row.update(tf.features)
-                        rows.append(row)
-                    
-                    df = pd.DataFrame(rows)
-                    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-                    return df.sort_values("timestamp").reset_index(drop=True)
-        except Exception as e:
-            import logging
-            logging.getLogger("DashboardDataRepository").warning(f"Failed to query DB for {sat_id}: {e}")
-            
         if sat_id not in self._frames_cache:
+            dfs = []
+            
+            # 1. Load from Historical CSV
             path = self.processed_dir / f"{sat_id}.csv"
-            if not path.exists():
-                raise KeyError(f"No processed telemetry dataset for NORAD {sat_id}")
+            if path.exists():
+                try:
+                    csv_df = pd.read_csv(path)
+                    if "timestamp" in csv_df.columns:
+                        csv_df["timestamp"] = pd.to_datetime(csv_df["timestamp"], utc=True)
+                        csv_df["norad_id"] = sat_id
+                        dfs.append(csv_df)
+                except Exception as e:
+                    import logging
+                    logging.getLogger("DashboardDataRepository").warning(f"Failed to load CSV for {sat_id}: {e}")
 
-            df = pd.read_csv(path)
-            if "timestamp" not in df.columns:
-                raise ValueError(f"{path} is missing required timestamp column.")
+            # 2. Load from Live Database
+            try:
+                try:
+                    from .database import get_engine
+                    from .models import TelemetryFrame, RawFrame
+                except ImportError:
+                    from database import get_engine
+                    from models import TelemetryFrame, RawFrame
+                from sqlmodel import Session, select
+                
+                engine = get_engine()
+                if engine:
+                    with Session(engine) as session:
+                        statement = select(TelemetryFrame, RawFrame).join(RawFrame, TelemetryFrame.raw_frame_id == RawFrame.id).where(TelemetryFrame.norad_id == sat_id).order_by(TelemetryFrame.timestamp.asc())
+                        results = session.exec(statement).all()
+                        
+                    if results:
+                        rows = []
+                        for tf, rf in results:
+                            if not tf.features:
+                                continue
+                            row = {
+                                "timestamp": tf.timestamp,
+                                "norad_id": tf.norad_id,
+                                "station_id": rf.station_id,
+                                "raw_frame": rf.raw_frame,
+                                "snr": rf.snr,
+                                "anomaly_score": tf.anomaly_score,
+                                "is_anomaly": tf.is_anomaly,
+                                "missing_fields": tf.missing_fields
+                            }
+                            if isinstance(tf.features, dict):
+                                row.update(tf.features)
+                            rows.append(row)
+                        
+                        db_df = pd.DataFrame(rows)
+                        db_df["timestamp"] = pd.to_datetime(db_df["timestamp"], utc=True)
+                        dfs.append(db_df)
+            except Exception as e:
+                import logging
+                logging.getLogger("DashboardDataRepository").warning(f"Failed to query DB for {sat_id}: {e}")
+                
+            if not dfs:
+                raise KeyError(f"No telemetry data found for NORAD {sat_id} in CSV or Database.")
 
-            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-            df["norad_id"] = sat_id
+            # Combine, normalize, and cache
+            df = pd.concat(dfs, ignore_index=True) if len(dfs) > 1 else dfs[0]
+            df = df.drop_duplicates(subset=["timestamp"], keep="last")
             df = self._normalize_frame_columns(sat_id, df)
             self._frames_cache[sat_id] = df.sort_values("timestamp").reset_index(drop=True)
 

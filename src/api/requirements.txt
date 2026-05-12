@@ -7,3 +7,4 @@ psycopg2-binary==2.9.10
 skyfield==1.54
 kaitaistruct==0.10
 satnogs-decoders==1.115.0
+websockets==12.0

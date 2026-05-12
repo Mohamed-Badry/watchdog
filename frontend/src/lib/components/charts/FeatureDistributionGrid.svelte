@@ -38,7 +38,7 @@
       const stats = computeStats(values);
       const data = values.map((v: number) => ({ value: v }));
       const binned = data.length > 0
-        ? binX({ data, x: 'value', y: 'count' }, { thresholds: 30 })
+        ? binX({ data, x: 'value' }, { y: 'count', thresholds: 30 })
         : { data: [] };
       return { ...f, values, stats, binned };
     })

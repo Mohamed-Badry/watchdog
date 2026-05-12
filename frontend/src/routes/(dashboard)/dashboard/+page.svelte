@@ -14,25 +14,30 @@
     error = data.error;
   });
 
-  let interval: ReturnType<typeof setInterval>;
+  let ws: WebSocket;
 
   onMount(() => {
-    interval = setInterval(async () => {
-      const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
+    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
+    const wsUrl = apiUrl.replace(/^http/, 'ws') + '/api/ws/dashboard';
+    
+    ws = new WebSocket(wsUrl);
+    
+    ws.onmessage = (event) => {
       try {
-        const res = await fetch(`${apiUrl}/api/dashboard/summary`);
-        if (res.ok) {
-          summary = await res.json();
-          error = undefined;
-        }
+        summary = JSON.parse(event.data);
+        error = undefined;
       } catch (e: any) {
-        console.error("Dashboard polling error", e);
+        console.error("Failed to parse websocket message", e);
       }
-    }, 5000);
+    };
+
+    ws.onerror = (e) => {
+      console.error("Dashboard websocket error", e);
+    };
   });
 
   onDestroy(() => {
-    if (interval) clearInterval(interval);
+    if (ws) ws.close();
   });
 </script>
 

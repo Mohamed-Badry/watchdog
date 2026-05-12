@@ -15,6 +15,7 @@
   let error = $derived(data.error);
 
   let noradId = $state<string>('all');
+  let dataLimit = $state<number>(1000);
 
   let loading = $state(false);
   let telemetryFrames = $state<any[]>([]);
@@ -22,7 +23,7 @@
   async function fetchTelemetry() {
     loading = true;
     const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
-    let url = `${apiUrl}/api/telemetry/recent?limit=5000`;
+    let url = `${apiUrl}/api/telemetry/recent?limit=${dataLimit}`;
     if (noradId !== 'all') {
       url += `&norad_id=${noradId}`;
     }
@@ -45,6 +46,7 @@
 
   $effect(() => {
     const _n = noradId;
+    const _l = dataLimit;
     untrack(() => fetchTelemetry());
   });
 
@@ -70,7 +72,7 @@
       .filter((f: any) => f.timestamp && f.features)
       .map((f: any) => ({
         timestamp: f.timestamp,
-        batt_voltage: f.features.batt_voltage,
+        batt_voltage: f.features.batt_voltage ?? f.features.batt_a_voltage,
         temp_batt_a: f.features.temp_batt_a,
         temp_panel_z: f.features.temp_panel_z,
       }))

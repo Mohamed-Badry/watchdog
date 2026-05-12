@@ -34,7 +34,7 @@
 
   let binned = $derived(
     gaps().length > 0
-      ? binX({ data: gaps(), x: 'gap', y: 'count' }, { thresholds: 30 })
+      ? binX({ data: gaps(), x: 'gap' }, { y: 'count', thresholds: 30 })
       : { data: [] }
   );
 </script>

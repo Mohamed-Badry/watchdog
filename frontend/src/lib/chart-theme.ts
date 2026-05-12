@@ -24,10 +24,10 @@ export const WATCHDOG_COLORS = {
 
 // ── Standard margins ────────────────────────────────────────────────────────
 /** Margins for full-width dashboard chart cards */
-export const CARD_MARGIN = { top: 24, right: 24, bottom: 44, left: 56 };
+export const CARD_MARGIN = { top: 24, right: 24, bottom: 44, left: 64 };
 
 /** Compact margins for smaller inline charts */
-export const COMPACT_MARGIN = { top: 12, right: 12, bottom: 32, left: 44 };
+export const COMPACT_MARGIN = { top: 12, right: 12, bottom: 32, left: 56 };
 
 /** Margins for sparklines (no axes) */
 export const SPARK_MARGIN = { top: 4, right: 4, bottom: 4, left: 4 };

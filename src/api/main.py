@@ -27,7 +27,13 @@ async def lifespan(app: FastAPI):
         client.loop_stop()
 
 def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
-    data = repository or DashboardDataRepository()
+    if repository is None:
+        from pathlib import Path
+        project_root = Path(__file__).resolve().parents[2]
+        data = DashboardDataRepository(root=project_root)
+    else:
+        data = repository
+        
     app = FastAPI(
         title="gr_sat Watchdog API",
         description="FastAPI backend for satellite telemetry dashboard data.",
@@ -36,7 +42,7 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=_cors_origins(),
+        allow_origins=["*"],
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -64,6 +70,17 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
     @app.get("/api/dashboard/summary")
     async def dashboard_summary() -> dict:
         return data.dashboard_summary()
+
+    @app.websocket("/api/ws/dashboard")
+    async def websocket_dashboard(websocket: WebSocket):
+        await websocket.accept()
+        try:
+            while True:
+                payload = data.dashboard_summary()
+                await websocket.send_json(payload)
+                await asyncio.sleep(2)
+        except WebSocketDisconnect:
+            pass
 
     @app.get("/api/satellites")
     async def satellites() -> dict:

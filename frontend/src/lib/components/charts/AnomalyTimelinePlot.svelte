@@ -19,7 +19,7 @@
   <Plot
     height={220}
     x={{ type: 'utc', label: false }}
-    y={{ label: 'Anomaly Score', grid: true }}
+    y={{ label: 'Anomaly Score', grid: true, domain: [0, 1] }}
     color={{ domain: [false, true], range: [MUTED, BRAND] }}
     marginTop={COMPACT_MARGIN.top}
     marginRight={COMPACT_MARGIN.right}
@@ -32,8 +32,7 @@
 
     <!-- Connecting line -->
     <Line data={plotData} x="date" y="anomaly_score"
-          stroke="var(--color-ink-3)" strokeWidth={1} strokeOpacity={0.3}
-          curve="monotone-x" />
+          stroke="var(--color-ink-3)" strokeWidth={1} strokeOpacity={0.3} />
 
     <!-- Score dots colored by anomaly status -->
     <Dot data={plotData} x="date" y="anomaly_score" fill="is_anomaly"
