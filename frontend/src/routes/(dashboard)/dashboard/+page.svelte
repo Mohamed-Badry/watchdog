@@ -75,18 +75,21 @@
       <!-- Left Col (Component Health & Recent Anomalies) -->
       <div class="flex flex-col gap-5 min-h-0">
         <!-- Service Status -->
-        <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none">
+        <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
             <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Component Health</h2>
           </div>
-          <div class="flex flex-col gap-px bg-border p-4 shrink-0">
+          <div class="flex flex-col gap-3 p-4 shrink-0">
             {#each summary.service_status as component}
-              <div class="group flex items-center justify-between bg-surface p-3.5 transition-colors hover:bg-surface/80 rounded-lg">
-                <div>
-                  <p class="text-sm font-medium capitalize text-ink transition-colors group-hover:text-brand">{component.name.replace('_', ' ')}</p>
-                  <p class="text-xs text-ink-3">{component.detail}</p>
+              <div class="group flex items-start justify-between rounded-xl border border-border/50 bg-surface/30 p-4 transition-all hover:border-brand/30 hover:bg-surface/60">
+                <div class="flex flex-col gap-1.5">
+                  <span class="text-sm font-semibold capitalize text-ink transition-colors group-hover:text-brand">{component.name.replace('_', ' ')}</span>
+                  <p class="text-[11px] font-medium leading-relaxed text-ink-3">{component.detail}</p>
                 </div>
-                <div class="flex h-2.5 w-2.5 shrink-0 rounded-full transition-all duration-300 {component.status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-brand shadow-[0_0_8px_rgba(177,33,66,0.6)]'}"></div>
+                <div class="flex shrink-0 items-center gap-2 rounded-full border border-border/50 bg-panel px-2.5 py-1">
+                  <span class="h-2 w-2 rounded-full {component.status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-brand shadow-[0_0_8px_rgba(177,33,66,0.4)]'}"></span>
+                  <span class="text-[10px] font-semibold uppercase tracking-wider {component.status === 'online' ? 'text-emerald-500' : 'text-brand'}">{component.status}</span>
+                </div>
               </div>
             {/each}
           </div>
