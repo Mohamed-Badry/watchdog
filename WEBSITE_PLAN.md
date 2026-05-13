@@ -266,3 +266,41 @@ We will adopt a clear division of labor between native Svelte capabilities and G
 - [ ] **Hover States:** Add subtle scale-ups (e.g., `scale: 1.02`) and shadow transitions to interactive cards and buttons using GSAP.
 - [ ] **Active States:** Add "click" feedback (e.g., slight scale-down) to buttons and actionable elements.
 - [ ] **Data Updates:** Briefly flash, pulse, or use GSAP number-tick animations in the dashboard when new live telemetry data arrives to draw attention without being distracting.
+
+---
+
+## 10. Dashboard & Analysis Separation Strategy
+
+To ensure optimal use of screen real estate and respect the differing user intents of monitoring versus research, we will split the application's views into two distinct layout paradigms: **Single-Page Dashboards** and **Scrolling Analysis Reports**.
+
+### A. Paradigm Shift
+1. **Dashboards (`Dashboard Home`, `Operations`, `Live Watcher`, `Analytics`):** 
+   - **Goal:** Real-time monitoring and immediate operational interactions.
+   - **Layout Constraints:** Must be strictly locked to 100% of the viewport height (`h-screen`, `h-full`). The main `<body>` or `<main>` wrapper must **never** scroll.
+   - **Overflow Management:** Any overflowing content (like a feed of anomalies, a list of passes, or table of active satellites) must be wrapped in its own `overflow-y-auto` container, ensuring the core controls and plots never leave the screen.
+   - **Tabbed Sub-Views:** If a dashboard requires more space for charts than visually comfortable on a single screen, we will introduce a horizontal Tab control component at the top of the dashboard area to switch between visualization groups without breaking the single-page constraint.
+
+2. **Analysis Reports (`EDA`, `ML Lab`):**
+   - **Goal:** Deep-dive historical research, methodology validation, and model explainability.
+   - **Layout Constraints:** These pages *should* scroll vertically like a classic document or Jupyter Notebook.
+   - **Content Structure:** They will feature a narrower, more readable `max-w-4xl` or `max-w-5xl` central column. The content will interleave rich markdown/prose explanations detailing the "Why" and "How" of the data alongside the interactive `SveltePlot` charts.
+
+### B. Route Reorganization Plan
+
+We will deprecate the old `/dashboard/insights` and restructure the routes as follows:
+
+- [ ] **Create `/dashboard/analytics` (Dashboard Paradigm):**
+  - Extract the general system stats, histograms, and macro-health visualizations from the old Insights page.
+  - Implement a Tabbed UI if necessary (e.g., Tab 1: System Health, Tab 2: Feature Distributions) to ensure all charts fit within the strict single-page view.
+  
+- [ ] **Refactor `/dashboard/ml` (Dashboard Paradigm):**
+  - Convert the ML Lab from a scrolling page into a locked single-page dashboard.
+  - Add a Top Control Bar for selecting models/satellites.
+  - Implement Tabs (e.g., Tab 1: Model Benchmarks, Tab 2: Feature Attribution) to organize the complex ROC curves, sensitivity sweeps, and contribution plots.
+  
+- [ ] **Create `/dashboard/eda` (Analysis Report Paradigm):**
+  - Create a new, scrolling, article-style page.
+  - Port over the physics validation (Eclipse Scatter) and correlation heatmaps.
+  - Wrap these visualizations in detailed, hardcoded text blocks that explain the methodology (e.g., explaining how solar panel temperature correlates with eclipse phases to identify anomalies).
+
+This separation guarantees that operators have fast, locked, single-screen tools for live tasks, while engineers have readable, scrolling reports for offline validation.
