@@ -10,21 +10,28 @@
     endTime: Date;
   }>();
 
-  let chartHeight = $derived(Math.max(180, (passes?.length ?? 0) * 28 + 60));
+  let satelliteRows = $derived.by((): string[] => {
+    const rows = new Set<string>();
+    for (const pass of passes ?? []) {
+      rows.add(pass.satellite);
+    }
+    return [...rows];
+  });
+  let chartHeight = $derived(Math.max(170, satelliteRows.length * 38 + 76));
 </script>
 
 <div class="h-full w-full">
   <Plot
     height={chartHeight}
     x={{ type: 'utc', domain: [now, endTime], label: false }}
-    y={{ type: 'band', label: false }}
-    marginTop={COMPACT_MARGIN.top}
+    y={{ type: 'band', domain: satelliteRows, label: false }}
+    marginTop={COMPACT_MARGIN.top + 4}
     marginRight={COMPACT_MARGIN.right}
     marginBottom={COMPACT_MARGIN.bottom}
     marginLeft={100}
   >
     <!-- "Now" reference line -->
-    <RuleX data={[now]} x={d => d}
+    <RuleX data={[now]}
            stroke="var(--color-ok)" strokeWidth={2}
            strokeDasharray="4 2" strokeOpacity={0.7} />
 

@@ -30,6 +30,10 @@
   </Plot>
 </div>
 <div class="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[0.65rem] text-ink-2">
+  <span class="flex items-center gap-1.5">
+    <span class="inline-block h-px w-5 border-t border-dashed" style="border-color: #94a3b8; opacity: 0.5"></span>
+    Random baseline
+  </span>
   {#each MODELS as m}
     <span class="flex items-center gap-1.5">
       <span class="inline-block h-0.5 w-5 rounded" style="background: {m.color}"></span>

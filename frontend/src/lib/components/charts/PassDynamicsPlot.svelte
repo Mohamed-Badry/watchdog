@@ -34,8 +34,8 @@
     {#if plotData.length > 0}
       <Plot height={140}
         x={{ type: 'utc', label: false }}
-        y={{ label: 'V', grid: true, nice: true }}
-        marginTop={8} marginRight={12} marginBottom={20} marginLeft={44}>
+        y={{ label: false, grid: true, nice: true }}
+        marginTop={12} marginRight={12} marginBottom={20} marginLeft={46}>
         <AreaY data={plotData} x="date" y="batt_voltage"
                fill="#4361ee" fillOpacity={0.12} />
         <Line data={plotData} x="date" y="batt_voltage"
@@ -51,9 +51,9 @@
     </p>
     {#if plotData.length > 0}
       <Plot height={160}
-        x={{ type: 'utc', label: 'Time (UTC)' }}
-        y={{ label: 'A / °C', grid: true, nice: true }}
-        marginTop={8} marginRight={12} marginBottom={32} marginLeft={44}>
+        x={{ type: 'utc', label: false }}
+        y={{ label: false, grid: true, nice: true }}
+        marginTop={12} marginRight={12} marginBottom={32} marginLeft={46}>
         <AreaY data={plotData} x="date" y="batt_current"
                fill="#e64848" fillOpacity={0.08} />
         <Line data={plotData} x="date" y="batt_current"

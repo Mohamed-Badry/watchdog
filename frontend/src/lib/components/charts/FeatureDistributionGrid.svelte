@@ -8,7 +8,7 @@
    * - Mean (μ) and ±2σ reference lines
    * - Per-feature color coding
    */
-  import { Plot, RectY, RuleX, Text } from 'svelteplot';
+  import { Plot, RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
 
   type FrameFeatures = Record<string, number | null>;
@@ -68,16 +68,16 @@
                  stroke={panel.color} strokeWidth={0.5} strokeOpacity={0.3} />
 
           <!-- Mean line -->
-          <RuleX data={[panel.stats.mean]} x={d => d}
-                 stroke={panel.color} strokeWidth={2} strokeOpacity={0.8} />
+          <RuleX data={[panel.stats.mean]}
+                 stroke={panel.color} strokeWidth={2.5} strokeOpacity={0.95} />
 
           <!-- ±2σ reference lines -->
-          <RuleX data={[panel.stats.mean - 2 * panel.stats.std]} x={d => d}
-                 stroke="var(--color-brand)" strokeWidth={1}
-                 strokeDasharray="4 3" strokeOpacity={0.5} />
-          <RuleX data={[panel.stats.mean + 2 * panel.stats.std]} x={d => d}
-                 stroke="var(--color-brand)" strokeWidth={1}
-                 strokeDasharray="4 3" strokeOpacity={0.5} />
+          <RuleX data={[panel.stats.mean - 2 * panel.stats.std]}
+                 stroke="var(--color-brand)" strokeWidth={1.5}
+                 strokeDasharray="4 3" strokeOpacity={0.75} />
+          <RuleX data={[panel.stats.mean + 2 * panel.stats.std]}
+                 stroke="var(--color-brand)" strokeWidth={1.5}
+                 strokeDasharray="4 3" strokeOpacity={0.75} />
         </Plot>
         <div class="mt-1 flex justify-center gap-4 text-[0.55rem] text-ink-3">
           <span class="flex items-center gap-1">

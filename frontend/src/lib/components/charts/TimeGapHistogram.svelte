@@ -3,7 +3,7 @@
    * Time Gap Distribution — Intra-pass frame cadence histogram
    * Reproduces docs/figures/time_gap_distribution.png
    */
-  import { Plot, RectY, RuleX, Text } from 'svelteplot';
+  import { Plot, RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
 
   let { timestamps = [] } = $props<{ timestamps: string[] }>();
@@ -51,7 +51,7 @@
              stroke="#9b59b6" strokeWidth={0.5} strokeOpacity={0.3} />
 
       <!-- Median reference line -->
-      <RuleX data={[median()]} x={d => d}
+      <RuleX data={[median()]}
              stroke="#e64848" strokeWidth={2}
              strokeDasharray="6 3" strokeOpacity={0.7} />
     </Plot>

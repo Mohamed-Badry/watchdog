@@ -7,11 +7,29 @@
     threshold: number;
   }>();
 
+  type PlotFrame = {
+    timestamp: string;
+    anomaly_score: number;
+    is_anomaly: boolean;
+    date: Date;
+  };
+
   let plotData = $derived(
-    (frames ?? []).map((f: { timestamp: string; anomaly_score: number; is_anomaly: boolean }) => ({
-      ...f,
-      date: new Date(f.timestamp),
-    }))
+    (frames ?? [])
+      .map((f: { timestamp: string; anomaly_score: number; is_anomaly: boolean }) => ({
+        ...f,
+        date: new Date(f.timestamp),
+      }))
+      .filter((f: PlotFrame) => Number.isFinite(f.date.getTime()) && Number.isFinite(f.anomaly_score))
+      .sort((a: PlotFrame, b: PlotFrame) => a.date.getTime() - b.date.getTime())
+  );
+
+  let yMax = $derived(
+    Math.max(
+      1,
+      threshold ? threshold * 1.15 : 0,
+      ...plotData.map((f: PlotFrame) => f.anomaly_score * 1.1)
+    )
   );
 </script>
 
@@ -19,20 +37,20 @@
   <Plot
     height={220}
     x={{ type: 'utc', label: false }}
-    y={{ label: 'Anomaly Score', grid: true, domain: [0, 1] }}
-    color={{ domain: [false, true], range: [MUTED, BRAND] }}
-    marginTop={COMPACT_MARGIN.top}
-    marginRight={COMPACT_MARGIN.right}
+    y={{ label: false, grid: true, domain: [0, yMax] }}
+    color={{ domain: [false, true], scheme: [MUTED, BRAND] }}
+    marginTop={COMPACT_MARGIN.top + 8}
+    marginRight={COMPACT_MARGIN.right + 8}
     marginBottom={COMPACT_MARGIN.bottom}
-    marginLeft={COMPACT_MARGIN.left}
+    marginLeft={COMPACT_MARGIN.left + 4}
   >
     <!-- Threshold reference line with label context -->
-    <RuleY data={[threshold]} y={d => d}
+    <RuleY data={[threshold]}
            stroke={BRAND} strokeDasharray="6 3" strokeOpacity={0.5} />
 
     <!-- Connecting line -->
     <Line data={plotData} x="date" y="anomaly_score"
-          stroke="var(--color-ink-3)" strokeWidth={1} strokeOpacity={0.3} />
+          stroke="var(--color-ink-3)" strokeWidth={1.4} strokeOpacity={0.35} />
 
     <!-- Score dots colored by anomaly status -->
     <Dot data={plotData} x="date" y="anomaly_score" fill="is_anomaly"

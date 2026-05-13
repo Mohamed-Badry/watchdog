@@ -22,9 +22,9 @@
     <p class="mb-2 text-center text-xs font-semibold text-ink-2">Thermal Runaway Detection</p>
     <Plot height={280}
       x={{ label: 'Thermal Runaway Δ (°C)', nice: true }}
-      y={{ label: 'AUROC', domain: [0.4, 1.05], grid: true }}
-      marginTop={12} marginRight={12} marginBottom={40} marginLeft={48}>
-      <RuleY data={[0.5]} y={d=>d} stroke="#94a3b8" strokeDasharray="4 3" strokeOpacity={0.3} />
+      y={{ label: false, domain: [0.4, 1.05], grid: true }}
+      marginTop={16} marginRight={12} marginBottom={44} marginLeft={50}>
+      <RuleY data={[0.5]} stroke="#94a3b8" strokeDasharray="4 3" strokeOpacity={0.3} />
       <Line data={thermal.vae} x="x" y="y" stroke="#e64848" strokeWidth={2} />
       <Dot data={thermal.vae} x="x" y="y" fill="#e64848" r={4} />
       <Line data={thermal.zs} x="x" y="y" stroke="#092e4b" strokeWidth={2} strokeDasharray="8 4" />
@@ -37,9 +37,9 @@
     <p class="mb-2 text-center text-xs font-semibold text-ink-2">Panel Failure Detection</p>
     <Plot height={280}
       x={{ label: 'Forced Current During Sunlight (A)', nice: true }}
-      y={{ label: 'AUROC', domain: [0.4, 1.05], grid: true }}
-      marginTop={12} marginRight={12} marginBottom={40} marginLeft={48}>
-      <RuleY data={[0.5]} y={d=>d} stroke="#94a3b8" strokeDasharray="4 3" strokeOpacity={0.3} />
+      y={{ label: false, domain: [0.4, 1.05], grid: true }}
+      marginTop={16} marginRight={12} marginBottom={44} marginLeft={50}>
+      <RuleY data={[0.5]} stroke="#94a3b8" strokeDasharray="4 3" strokeOpacity={0.3} />
       <Line data={panel.vae} x="x" y="y" stroke="#e64848" strokeWidth={2} />
       <Dot data={panel.vae} x="x" y="y" fill="#e64848" r={4} />
       <Line data={panel.zs} x="x" y="y" stroke="#092e4b" strokeWidth={2} strokeDasharray="8 4" />

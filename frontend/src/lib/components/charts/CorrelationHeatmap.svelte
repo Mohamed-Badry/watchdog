@@ -68,7 +68,7 @@
     height={380}
     x={{ type: 'band', label: false, domain: FEATURES.map(f => LABELS[f]) }}
     y={{ type: 'band', label: false, domain: [...FEATURES].reverse().map(f => LABELS[f]) }}
-    color={{ type: 'linear', domain: [-1, 0, 1], range: ['#2166ac', '#f7f7f7', '#b2182b'], label: 'Correlation' }}
+    color={{ type: 'linear', domain: [-1, 0, 1], scheme: ['#2166ac', '#f7f7f7', '#b2182b'], label: 'Correlation' }}
     marginTop={8}
     marginRight={8}
     marginBottom={60}

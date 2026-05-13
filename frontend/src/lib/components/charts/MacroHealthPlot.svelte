@@ -1,12 +1,12 @@
 <script lang="ts">
   /**
-   * Macro-Scale Health — Dual-panel: Voltage with confidence band + Temperature overlay
+   * Macro-Scale Health — Dual-panel: Voltage with ±2σ band + Temperature overlay
    * Reproduces docs/figures/timeseries_macro_7month.png
    *
-   * Top: Daily average battery voltage with min/max band
+   * Top: Daily average battery voltage with ±2σ band
    * Bottom: Daily average temp_batt_a (red) + temp_panel_z (green)
    */
-  import { Plot, Line, AreaY, RuleY } from 'svelteplot';
+  import { Plot, Line, AreaY } from 'svelteplot';
   import { COMPACT_MARGIN } from '$lib/chart-theme';
 
   type Frame = {
@@ -30,7 +30,7 @@
 
     const result: {
       date: Date;
-      v_mean: number; v_min: number; v_max: number;
+      v_mean: number; v_sigma_low: number; v_sigma_high: number;
       t_batt: number; t_panel: number;
     }[] = [];
 
@@ -42,12 +42,16 @@
       if (volts.length === 0) continue;
 
       const mean = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+      const std = (arr: number[], avg: number) =>
+        Math.sqrt(arr.reduce((a, b) => a + (b - avg) ** 2, 0) / arr.length);
+      const vMean = mean(volts);
+      const vStd = std(volts, vMean);
 
       result.push({
         date: new Date(day),
-        v_mean: mean(volts),
-        v_min: Math.min(...volts),
-        v_max: Math.max(...volts),
+        v_mean: vMean,
+        v_sigma_low: vMean - 2 * vStd,
+        v_sigma_high: vMean + 2 * vStd,
         t_batt: tBatt.length > 0 ? mean(tBatt) : NaN,
         t_panel: tPanel.length > 0 ? mean(tPanel) : NaN,
       });
@@ -60,26 +64,42 @@
   <!-- Top: Voltage panel -->
   <div>
     <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-3">
-      Battery Voltage (V) — Daily Average with Min/Max Band
+      Battery Voltage (V) — Daily Average with ±2σ Band
     </p>
     {#if dailyStats().length > 0}
-      <Plot
-        height={200}
-        x={{ type: 'utc', label: false }}
-        y={{ label: 'Voltage (V)', grid: true, nice: true }}
-        marginTop={COMPACT_MARGIN.top}
-        marginRight={COMPACT_MARGIN.right}
-        marginBottom={COMPACT_MARGIN.bottom}
-        marginLeft={COMPACT_MARGIN.left + 4}
-      >
-        <!-- Confidence band (min to max) -->
-        <AreaY data={dailyStats()} x="date" y1="v_min" y2="v_max"
-               fill="#4361ee" fillOpacity={0.15} />
+        <Plot
+          height={200}
+          x={{ type: 'utc', label: false }}
+          y={{ label: false, grid: true, nice: true }}
+          marginTop={COMPACT_MARGIN.top + 8}
+          marginRight={COMPACT_MARGIN.right + 8}
+          marginBottom={COMPACT_MARGIN.bottom}
+          marginLeft={COMPACT_MARGIN.left + 10}
+        >
+          <!-- ±2σ band -->
+          <AreaY data={dailyStats()} x="date" y1="v_sigma_low" y2="v_sigma_high"
+                 fill="#4361ee" fillOpacity={0.16} />
 
-        <!-- Mean line -->
-        <Line data={dailyStats()} x="date" y="v_mean"
-              stroke="#4361ee" strokeWidth={2} />
-      </Plot>
+          <!-- Mean and ±2σ lines -->
+          <Line data={dailyStats()} x="date" y="v_mean"
+                stroke="#4361ee" strokeWidth={2} />
+          <Line data={dailyStats()} x="date" y="v_sigma_low"
+                stroke="#4361ee" strokeWidth={1.2}
+                strokeDasharray="5 4" strokeOpacity={0.55} />
+          <Line data={dailyStats()} x="date" y="v_sigma_high"
+                stroke="#4361ee" strokeWidth={1.2}
+                strokeDasharray="5 4" strokeOpacity={0.55} />
+        </Plot>
+        <div class="mt-2 flex items-center justify-center gap-5 text-[0.6rem] text-ink-3">
+          <span class="flex items-center gap-1.5">
+            <span class="inline-block h-0.5 w-4 rounded" style="background: #4361ee"></span>
+            Daily Mean
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="inline-block h-px w-4 border-t border-dashed" style="border-color: #4361ee; opacity: 0.65"></span>
+            ±2σ
+          </span>
+        </div>
     {:else}
       <div class="flex h-48 items-center justify-center text-xs text-ink-3">Insufficient data</div>
     {/if}
@@ -92,15 +112,15 @@
     </p>
     {#if dailyStats().length > 0}
       {@const tempData = dailyStats().filter(d => !isNaN(d.t_batt) || !isNaN(d.t_panel))}
-      <Plot
-        height={200}
-        x={{ type: 'utc', label: 'Date' }}
-        y={{ label: 'Temperature (°C)', grid: true, nice: true }}
-        marginTop={COMPACT_MARGIN.top}
-        marginRight={COMPACT_MARGIN.right}
-        marginBottom={COMPACT_MARGIN.bottom}
-        marginLeft={COMPACT_MARGIN.left + 4}
-      >
+        <Plot
+          height={200}
+          x={{ type: 'utc', label: false }}
+          y={{ label: false, grid: true, nice: true }}
+          marginTop={COMPACT_MARGIN.top + 8}
+          marginRight={COMPACT_MARGIN.right + 8}
+          marginBottom={COMPACT_MARGIN.bottom + 4}
+          marginLeft={COMPACT_MARGIN.left + 10}
+        >
         <!-- Battery temp -->
         <Line data={tempData.filter(d => !isNaN(d.t_batt))} x="date" y="t_batt"
               stroke="#e64848" strokeWidth={1.8} />
