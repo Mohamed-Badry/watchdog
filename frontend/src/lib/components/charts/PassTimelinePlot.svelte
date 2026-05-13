@@ -43,7 +43,7 @@
   </Plot>
 </div>
 
-<div class="mt-2 flex items-center justify-center gap-5 text-xs text-ink-3">
+<div class="mb-5 flex items-center justify-center gap-5 text-xs text-ink-3">
   <span class="flex items-center gap-1.5">
     <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: var(--color-ok)"></span>
     Current Time
