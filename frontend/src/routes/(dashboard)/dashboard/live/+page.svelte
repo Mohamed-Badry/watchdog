@@ -16,6 +16,7 @@
 
   let frames = $state<any[]>([]);
   let loading = $state(false);
+  let selectedTimestamp = $state<string | null>(null);
 
   async function fetchRecent() {
     loading = true;
@@ -138,7 +139,11 @@
         {:else}
           <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {#each frames as frame (frame.timestamp + frame.norad_id)}
-              <article class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border border-border bg-surface/50 p-4 transition-all hover:border-brand/30">
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+              <article 
+                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/30 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-highlight bg-highlight/5 shadow-md shadow-highlight/10' : 'border-border bg-surface/50'}"
+                onclick={() => selectedTimestamp = selectedTimestamp === frame.timestamp ? null : frame.timestamp}
+              >
                 <!-- Status Indicator Bar -->
                 <div class="absolute inset-y-0 left-0 w-1 {frame.model?.is_anomaly ? 'bg-brand shadow-[0_0_8px_rgba(177,33,66,0.8)]' : 'bg-emerald-500/50'}"></div>
 
@@ -200,6 +205,7 @@
             <AnomalyTimelinePlot
               frames={timelineFrames}
               threshold={frames[0]?.model?.threshold ?? 0.3}
+              {selectedTimestamp}
             />
           </div>
         </div>

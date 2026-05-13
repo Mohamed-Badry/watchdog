@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { Plot, Dot, Line, RuleY } from 'svelteplot';
+  import { Plot, Dot, Line, RuleY, RuleX } from 'svelteplot';
   import { BRAND, MUTED, COMPACT_MARGIN } from '$lib/chart-theme';
 
-  let { frames, threshold } = $props<{
+  let { frames, threshold, selectedTimestamp } = $props<{
     frames: { timestamp: string; anomaly_score: number; is_anomaly: boolean }[];
     threshold: number;
+    selectedTimestamp?: string | null;
   }>();
 
   type PlotFrame = {
@@ -31,11 +32,15 @@
       ...plotData.map((f: PlotFrame) => f.anomaly_score * 1.1)
     )
   );
+
+  let selectedData = $derived(
+    selectedTimestamp ? plotData.filter((d: PlotFrame) => d.timestamp === selectedTimestamp) : []
+  );
 </script>
 
 <div class="h-full w-full">
   <Plot
-    height={200}
+    height={130}
     x={{ type: 'utc', label: false }}
     y={{ label: false, grid: true, domain: [0, yMax] }}
     color={{ domain: [false, true], scheme: [MUTED, BRAND] }}
@@ -58,6 +63,13 @@
          stroke={d => d.is_anomaly ? BRAND : 'none'}
          strokeWidth={d => d.is_anomaly ? 1.5 : 0}
          strokeOpacity={0.4} />
+
+    <!-- Selected dot highlight layer -->
+    {#if selectedTimestamp}
+      <RuleX data={[new Date(selectedTimestamp)]} stroke="#000001" strokeWidth={1.5} strokeOpacity={0.8} strokeDasharray="4 4" />
+      <Dot data={selectedData} x="date" y="anomaly_score"
+           r={7} fill="var(--color-highlight)" stroke="#000001" strokeWidth={2} />
+    {/if}
   </Plot>
 </div>
 
