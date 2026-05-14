@@ -243,10 +243,10 @@ Two distinct environments sharing a single *Shared Core*.
     - *Action:* Train Autoencoder
   ],
   [
-    *B. The Watchdog (Planned)*
-    - Planned live anomaly detection
-    - Target Source: Antenna -> SDR
-    - *Action:* Online inference service not yet implemented
+    *B. The Watchdog (Edge Deployment)*
+    - Live anomaly detection (5 Docker Microservices)
+    - Source: Live Antenna -> SDR -> MQTT
+    - *Action:* FastAPI backend inference & SvelteKit dashboard
   ],
 )
 
@@ -287,10 +287,10 @@ We use the "Shared Core" (`src/gr_sat/telemetry.py`) which acts as the universal
   ],
   [
     *Current Status:*
-    - Core Logic: *Operational for offline processing*
+    - Core Logic: *Operational (Shared Core)*
     - Decoder Ecosystem: *satnogs-decoders*
     - Coverage: *1 production decoder in-repo (UWE-4)*
-    - Online Runtime: *Planned, not implemented*
+    - Online Runtime: *Implemented (FastAPI + TimescaleDB + SvelteKit UI)*
   ],
 )
 
@@ -308,8 +308,8 @@ Because real anomaly data is rare, we validate the model using *Synthetic Fault 
     3. *Sensor Stuck:* Historical notebook experiment, not in current shipped benchmark.
   ],
   [
-    *Planned Edge Targets*
-    For a future online runtime alongside SDR processing.
+    *Edge Targets (Online Runtime)*
+    Integrated with Dockerized Backend / MQTT Broker.
     - *Latency:* target $< 10$ ms per frame.
     - *Memory:* target $< 5$ MB model footprint.
   ],
@@ -473,9 +473,9 @@ A 100% detection rate on extreme faults proves nothing; basic thresholds can cat
 #task-card(
   "2",
   "Stage 1: Overall Score",
-  "The current codebase uses a VAE-only benchmark path.",
-  "Run the VAE and compute MSE + KLD per frame. In the current repo, the operating threshold is still derived inside offline evaluation rather than persisted during training.",
-  "Provides an offline anomaly score for model comparison, not a deployment-ready live threshold.",
+  "The current codebase uses a VAE-only pipeline.",
+  "Run the VAE and compute MSE + KLD per frame. The operating threshold is calibrated during training and persisted in the model metadata artifact.",
+  "Provides a deployment-ready anomaly threshold for real-time inference.",
 )
 
 #v(1em)
@@ -483,13 +483,31 @@ A 100% detection rate on extreme faults proves nothing; basic thresholds can cat
 #task-card(
   "3",
   "Stage 2: Feature Diagnosis",
-  "We still need per-feature attribution after a frame is flagged.",
+  "We need per-feature attribution after a frame is flagged.",
   "Inspect the reconstruction error feature-by-feature and identify the dominant contributor.",
-  "Provides offline subsystem attribution for benchmarked faults.",
+  "Provides real-time subsystem attribution for both dashboards and offline benchmarking.",
+)
+
+== Architecture: The Watchdog Stack
+
+We have deployed the real-time watchdog as a 5-container microservice stack:
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1.5em,
+  [
+    - *MQTT Broker (Mosquitto):* Live telemetry ingestion.
+    - *Database (TimescaleDB):* Time-series telemetry storage.
+    - *Backend API (FastAPI):* Inference and WebSocket streaming.
+    - *Frontend (SvelteKit):* Real-time dashboard and ML insights.
+    - *Simulator:* Replays data to test the pipeline.
+  ],
+  align(center)[
+    #image("architecture_diagrams/architecture_v2_edge_deployment.png", width: 100%)
+  ]
 )
 
 == Conclusion: Current State
 
-1. *Implemented now:* Offline data refinery, VAE training, synthetic-fault benchmarking, and the telemetry inspector.
-2. *Not yet implemented:* Live receiver/inference/alert runtime and persisted operational thresholds.
-3. *Next Step:* Turn the current benchmark scoring contract into a reproducible deployment artifact, then build the online watchdog service.
+1. *Implemented now:* Offline ML pipeline, VAE training, Dockerized 5-component microservice stack, FastAPI backend, and SvelteKit real-time dashboard.
+2. *Next Step:* Integrate live SDR (Software Defined Radio) ingress, expand decoder coverage, and tune production anomaly thresholds based on live operational feedback.

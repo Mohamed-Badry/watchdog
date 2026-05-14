@@ -4,7 +4,7 @@
 **Real-Time Anomaly Detection at the Edge (Target State).**
 Project Watchdog is intended to become a "First Responder" for amateur satellite telemetry, flagging anomalies such as power, thermal, and attitude-related faults during a pass.
 
-**Current repository status:** the offline data pipeline, decoder normalization, model training, synthetic-fault benchmarking, and a minimal deterministic packet-by-packet watchdog runtime are implemented. A richer production runtime with broader ingress adapters and operator UX is still planned.
+**Current repository status:** the offline data pipeline, decoder normalization, model training, synthetic-fault benchmarking, and a Dockerized 5-container microservice stack (Broker, TimescaleDB, FastAPI, SvelteKit, Simulator) are fully implemented.
 
 ---
 
@@ -32,7 +32,7 @@ Based on our Beni Suef ground station and the `satnogs-decoders` library:
 ## 3. High-Level Architecture (The V-Model)
 The intended system is split into two distinct environments that share a common logic core to ensure consistency.
 
-**Implementation note:** the offline "Lab" path is implemented, and the repository now also contains a minimal deterministic "Watchdog" runtime. The fuller service architecture below remains the target state.
+**Implementation note:** Both the offline "Lab" path and the live "Watchdog" deployment (via a 5-component Docker stack) are now fully implemented and integrated.
 
 ### A. "The Lab" (Offline Training Pipeline)
 * **Goal:** Learn "Normal" behavior from historical data.
@@ -79,22 +79,15 @@ These are target metrics for the planned online runtime, not a statement of curr
 1.  **Latency:** Target < 10ms inference per frame.
 2.  **Footprint:** Target < 5MB model file size.
 
-### B. "The Watchdog" (Current Minimal Runtime + Target Online Pipeline)
-* **Goal:** Detect anomalies during a 10-minute satellite pass.
-* **Source:** Local Antenna -> SDR -> `satnogs-decoders`.
+### B. "The Watchdog" (Live Deployment Pipeline)
+* **Goal:** Detect anomalies during a 10-minute satellite pass in real-time.
+* **Source:** Local Antenna -> SDR -> MQTT Broker (`telemetry/live/{norad_id}`).
 * **Current Implemented Runtime:**
-    1. Load a persisted scaler/model/threshold artifact.
-    2. Decode one packet at a time through the shared telemetry core.
-    3. Run deterministic inference on the packet's normalized feature vector.
-    4. Track runtime states: `idle`, `receiving`, `gap`, `degraded`, `alerting`.
-
-* **Target Expanded Process:**
-    1. Demodulate packets.
-    2. Decode & Normalize using `satnogs-decoders` (Kaitai Structs).
-    3. Run Inference using the pre-trained model.
-    4. Alert on high reconstruction error.
-
-**Current limitation:** the implemented runtime is intentionally minimal. It does not yet include richer network ingress adapters, advanced alert transport, or a full operator UI.
+    1. **Ingest:** Telemetry payloads arrive via Eclipse Mosquitto.
+    2. **Backend (FastAPI):** Subscribes, decodes packets via `satnogs-decoders`, normalizes to SI units.
+    3. **Inference:** Runs the pre-trained PyTorch VAE model on normalized feature vectors.
+    4. **Persistence & Alerts:** Scores and payload data are persisted to TimescaleDB, while live updates are pushed to the frontend via WebSockets.
+    5. **Dashboard (SvelteKit):** Provides real-time component health tracking, telemetry visualization, and notebook-style ML insights.
 
 ---
 
@@ -188,9 +181,9 @@ def process_packet(raw_bytes):
 
 ### Not Yet Implemented
 
-*   Richer ingress adapters and network-facing live packet receivers
-*   Advanced alert transport beyond the minimal callback/CLI runtime
-*   Feature-complete operator-facing dashboard / UI integration (the repo now contains a Bun + SvelteKit shell only)
+*   Richer network-facing live packet receivers beyond the simulated antenna
+*   Advanced alert transport integrations (e.g. email, SMS)
+*   Expansion of the decoder ecosystem beyond UWE-4 for real-time coverage
 
 ---
 

@@ -150,10 +150,10 @@ Derived from the academic Typst templates, adapting to web conventions:
 
 ### C. WebGL Background Integration
 The `(landing)/+layout.svelte` will mount a `<canvas>` element fixed to the background (`z-index: -1`). 
-- **Effect:** A grid of antennas that orient themselves to point towards the user's mouse cursor.
+- **Effect:** A grid of antennas that orient themselves to point towards the user's mouse cursor using a non-linear ease-in follow function.
 - **Animation:** They will shoot a small oscillating signal (using the Primary/Secondary CSS variables for colorization).
-- **Performance:** Rendered via WebGL ensuring it does not block the Svelte UI thread.
-- **Scope:** Only active on landing/team pages — disabled inside dashboard.
+- **Performance:** Rendered via WebGL ensuring it does not block the Svelte UI thread. Includes Chromium compatibility fixes for cross-browser stability.
+- **Scope:** Only active on landing/team pages — disabled inside dashboard. Light/Dark mode transitions are handled seamlessly.
 
 ---
 
@@ -167,11 +167,11 @@ The `(landing)/+layout.svelte` will mount a `<canvas>` element fixed to the back
 
 ### Summary of Dashboard Sub-Pages:
 
-1. **Dashboard Home** (`/dashboard`) — Service status grid, active satellites, recent anomalies, throughput sparkline.
+1. **Dashboard Home** (`/dashboard`) — Component health grid with polished aesthetic cards, active satellites, recent anomalies, throughput sparkline.
 2. **Operations** (`/dashboard/operations`) — Pass prediction, skyplots, timeline Gantt, satellite rankings. Powered by Skyfield.
 3. **Live Watcher** (`/dashboard/live`) — Real-time packet decode visualization, feature gauges, anomaly score timeline. Powered by WebSocket.
-4. **EDA & Insights** (`/dashboard/insights`) — Historical telemetry explorer, distributions, eclipse scatter, correlation heatmap, PCA projection.
-5. **ML Lab** (`/dashboard/ml`) — VAE vs Z-Score sensitivity curves, ROC comparisons, score distributions, latent space visualization, threshold tuning.
+4. **EDA & Insights** (`/dashboard/insights`) — Reworked as a notebook-style analysis page. Historical telemetry explorer, distributions, eclipse scatter, correlation heatmap, PCA projection.
+5. **ML Lab** (`/dashboard/ml`) — Reworked as a notebook-style analysis page. VAE vs Z-Score sensitivity curves, ROC comparisons, score distributions, latent space visualization, threshold tuning.
 
 ---
 
