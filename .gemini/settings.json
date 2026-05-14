@@ -1,0 +1,8 @@
+{
+  "hooks": [
+    {
+      "trigger": "AfterTool",
+      "command": "bash .gemini/hooks/after_tool_mutations.sh"
+    }
+  ]
+}

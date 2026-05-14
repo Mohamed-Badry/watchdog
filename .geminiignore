@@ -1,0 +1,28 @@
+# PostgreSQL volume data
+db/data/
+**/.pgdata/
+postgres-data/
+
+# Frontend builds and dependencies
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+**/node_modules/
+**/.svelte-kit/
+**/dist/
+**/.bun/
+
+# Python environments and caches
+**/.venv/
+**/__pycache__/
+**/.ruff_cache/
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Raw MQTT logs and data dumps
+mosquitto/data/
+mosquitto/log/
+**/*.log
+
+# Telemetry/Simulation dumps
+satellite-recordings/
