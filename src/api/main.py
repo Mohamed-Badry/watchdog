@@ -6,6 +6,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from contextlib import asynccontextmanager
 
@@ -45,6 +46,8 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+    # Compress massive JSON payloads (like 10k telemetry frames) to save bandwidth
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

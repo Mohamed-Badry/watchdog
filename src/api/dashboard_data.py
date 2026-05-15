@@ -212,11 +212,54 @@ class DashboardDataRepository:
     ) -> dict[str, Any]:
         df = self._combined_frames(norad_id)
         records = self._sort_recent(df).head(limit)
+        
+        # Optimize by avoiding iterrows
+        records_dict = records.to_dict(orient="records")
+        frames = []
+        
+        for row in records_dict:
+            threshold = None
+            if norad_id is not None:
+                model_status = self.model_status(int(norad_id))
+            else:
+                model_status = self.model_status(int(row["norad_id"]))
+                
+            if model_status.metadata is not None:
+                threshold = _json_value(model_status.metadata.threshold)
+
+            features = {
+                field: _json_value(row.get(field))
+                for field in FEATURE_FIELDS
+                if field in row
+            }
+            quality = {
+                field: _json_value(row.get(field))
+                for field in QUALITY_FIELDS
+                if field in row
+            }
+            if "missing_raw_fields" in quality:
+                quality["missing_raw_fields"] = _missing_fields_value(
+                    quality["missing_raw_fields"]
+                )
+
+            frames.append({
+                "timestamp": _timestamp_iso(row["timestamp"]),
+                "norad_id": int(row["norad_id"]),
+                "source": "historical_processed_csv",
+                "features": features,
+                "quality": quality,
+                "model": {
+                    "anomaly_score": _json_value(row.get("anomaly_score")),
+                    "threshold": threshold,
+                    "is_anomaly": bool(_bool_value(row.get("is_anomaly"))),
+                },
+            })
+
         return {
             "generated_at": _now_iso(),
             "norad_id": norad_id,
             "limit": limit,
-            "frames": [self._frame_record(row) for _, row in records.iterrows()],
+            "frames": frames,
         }
 
     def recent_anomalies(
@@ -231,11 +274,48 @@ class DashboardDataRepository:
             anomalies = df[df["is_anomaly"].fillna(False).astype(bool)]
 
         records = self._sort_recent(anomalies).head(limit)
+        records_dict = records.to_dict(orient="records")
+        anomalies_list = []
+        
+        for row in records_dict:
+            threshold = None
+            if norad_id is not None:
+                model_status = self.model_status(int(norad_id))
+            else:
+                model_status = self.model_status(int(row["norad_id"]))
+                
+            if model_status.metadata is not None:
+                threshold = _json_value(model_status.metadata.threshold)
+
+            features = {
+                field: _json_value(row.get(field))
+                for field in FEATURE_FIELDS
+                if field in row
+            }
+            quality = {
+                field: _json_value(row.get(field))
+                for field in QUALITY_FIELDS
+                if field in row
+            }
+            if "missing_raw_fields" in quality:
+                quality["missing_raw_fields"] = _missing_fields_value(
+                    quality["missing_raw_fields"]
+                )
+                
+            anomalies_list.append({
+                "timestamp": _timestamp_iso(row["timestamp"]),
+                "norad_id": int(row["norad_id"]),
+                "score": _json_value(row.get("anomaly_score")),
+                "threshold": threshold,
+                "features": features,
+                "quality": quality,
+            })
+
         return {
             "generated_at": _now_iso(),
             "norad_id": norad_id,
             "limit": limit,
-            "anomalies": [self._anomaly_record(row) for _, row in records.iterrows()],
+            "anomalies": anomalies_list,
         }
 
     def throughput(

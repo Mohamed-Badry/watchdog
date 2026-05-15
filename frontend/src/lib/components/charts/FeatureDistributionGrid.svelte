@@ -51,7 +51,7 @@
       <div class="mb-2 flex items-baseline justify-between">
         <span class="text-xs font-semibold text-ink-2">{panel.label}</span>
         {#if panel.values.length > 0}
-          <span class="font-mono text-[0.6rem] text-ink-3">
+          <span class="font-mono text-xs text-ink-3">
             μ={panel.stats.mean.toFixed(2)} σ={panel.stats.std.toFixed(2)}
           </span>
         {/if}

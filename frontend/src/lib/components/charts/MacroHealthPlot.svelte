@@ -90,7 +90,7 @@
                 stroke="#4361ee" strokeWidth={1.2}
                 strokeDasharray="5 4" strokeOpacity={0.55} />
         </Plot>
-        <div class="mt-2 flex items-center justify-center gap-5 text-[0.6rem] text-ink-3">
+        <div class="mt-2 flex items-center justify-center gap-5 text-xs text-ink-3">
           <span class="flex items-center gap-1.5">
             <span class="inline-block h-0.5 w-4 rounded" style="background: #4361ee"></span>
             Daily Mean
@@ -129,7 +129,7 @@
         <Line data={tempData.filter(d => !isNaN(d.t_panel))} x="date" y="t_panel"
               stroke="#2ec4b6" strokeWidth={1.8} />
       </Plot>
-      <div class="mt-2 flex items-center justify-center gap-6 text-[0.6rem] text-ink-3">
+      <div class="mt-2 flex items-center justify-center gap-6 text-xs text-ink-3">
         <span class="flex items-center gap-1.5">
           <span class="inline-block h-0.5 w-4 rounded" style="background: #e64848"></span>
           Daily Avg Batt Temp A

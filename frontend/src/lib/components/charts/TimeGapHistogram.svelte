@@ -39,9 +39,9 @@
   );
 </script>
 
-<div class="h-full w-full">
+<div class="w-full">
   {#if gaps().length > 0}
-    <Plot height={240}
+    <Plot height={320}
       x={{ label: 'Seconds Between Frames', nice: true }}
       y={{ label: 'Count', grid: true }}
       marginTop={12} marginRight={12} marginBottom={40} marginLeft={44}>
@@ -55,7 +55,7 @@
              stroke="#e64848" strokeWidth={2}
              strokeDasharray="6 3" strokeOpacity={0.7} />
     </Plot>
-    <div class="mt-2 flex items-center justify-center gap-4 text-[0.6rem] text-ink-3">
+    <div class="mt-2 flex items-center justify-center gap-4 text-xs text-ink-3">
       <span class="flex items-center gap-1.5">
         <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: #e64848; opacity: 0.7"></span>
         Median: {median().toFixed(0)}s

@@ -94,12 +94,6 @@
     }
   }
 
-  $effect(() => {
-    const _n = noradId;
-    const _l = dataLimit;
-    untrack(() => fetchTelemetry());
-  });
-
   // Derive feature arrays from frames
   let featureFrames = $derived(
     telemetryFrames
@@ -177,6 +171,16 @@
           <option value={5000}>5,000 frames</option>
           <option value={10000}>10,000 frames (Full Macro)</option>
         </select>
+      </div>
+
+      <div class="ml-4 border-l border-border pl-4">
+        <button 
+          onclick={fetchTelemetry}
+          disabled={loading}
+          class="flex items-center justify-center rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand/90 disabled:opacity-50"
+        >
+          {loading ? 'Fetching...' : 'Fetch Data'}
+        </button>
       </div>
 
       {#if loading}
@@ -299,7 +303,7 @@
                 <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                 Pearson Correlation Matrix
               </h3>
-              <div class="h-[600px]">
+              <div>
                 <CorrelationHeatmap frames={featureFrames} />
               </div>
             </div>
@@ -329,7 +333,7 @@
                 <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                 Intra-Pass Time Gaps
               </h3>
-              <div class="h-80">
+              <div>
                  <TimeGapHistogram {timestamps} />
               </div>
             </div>

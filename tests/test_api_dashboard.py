@@ -242,10 +242,11 @@ class DashboardApiTests(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_unknown_satellite_returns_404(self):
-        response = await self._get("/api/telemetry/recent", params={"norad_id": 99999})
-
+        response = await self._get(
+            "/api/telemetry/recent", params={"norad_id": 99999}
+        )
         self.assertEqual(response.status_code, 404)
-        self.assertIn("No processed telemetry dataset", response.json()["detail"])
+        self.assertIn("No telemetry data found for NORAD 99999", response.json()["detail"])
 
 
 if __name__ == "__main__":
