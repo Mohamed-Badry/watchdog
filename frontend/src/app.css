@@ -188,6 +188,32 @@ body {
   scrollbar-color: var(--color-border) transparent;
 }
 
+/* ── Typography Overrides ── */
+.prose {
+  color: var(--color-ink-2);
+  max-width: 65ch;
+}
+.prose h1, .prose h2, .prose h3, .prose h4, .prose strong, .prose b {
+  color: var(--color-ink);
+}
+.prose a {
+  color: var(--color-brand);
+}
+.prose code, .prose pre {
+  color: var(--color-ink);
+  background-color: var(--color-surface);
+}
+.prose ul, .prose ol {
+  color: var(--color-ink-2);
+}
+.prose li::marker {
+  color: var(--color-ink-3);
+}
+.prose blockquote {
+  color: var(--color-ink-2);
+  border-left-color: var(--color-brand);
+}
+
 /* ── Bypassing D3-Color for CSS variables ── */
 [stroke="#000001"],
 [fill="#000001"] {
