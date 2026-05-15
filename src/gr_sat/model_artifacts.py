@@ -86,14 +86,17 @@ class ModelArtifactMetadata:
             "test_start": self.test_start,
             "test_end": self.test_end,
             "feature_contract_version": self.feature_contract_version,
-            "diagnosis_feature_names": self.diagnosis_feature_names or list(self.feature_names),
+            "diagnosis_feature_names": self.diagnosis_feature_names
+            or list(self.feature_names),
         }
 
     @classmethod
     def from_dict(cls, payload: dict) -> "ModelArtifactMetadata":
         hydrated = dict(payload)
         default_contract_version = 1
-        if list(hydrated.get("feature_names", [])) == list(DEFAULT_PROFILE.feature_contract.feature_names):
+        if list(hydrated.get("feature_names", [])) == list(
+            DEFAULT_PROFILE.feature_contract.feature_names
+        ):
             default_contract_version = DEFAULT_PROFILE.feature_contract.version
         hydrated.setdefault("feature_contract_version", default_contract_version)
         hydrated.setdefault(
@@ -159,14 +162,18 @@ def split_chronological(
     validation_fraction: float = VALIDATION_SPLIT,
 ) -> ChronologicalSplit:
     if len(df) < 3:
-        raise ValueError("Need at least 3 clean frames for train/validation/test splits.")
+        raise ValueError(
+            "Need at least 3 clean frames for train/validation/test splits."
+        )
 
     if not 0 < train_fraction < 1:
         raise ValueError("train_fraction must be between 0 and 1.")
     if not 0 < validation_fraction < 1:
         raise ValueError("validation_fraction must be between 0 and 1.")
     if train_fraction + validation_fraction >= 1:
-        raise ValueError("train_fraction + validation_fraction must leave room for test data.")
+        raise ValueError(
+            "train_fraction + validation_fraction must leave room for test data."
+        )
 
     df_sorted = df.sort_values("timestamp").reset_index(drop=True).copy()
     n_rows = len(df_sorted)

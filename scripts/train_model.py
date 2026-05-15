@@ -26,6 +26,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
 import warnings
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 from gr_sat.ml_config import (
@@ -49,16 +50,20 @@ from gr_sat.satellite_profiles import (
     get_satellite_profile,
 )
 
-logger.configure(handlers=[
-    {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
-])
+logger.configure(
+    handlers=[
+        {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
+    ]
+)
 
 MODELS_DIR = Path("models")
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DIR = Path("data/processed")
 
 
-def score_scaled_frames(vae: TelemetryVAE, X_scaled, kld_weight=DEFAULT_KLD_WEIGHT) -> np.ndarray:
+def score_scaled_frames(
+    vae: TelemetryVAE, X_scaled, kld_weight=DEFAULT_KLD_WEIGHT
+) -> np.ndarray:
     X_tensor = torch.FloatTensor(X_scaled)
     vae.eval()
     with torch.no_grad():
@@ -75,12 +80,12 @@ def score_scaled_frames(vae: TelemetryVAE, X_scaled, kld_weight=DEFAULT_KLD_WEIG
 
 def train_vae(X_train_scaled, feature_names: list[str], epochs: int = 100):
     logger.info("Training PyTorch Variational Autoencoder (VAE)...")
-    
+
     # 1. Prepare PyTorch Dataset
     X_tensor = torch.FloatTensor(X_train_scaled)
     dataset = TensorDataset(X_tensor)
     dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
-    
+
     # 2. Init Model
     vae = TelemetryVAE(
         input_dim=len(feature_names),
@@ -88,16 +93,16 @@ def train_vae(X_train_scaled, feature_names: list[str], epochs: int = 100):
         latent_dim=LATENT_DIM,
     )
     optimizer = optim.Adam(vae.parameters(), lr=1e-3)
-    
+
     # 3. Training Loop
     vae.train()
-    
+
     for epoch in range(epochs):
         total_loss = 0
         for batch in dataloader:
             x = batch[0]
             optimizer.zero_grad()
-            
+
             recon_x, mu, logvar = vae(x)
             loss = vae_loss(
                 recon_x,
@@ -106,15 +111,17 @@ def train_vae(X_train_scaled, feature_names: list[str], epochs: int = 100):
                 logvar,
                 kld_weight=DEFAULT_KLD_WEIGHT,
             )
-            
+
             loss.backward()
             optimizer.step()
-            
+
             total_loss += loss.item()
-            
+
         if (epoch + 1) % 25 == 0:
-            logger.debug(f"VAE Epoch [{epoch+1}/{epochs}], Loss: {total_loss/len(dataloader):.4f}")
-            
+            logger.debug(
+                f"VAE Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / len(dataloader):.4f}"
+            )
+
     return vae
 
 
@@ -134,14 +141,14 @@ def train_for_satellite(norad_id: str, epochs: int = 100):
     df = pd.read_csv(data_path)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df = df.sort_values("timestamp")
-    
+
     orig_len = len(df)
 
     extreme_mask = build_baseline_mask(df, profile)
     df_clean = df[~extreme_mask].copy()
     complete_mask = feature_completeness_mask(df_clean, feature_names)
     df_trainable = df_clean[complete_mask].copy()
-    
+
     split = split_chronological(df_trainable)
     df_train = split.train
     df_validation = split.validation
@@ -149,14 +156,16 @@ def train_for_satellite(norad_id: str, epochs: int = 100):
 
     X_train = df_train[feature_names].values
     X_validation = df_validation[feature_names].values
-    
+
     logger.info(f"Cleaned extreme rows: {extreme_mask.sum()}")
     logger.info(f"Dropped incomplete feature rows: {(~complete_mask).sum()}")
     logger.info(
         "Chronological split: "
         f"train={len(df_train)} | validation={len(df_validation)} | test={len(df_test)}"
     )
-    logger.info(f"Training on {len(X_train)} frames ({len(X_train) / orig_len * 100:.1f}%)")
+    logger.info(
+        f"Training on {len(X_train)} frames ({len(X_train) / orig_len * 100:.1f}%)"
+    )
 
     # Train Scaler
     scaler = StandardScaler()
@@ -196,9 +205,12 @@ def train_for_satellite(norad_id: str, epochs: int = 100):
     logger.info("[bold green]Training pipeline completed successfully![/bold green]")
     return metadata
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--norad", type=str, required=True, help="Specific NORAD ID to process")
+    parser.add_argument(
+        "--norad", type=str, required=True, help="Specific NORAD ID to process"
+    )
     parser.add_argument("--epochs", type=int, default=100, help="Training epochs")
     args = parser.parse_args()
     train_for_satellite(args.norad, epochs=args.epochs)

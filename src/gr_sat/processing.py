@@ -53,7 +53,9 @@ def frame_payload_fingerprint(
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def deduplicate_processed_frames(df_processed: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
+def deduplicate_processed_frames(
+    df_processed: pd.DataFrame,
+) -> tuple[pd.DataFrame, dict[str, int]]:
     if df_processed.empty:
         return df_processed.copy(), {
             "input_rows": 0,
@@ -77,7 +79,9 @@ def deduplicate_processed_frames(df_processed: pd.DataFrame) -> tuple[pd.DataFra
 
     exact_duplicate_mask = working.duplicated(subset=["_dedupe_key"], keep="first")
 
-    per_timestamp_payloads = working.groupby("_timestamp_key")["_payload_fingerprint"].nunique()
+    per_timestamp_payloads = working.groupby("_timestamp_key")[
+        "_payload_fingerprint"
+    ].nunique()
     same_timestamp_multi_payload_rows = int(
         working["_timestamp_key"].map(per_timestamp_payloads).gt(1).sum()
     )
@@ -87,7 +91,9 @@ def deduplicate_processed_frames(df_processed: pd.DataFrame) -> tuple[pd.DataFra
     if "observation_id" in working.columns:
         observed = working[working["observation_id"].notna()]
         if not observed.empty:
-            per_observation_payloads = observed.groupby("observation_id")["_payload_fingerprint"].nunique()
+            per_observation_payloads = observed.groupby("observation_id")[
+                "_payload_fingerprint"
+            ].nunique()
             same_observation_multi_payload_rows = int(
                 observed["observation_id"].map(per_observation_payloads).gt(1).sum()
             )
@@ -95,7 +101,14 @@ def deduplicate_processed_frames(df_processed: pd.DataFrame) -> tuple[pd.DataFra
     deduplicated = (
         working.loc[~exact_duplicate_mask]
         .sort_values(["timestamp", "_row_order"])
-        .drop(columns=["_row_order", "_timestamp_key", "_payload_fingerprint", "_dedupe_key"])
+        .drop(
+            columns=[
+                "_row_order",
+                "_timestamp_key",
+                "_payload_fingerprint",
+                "_dedupe_key",
+            ]
+        )
         .reset_index(drop=True)
     )
 
@@ -148,9 +161,9 @@ def annotate_pass_and_cadence_metadata(
         if len(timestamps) > 1
         else 0.0
     )
-    working["pass_median_cadence_sec"] = working.groupby("pass_id")["timestamp"].transform(
-        _median_positive_cadence_seconds
-    )
+    working["pass_median_cadence_sec"] = working.groupby("pass_id")[
+        "timestamp"
+    ].transform(_median_positive_cadence_seconds)
     working["cadence_reference_sec"] = working["pass_median_cadence_sec"]
 
     cadence_tolerance = (
@@ -158,29 +171,47 @@ def annotate_pass_and_cadence_metadata(
         .mul(cadence_tolerance_ratio)
         .clip(lower=cadence_min_tolerance_seconds)
     )
-    has_reference = working["cadence_reference_sec"].notna() & working["cadence_reference_sec"].gt(0)
-    within_pass = working["seconds_since_prev"].notna() & working["seconds_since_prev"].le(pass_gap_seconds)
+    has_reference = working["cadence_reference_sec"].notna() & working[
+        "cadence_reference_sec"
+    ].gt(0)
+    within_pass = working["seconds_since_prev"].notna() & working[
+        "seconds_since_prev"
+    ].le(pass_gap_seconds)
 
     working["sampling_irregular"] = (
         within_pass
         & has_reference
-        & (working["seconds_since_prev"] - working["cadence_reference_sec"]).abs().gt(cadence_tolerance)
+        & (working["seconds_since_prev"] - working["cadence_reference_sec"])
+        .abs()
+        .gt(cadence_tolerance)
     )
     working["dropped_packet_suspect"] = (
         within_pass
         & has_reference
-        & working["seconds_since_prev"].gt(working["cadence_reference_sec"] + cadence_tolerance)
+        & working["seconds_since_prev"].gt(
+            working["cadence_reference_sec"] + cadence_tolerance
+        )
     )
-    working["same_timestamp_collision"] = within_pass & working["seconds_since_prev"].eq(0)
+    working["same_timestamp_collision"] = within_pass & working[
+        "seconds_since_prev"
+    ].eq(0)
 
     if "batt_voltage" in working.columns:
-        working["volt_rolling_std"] = working.groupby("pass_id")["batt_voltage"].transform(
-            lambda series: series.rolling(rolling_window, min_periods=1).std().fillna(0.0)
+        working["volt_rolling_std"] = working.groupby("pass_id")[
+            "batt_voltage"
+        ].transform(
+            lambda series: series.rolling(rolling_window, min_periods=1)
+            .std()
+            .fillna(0.0)
         )
 
     if "temp_batt_a" in working.columns:
-        working["temp_rolling_std"] = working.groupby("pass_id")["temp_batt_a"].transform(
-            lambda series: series.rolling(rolling_window, min_periods=1).std().fillna(0.0)
+        working["temp_rolling_std"] = working.groupby("pass_id")[
+            "temp_batt_a"
+        ].transform(
+            lambda series: series.rolling(rolling_window, min_periods=1)
+            .std()
+            .fillna(0.0)
         )
 
     return working

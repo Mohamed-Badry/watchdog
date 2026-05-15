@@ -41,8 +41,8 @@ class TelemetryFrame:
     dest_callsign: Optional[str] = None
 
     # --- Power System ---
-    batt_voltage: Optional[float] = None    # Volts (V) — Combined/averaged
-    batt_current: Optional[float] = None    # Amps (A) — Combined (+Charge / -Discharge)
+    batt_voltage: Optional[float] = None  # Volts (V) — Combined/averaged
+    batt_current: Optional[float] = None  # Amps (A) — Combined (+Charge / -Discharge)
     batt_a_voltage: Optional[float] = None  # Volts (V) — Battery A
     batt_b_voltage: Optional[float] = None  # Volts (V) — Battery B
     batt_a_current: Optional[float] = None  # Amps (A) — Battery A
@@ -50,20 +50,17 @@ class TelemetryFrame:
     power_consumption: Optional[float] = None  # Watts (W)
 
     # --- Thermal ---
-    temp_obc: Optional[float] = None        # Celsius (°C) — Main Computer
-    temp_batt_a: Optional[float] = None     # Celsius (°C) — Battery A
-    temp_batt_b: Optional[float] = None     # Celsius (°C) — Battery B
-    temp_panel_z: Optional[float] = None    # Celsius (°C) — Solar Panel Z (eclipse proxy)
+    temp_obc: Optional[float] = None  # Celsius (°C) — Main Computer
+    temp_batt_a: Optional[float] = None  # Celsius (°C) — Battery A
+    temp_batt_b: Optional[float] = None  # Celsius (°C) — Battery B
+    temp_panel_z: Optional[float] = None  # Celsius (°C) — Solar Panel Z (eclipse proxy)
 
     # --- Status ---
-    uptime: Optional[int] = None            # Seconds since boot
+    uptime: Optional[int] = None  # Seconds since boot
 
     def to_dict(self) -> Dict[str, Any]:
         """Returns a flat dictionary suitable for CSV/pandas, excluding internal fields."""
-        return {
-            f.name: getattr(self, f.name)
-            for f in fields(self)
-        }
+        return {f.name: getattr(self, f.name) for f in fields(self)}
 
     @classmethod
     def field_names(cls) -> set:
@@ -196,10 +193,14 @@ class DecoderRegistry:
     @classmethod
     def register(cls, norad_id: int):
         """Decorator to register a decoder class for a specific satellite."""
+
         def wrapper(decoder_cls: Type[BaseDecoder]):
             cls._registry[norad_id] = decoder_cls
-            logger.debug(f"Registered decoder for NORAD {norad_id}: {decoder_cls.__name__}")
+            logger.debug(
+                f"Registered decoder for NORAD {norad_id}: {decoder_cls.__name__}"
+            )
             return decoder_cls
+
         return wrapper
 
     @classmethod

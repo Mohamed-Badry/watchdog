@@ -26,7 +26,6 @@ from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neural_network import MLPRegressor
-from sklearn.metrics import roc_auc_score, roc_curve
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -48,7 +47,13 @@ train_size = int(len(df_clean) * 0.8)
 df_train = df_clean.iloc[:train_size].copy()
 df_test = df_clean.iloc[train_size:].copy()
 
-FEATURES = ["batt_voltage", "batt_current", "temp_batt_a", "temp_batt_b", "temp_panel_z"]
+FEATURES = [
+    "batt_voltage",
+    "batt_current",
+    "temp_batt_a",
+    "temp_batt_b",
+    "temp_panel_z",
+]
 X_train = df_train[FEATURES].values
 X_test = df_test[FEATURES].values
 

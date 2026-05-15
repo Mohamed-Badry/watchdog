@@ -23,3 +23,6 @@ platforms = ["linux-64"]
 gr_sat = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+
+[tool.ruff.lint]
+ignore = ["E701", "E402", "E722", "F821", "F841"]

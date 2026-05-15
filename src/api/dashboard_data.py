@@ -121,7 +121,9 @@ class DashboardDataRepository:
             if processed_dir is not None
             else self.root / "data" / "processed"
         )
-        self.models_dir = Path(models_dir) if models_dir is not None else self.root / "models"
+        self.models_dir = (
+            Path(models_dir) if models_dir is not None else self.root / "models"
+        )
         self._frames_cache: dict[int, pd.DataFrame] = {}
         self._model_cache: dict[int, ModelStatus] = {}
 
@@ -144,8 +146,7 @@ class DashboardDataRepository:
             "generated_at": _now_iso(),
             "components": components,
             "supported_satellites": [
-                self._satellite_identity(summary["norad_id"])
-                for summary in satellites
+                self._satellite_identity(summary["norad_id"]) for summary in satellites
             ],
             "links": {
                 "dashboard_summary": "/api/dashboard/summary",
@@ -159,7 +160,9 @@ class DashboardDataRepository:
     def dashboard_summary(self) -> dict[str, Any]:
         satellites = self.satellite_summaries()
         frame_count = sum(summary["dataset"]["row_count"] for summary in satellites)
-        anomaly_count = sum(summary["dataset"]["anomaly_count"] for summary in satellites)
+        anomaly_count = sum(
+            summary["dataset"]["anomaly_count"] for summary in satellites
+        )
         partial_frame_count = sum(
             summary["dataset"]["partial_frame_count"] for summary in satellites
         )
@@ -277,7 +280,9 @@ class DashboardDataRepository:
             "bucket": bucket,
             "limit": limit,
             "total_frames": int(len(df)),
-            "returned_frame_count": int(grouped["frame_count"].sum()) if not grouped.empty else 0,
+            "returned_frame_count": int(grouped["frame_count"].sum())
+            if not grouped.empty
+            else 0,
             "buckets": buckets,
         }
 
@@ -302,8 +307,10 @@ class DashboardDataRepository:
         if not -180.0 <= lon <= 180.0:
             raise ValueError("Longitude must be between -180 and 180 degrees.")
         if not -500.0 <= elevation_m <= 10000.0:
-            raise ValueError("Ground station elevation must be between -500 and 10000 meters.")
-            
+            raise ValueError(
+                "Ground station elevation must be between -500 and 10000 meters."
+            )
+
         st_data = {
             "id": "custom",
             "label": station_label or "Custom Ground Station",
@@ -326,7 +333,7 @@ class DashboardDataRepository:
         ts = load.timescale()
         t0 = ts.from_datetime(now)
         t1 = ts.from_datetime(now + timedelta(hours=lookahead_hours))
-        
+
         # Load Celestrak TLEs using skyfield
         url = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
         try:
@@ -353,14 +360,16 @@ class DashboardDataRepository:
                 sample_t = ts.from_datetime(sample_dt)
                 subpoint = sat.at(sample_t).subpoint()
                 alt, az, distance = (sat - gs).at(sample_t).altaz()
-                track.append({
-                    "time": _timestamp_iso(sample_dt),
-                    "lat": round(subpoint.latitude.degrees, 4),
-                    "lon": round(subpoint.longitude.degrees, 4),
-                    "elevation": round(alt.degrees, 1),
-                    "azimuth": round(az.degrees, 1),
-                    "range_km": round(distance.km, 1),
-                })
+                track.append(
+                    {
+                        "time": _timestamp_iso(sample_dt),
+                        "lat": round(subpoint.latitude.degrees, 4),
+                        "lon": round(subpoint.longitude.degrees, 4),
+                        "elevation": round(alt.degrees, 1),
+                        "azimuth": round(az.degrees, 1),
+                        "range_km": round(distance.km, 1),
+                    }
+                )
             return track
 
         passes = []
@@ -368,52 +377,52 @@ class DashboardDataRepository:
             sat_id = sat_info["norad_id"]
             if sat_id not in by_id:
                 continue
-            
+
             sat = by_id[sat_id]
             t, events = sat.find_events(gs, t0, t1, altitude_degrees=0.0)
-            
+
             for i in range(len(events)):
                 if events[i] == 1:  # culmination
                     t_peak = t[i]
                     alt, az, dist = (sat - gs).at(t_peak).altaz()
-                    
+
                     if alt.degrees >= min_elevation:
                         t_rise = None
                         for j in range(i, -1, -1):
                             if events[j] == 0:
                                 t_rise = t[j]
                                 break
-                        
+
                         t_set = None
                         for j in range(i, len(events)):
                             if events[j] == 2:
                                 t_set = t[j]
                                 break
-                        
+
                         if t_rise is not None and t_set is not None:
                             # Determine general direction
                             start_az = (sat - gs).at(t_rise).altaz()[1].degrees
                             end_az = (sat - gs).at(t_set).altaz()[1].degrees
-                            
+
                             # Simple heuristic for direction
                             direction = "N->S" if end_az > start_az else "S->N"
-                            if abs(start_az - end_az) > 180: # cross 360
+                            if abs(start_az - end_az) > 180:  # cross 360
                                 direction = "S->N" if end_az < start_az else "N->S"
-                                
+
                             pass_record = {
                                 "satellite": sat_info["name"],
                                 "norad_id": sat_id,
                                 "aos": _timestamp_iso(t_rise.utc_datetime()),
                                 "los": _timestamp_iso(t_set.utc_datetime()),
                                 "max_elevation": round(alt.degrees, 1),
-                                "direction": direction
+                                "direction": direction,
                             }
                             if include_tracks:
                                 pass_record["track"] = sample_track(sat, t_rise, t_set)
                             passes.append(pass_record)
-                            
+
         passes.sort(key=lambda p: p["aos"])
-            
+
         return {
             "ground_station": {
                 "id": st_data["id"],
@@ -424,7 +433,7 @@ class DashboardDataRepository:
             },
             "lookahead_hours": lookahead_hours,
             "min_elevation": min_elevation,
-            "passes": passes
+            "passes": passes,
         }
 
     def sensitivity_sweep(self, norad_id: int) -> dict[str, Any]:
@@ -434,48 +443,52 @@ class DashboardDataRepository:
 
         model = self.model_status(sat_id)
         current_threshold = model.metadata.threshold if model.metadata else 0.5
-        
+
         # Simulated sweep data
         sweep = []
         roc = []
         for i in range(1, 100):
             thresh = i / 100.0
-            sweep.append({
-                "threshold": thresh,
-                "f1_score": 1.0 - abs(thresh - 0.5),
-                "precision": thresh,
-                "recall": 1.0 - thresh
-            })
-            roc.append({
-                "fpr": 1.0 - thresh,
-                "tpr": 1.0 - (thresh * 0.5)
-            })
+            sweep.append(
+                {
+                    "threshold": thresh,
+                    "f1_score": 1.0 - abs(thresh - 0.5),
+                    "precision": thresh,
+                    "recall": 1.0 - thresh,
+                }
+            )
+            roc.append({"fpr": 1.0 - thresh, "tpr": 1.0 - (thresh * 0.5)})
 
         return {
             "norad_id": sat_id,
             "current_threshold": current_threshold,
             "sweep": sweep,
-            "roc": roc
+            "roc": roc,
         }
 
     def frames_for(self, norad_id: int) -> pd.DataFrame:
         sat_id = int(norad_id)
-        
+
         if sat_id not in self._frames_cache:
             dfs = []
-            
+
             # 1. Load from Historical CSV
             path = self.processed_dir / f"{sat_id}.csv"
             if path.exists():
                 try:
                     csv_df = pd.read_csv(path)
                     if "timestamp" in csv_df.columns:
-                        csv_df["timestamp"] = pd.to_datetime(csv_df["timestamp"], utc=True)
+                        csv_df["timestamp"] = pd.to_datetime(
+                            csv_df["timestamp"], utc=True
+                        )
                         csv_df["norad_id"] = sat_id
                         dfs.append(csv_df)
                 except Exception as e:
                     import logging
-                    logging.getLogger("DashboardDataRepository").warning(f"Failed to load CSV for {sat_id}: {e}")
+
+                    logging.getLogger("DashboardDataRepository").warning(
+                        f"Failed to load CSV for {sat_id}: {e}"
+                    )
 
             # 2. Load from Live Database
             try:
@@ -486,13 +499,18 @@ class DashboardDataRepository:
                     from database import get_engine
                     from models import TelemetryFrame, RawFrame
                 from sqlmodel import Session, select
-                
+
                 engine = get_engine()
                 if engine:
                     with Session(engine) as session:
-                        statement = select(TelemetryFrame, RawFrame).join(RawFrame, TelemetryFrame.raw_frame_id == RawFrame.id).where(TelemetryFrame.norad_id == sat_id).order_by(TelemetryFrame.timestamp.asc())
+                        statement = (
+                            select(TelemetryFrame, RawFrame)
+                            .join(RawFrame, TelemetryFrame.raw_frame_id == RawFrame.id)
+                            .where(TelemetryFrame.norad_id == sat_id)
+                            .order_by(TelemetryFrame.timestamp.asc())
+                        )
                         results = session.exec(statement).all()
-                        
+
                     if results:
                         rows = []
                         for tf, rf in results:
@@ -506,27 +524,36 @@ class DashboardDataRepository:
                                 "snr": rf.snr,
                                 "anomaly_score": tf.anomaly_score,
                                 "is_anomaly": tf.is_anomaly,
-                                "missing_fields": tf.missing_fields
+                                "missing_fields": tf.missing_fields,
                             }
                             if isinstance(tf.features, dict):
                                 row.update(tf.features)
                             rows.append(row)
-                        
+
                         db_df = pd.DataFrame(rows)
-                        db_df["timestamp"] = pd.to_datetime(db_df["timestamp"], utc=True)
+                        db_df["timestamp"] = pd.to_datetime(
+                            db_df["timestamp"], utc=True
+                        )
                         dfs.append(db_df)
             except Exception as e:
                 import logging
-                logging.getLogger("DashboardDataRepository").warning(f"Failed to query DB for {sat_id}: {e}")
-                
+
+                logging.getLogger("DashboardDataRepository").warning(
+                    f"Failed to query DB for {sat_id}: {e}"
+                )
+
             if not dfs:
-                raise KeyError(f"No telemetry data found for NORAD {sat_id} in CSV or Database.")
+                raise KeyError(
+                    f"No telemetry data found for NORAD {sat_id} in CSV or Database."
+                )
 
             # Combine, normalize, and cache
             df = pd.concat(dfs, ignore_index=True) if len(dfs) > 1 else dfs[0]
             df = df.drop_duplicates(subset=["timestamp"], keep="last")
             df = self._normalize_frame_columns(sat_id, df)
-            self._frames_cache[sat_id] = df.sort_values("timestamp").reset_index(drop=True)
+            self._frames_cache[sat_id] = df.sort_values("timestamp").reset_index(
+                drop=True
+            )
 
         return self._frames_cache[sat_id].copy()
 
@@ -552,9 +579,7 @@ class DashboardDataRepository:
                 return self._model_cache[sat_id]
 
             missing = [
-                str(path)
-                for path in (paths.scaler, paths.weights)
-                if not path.exists()
+                str(path) for path in (paths.scaler, paths.weights) if not path.exists()
             ]
             if missing:
                 self._model_cache[sat_id] = ModelStatus(
@@ -630,7 +655,9 @@ class DashboardDataRepository:
                 "is_anomaly" not in df.columns or working["is_anomaly"].isna().any()
             )
             if missing_anomaly_flags:
-                working["is_anomaly"] = working["anomaly_score"].gt(threshold).fillna(False)
+                working["is_anomaly"] = (
+                    working["anomaly_score"].gt(threshold).fillna(False)
+                )
 
         return working
 
@@ -643,13 +670,17 @@ class DashboardDataRepository:
         assert model_status.metadata is not None
         working = df.copy()
         try:
-            scaler, model, metadata = load_model_artifacts(str(norad_id), self.models_dir)
+            scaler, model, metadata = load_model_artifacts(
+                str(norad_id), self.models_dir
+            )
             feature_names = list(metadata.feature_names)
             complete_mask = working[feature_names].notna().all(axis=1)
             if not complete_mask.any():
                 return working
 
-            feature_matrix = working.loc[complete_mask, feature_names].astype(float).to_numpy()
+            feature_matrix = (
+                working.loc[complete_mask, feature_names].astype(float).to_numpy()
+            )
             scaled = scaler.transform(feature_matrix)
             x_tensor = torch.FloatTensor(scaled)
             model.eval()
@@ -664,7 +695,9 @@ class DashboardDataRepository:
                 ).numpy()
 
             working.loc[complete_mask, "anomaly_score"] = scores
-            working["is_anomaly"] = working["anomaly_score"].gt(metadata.threshold).fillna(False)
+            working["is_anomaly"] = (
+                working["anomaly_score"].gt(metadata.threshold).fillna(False)
+            )
         except Exception as exc:
             self._model_cache[int(norad_id)] = ModelStatus(
                 status="error",
@@ -683,7 +716,9 @@ class DashboardDataRepository:
             name = profile.name
             feature_contract_version = profile.feature_contract.version
             feature_names = list(profile.feature_contract.feature_names)
-            diagnosis_feature_names = list(profile.feature_contract.diagnosis_feature_names)
+            diagnosis_feature_names = list(
+                profile.feature_contract.diagnosis_feature_names
+            )
         except KeyError:
             name = f"NORAD {sat_id}"
             feature_contract_version = None
@@ -713,11 +748,11 @@ class DashboardDataRepository:
                 "latest_timestamp": None,
             }
 
-        complete = df.get("frame_is_complete", pd.Series(True, index=df.index)).map(_bool_value)
+        complete = df.get("frame_is_complete", pd.Series(True, index=df.index)).map(
+            _bool_value
+        )
         pass_count = (
-            int(df["pass_id"].dropna().nunique())
-            if "pass_id" in df.columns
-            else 0
+            int(df["pass_id"].dropna().nunique()) if "pass_id" in df.columns else 0
         )
         return {
             "status": "available",

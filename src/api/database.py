@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from urllib.parse import urlsplit, urlunsplit
 from sqlmodel import create_engine, Session
 
+
 @dataclass(frozen=True)
 class DatabaseSettings:
     url: str | None
@@ -26,8 +27,10 @@ class DatabaseSettings:
         user = credentials.split(":", 1)[0]
         return urlunsplit(parsed._replace(netloc=f"{user}:***@{host}"))
 
+
 def load_database_settings() -> DatabaseSettings:
     return DatabaseSettings(url=os.getenv("DATABASE_URL"))
+
 
 def get_engine():
     settings = load_database_settings()
@@ -36,6 +39,7 @@ def get_engine():
         url = settings.url.replace("postgres://", "postgresql://")
         return create_engine(url, pool_pre_ping=True)
     return None
+
 
 def database_status(settings: DatabaseSettings | None = None) -> dict:
     db_settings = settings or load_database_settings()
@@ -52,6 +56,7 @@ def database_status(settings: DatabaseSettings | None = None) -> dict:
     detail = "DATABASE_URL is configured for the live TimescaleDB service."
     try:
         from sqlalchemy import text
+
         engine = get_engine()
         with Session(engine) as session:
             session.exec(text("SELECT 1"))

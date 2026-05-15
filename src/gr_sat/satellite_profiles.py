@@ -120,7 +120,6 @@ def feature_completeness_mask(
     missing_columns = [name for name in required if name not in df.columns]
     if missing_columns:
         raise ValueError(
-            "Missing required feature columns: "
-            + ", ".join(sorted(missing_columns))
+            "Missing required feature columns: " + ", ".join(sorted(missing_columns))
         )
     return df[required].notna().all(axis=1)

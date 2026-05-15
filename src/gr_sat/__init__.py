@@ -12,6 +12,11 @@ Key components:
   - decoders/: Satellite-specific decoder implementations.
 """
 
-from .telemetry import TelemetryFrame, DecoderRegistry, process_frame, process_frame_result
+from .telemetry import (
+    TelemetryFrame,
+    DecoderRegistry,
+    process_frame,
+    process_frame_result,
+)
 
 __all__ = ["TelemetryFrame", "DecoderRegistry", "process_frame", "process_frame_result"]

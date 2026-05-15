@@ -45,9 +45,11 @@ INTERIM_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 # --- Logging ---
-logger.configure(handlers=[
-    {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
-])
+logger.configure(
+    handlers=[
+        {"sink": RichHandler(show_time=False, markup=True), "format": "{message}"}
+    ]
+)
 
 
 def load_raw_frames(sat_dir: Path) -> list[dict]:
@@ -66,10 +68,7 @@ def load_raw_frames(sat_dir: Path) -> list[dict]:
 def _log_failure_breakdown(stage_name: str, counts: Counter) -> None:
     if not counts:
         return
-    breakdown = ", ".join(
-        f"{code}={count}"
-        for code, count in sorted(counts.items())
-    )
+    breakdown = ", ".join(f"{code}={count}" for code, count in sorted(counts.items()))
     logger.info(f"{stage_name} failure breakdown: {breakdown}")
 
 
@@ -92,8 +91,7 @@ def process_satellite(norad_id: str):
     if not decoder:
         supported = DecoderRegistry.list_supported()
         logger.error(
-            f"No decoder registered for NORAD {norad_id}. "
-            f"Supported: {supported}"
+            f"No decoder registered for NORAD {norad_id}. Supported: {supported}"
         )
         return
 
@@ -280,7 +278,8 @@ def main():
     else:
         # Interactive: list available satellites
         sat_dirs = sorted(
-            d.name for d in RAW_DIR.iterdir()
+            d.name
+            for d in RAW_DIR.iterdir()
             if d.is_dir() and DecoderRegistry.get_decoder(int(d.name))
         )
         if not sat_dirs:

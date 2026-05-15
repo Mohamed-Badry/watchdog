@@ -52,7 +52,13 @@ INTERIM_PATH = INTERIM_DIR / "43880.csv"
 PROCESSED_PATH = PROCESSED_DIR / "43880.csv"
 
 # --- ML Features (established in prior EDA) ---
-ML_FEATURES = ["batt_voltage", "batt_current", "temp_batt_a", "temp_batt_b", "temp_panel_z"]
+ML_FEATURES = [
+    "batt_voltage",
+    "batt_current",
+    "temp_batt_a",
+    "temp_batt_b",
+    "temp_panel_z",
+]
 
 # --- Plot Style ---
 plt.style.use("ggplot")
@@ -102,7 +108,9 @@ print("PIPELINE OVERVIEW")
 print("=" * 60)
 print(f"  Interim:   {len(df_interim):>6} rows × {len(df_interim.columns)} columns")
 print(f"  Processed: {len(df):>6} rows × {len(df.columns)} columns")
-print(f"  Row loss:  {len(df_interim) - len(df):>6} rows ({(len(df_interim) - len(df)) / len(df_interim) * 100:.1f}%)")
+print(
+    f"  Row loss:  {len(df_interim) - len(df):>6} rows ({(len(df_interim) - len(df)) / len(df_interim) * 100:.1f}%)"
+)
 print(f"  Date range: {df['timestamp'].min()} → {df['timestamp'].max()}")
 
 # %% [markdown]
@@ -113,11 +121,26 @@ print(f"  Date range: {df['timestamp'].min()} → {df['timestamp'].max()}")
 # %%
 # Merge on timestamp for spot-checking
 df_check = pd.merge(
-    df_interim[["timestamp", "beacon_payload_batt_a_voltage", "beacon_payload_batt_a_current",
-                "beacon_payload_batt_a_temp", "beacon_payload_panel_pos_z_temp",
-                "beacon_payload_power_consumption"]],
-    df[["timestamp", "batt_a_voltage", "batt_a_current", "temp_batt_a", "temp_panel_z",
-        "power_consumption"]],
+    df_interim[
+        [
+            "timestamp",
+            "beacon_payload_batt_a_voltage",
+            "beacon_payload_batt_a_current",
+            "beacon_payload_batt_a_temp",
+            "beacon_payload_panel_pos_z_temp",
+            "beacon_payload_power_consumption",
+        ]
+    ],
+    df[
+        [
+            "timestamp",
+            "batt_a_voltage",
+            "batt_a_current",
+            "temp_batt_a",
+            "temp_panel_z",
+            "power_consumption",
+        ]
+    ],
     on="timestamp",
     how="inner",
 )
@@ -158,18 +181,24 @@ print(f"\n{'ALL CONVERSIONS CORRECT ✅' if all_pass else 'CONVERSION ERRORS FOU
 interim_ts_dupes = df_interim[df_interim.duplicated(subset=["timestamp"], keep=False)]
 n_dupe_groups = interim_ts_dupes.groupby("timestamp").ngroups
 
-print(f"DEDUPLICATION AUDIT")
-print(f"-" * 60)
-print(f"  Timestamp duplicates in interim: {len(interim_ts_dupes)} rows in {n_dupe_groups} groups")
+print("DEDUPLICATION AUDIT")
+print("-" * 60)
+print(
+    f"  Timestamp duplicates in interim: {len(interim_ts_dupes)} rows in {n_dupe_groups} groups"
+)
 
 if n_dupe_groups > 0:
     # Show a few examples: do the duplicate rows have different values?
     example_ts = interim_ts_dupes["timestamp"].unique()[:3]
     for ts in example_ts:
         group = interim_ts_dupes[interim_ts_dupes["timestamp"] == ts]
-        cols_to_show = ["timestamp", "beacon_payload_batt_a_voltage",
-                        "beacon_payload_batt_a_current", "beacon_payload_uptime",
-                        "observation_id"]
+        cols_to_show = [
+            "timestamp",
+            "beacon_payload_batt_a_voltage",
+            "beacon_payload_batt_a_current",
+            "beacon_payload_uptime",
+            "observation_id",
+        ]
         cols_avail = [c for c in cols_to_show if c in group.columns]
         print(f"\n  Example duplicate group (ts={ts}):")
         print(group[cols_avail].to_string(index=False))
@@ -177,14 +206,18 @@ if n_dupe_groups > 0:
         # Check if values are identical
         payload_cols = [c for c in group.columns if "beacon_payload" in c]
         all_same = group[payload_cols].nunique().max() <= 1
-        print(f"  → Payload values identical: {'Yes (safe to dedup)' if all_same else 'NO — different observations!'}")
+        print(
+            f"  → Payload values identical: {'Yes (safe to dedup)' if all_same else 'NO — different observations!'}"
+        )
 
 # Also check: are the interim rows that didn't make it to processed all decode failures?
 interim_decoded_ts = set(df_interim["timestamp"])
 processed_ts = set(df["timestamp"])
 in_interim_not_processed = interim_decoded_ts - processed_ts
-print(f"\n  Timestamps in interim but not in processed: {len(in_interim_not_processed)}")
-print(f"  (These are the rows removed by deduplication)")
+print(
+    f"\n  Timestamps in interim but not in processed: {len(in_interim_not_processed)}"
+)
+print("  (These are the rows removed by deduplication)")
 
 # %% [markdown]
 # ### 1.3 Derived Field Verification
@@ -199,7 +232,9 @@ print("-" * 60)
 # Check batt_voltage = mean(a, b)
 expected_v = (df["batt_a_voltage"] + df["batt_b_voltage"]) / 2.0
 v_match = np.allclose(expected_v, df["batt_voltage"], atol=1e-6)
-print(f"  {'✅' if v_match else '❌'} batt_voltage = mean(batt_a_voltage, batt_b_voltage)")
+print(
+    f"  {'✅' if v_match else '❌'} batt_voltage = mean(batt_a_voltage, batt_b_voltage)"
+)
 
 # Check batt_current = a + b
 expected_i = df["batt_a_current"] + df["batt_b_current"]
@@ -249,14 +284,25 @@ for m, count in monthly.items():
 # %%
 # Feature distribution plots
 fig, axes = plt.subplots(2, 3, figsize=(16, 9))
-fig.suptitle("UWE-4 Feature Distributions (10,941 frames, 7+ months)", fontsize=14, fontweight="bold")
+fig.suptitle(
+    "UWE-4 Feature Distributions (10,941 frames, 7+ months)",
+    fontsize=14,
+    fontweight="bold",
+)
 
 for i, feat in enumerate(ML_FEATURES):
     ax = axes.flat[i]
     col = df[feat]
 
     # Histogram + KDE
-    sns.histplot(col, bins=60, kde=True, ax=ax, color=sns.color_palette("viridis", 5)[i], alpha=0.7)
+    sns.histplot(
+        col,
+        bins=60,
+        kde=True,
+        ax=ax,
+        color=sns.color_palette("viridis", 5)[i],
+        alpha=0.7,
+    )
 
     # Mark the 1st/99th percentile range
     p1, p99 = col.quantile(0.01), col.quantile(0.99)
@@ -285,15 +331,35 @@ print("-" * 60)
 v_extreme = df[df["batt_voltage"] > 5]
 print(f"\n  batt_voltage > 5V: {len(v_extreme)} rows")
 if len(v_extreme) > 0:
-    print(v_extreme[["timestamp", "batt_voltage", "batt_a_voltage", "batt_b_voltage",
-                      "batt_current", "temp_panel_z"]].to_string(index=False))
+    print(
+        v_extreme[
+            [
+                "timestamp",
+                "batt_voltage",
+                "batt_a_voltage",
+                "batt_b_voltage",
+                "batt_current",
+                "temp_panel_z",
+            ]
+        ].to_string(index=False)
+    )
 
 # Current extremes
 i_extreme = df[df["batt_current"].abs() > 1.0]
 print(f"\n  |batt_current| > 1A: {len(i_extreme)} rows")
 if len(i_extreme) > 0:
-    print(i_extreme[["timestamp", "batt_current", "batt_a_current", "batt_b_current",
-                      "batt_voltage", "temp_panel_z"]].to_string(index=False))
+    print(
+        i_extreme[
+            [
+                "timestamp",
+                "batt_current",
+                "batt_a_current",
+                "batt_b_current",
+                "batt_voltage",
+                "temp_panel_z",
+            ]
+        ].to_string(index=False)
+    )
 
 # Temperature extremes
 t_extreme = df[(df["temp_batt_b"] < -20) | (df["temp_batt_a"] > 25)]
@@ -303,7 +369,7 @@ print(f"\n  temp_batt_b < -20°C or temp_batt_a > 25°C: {len(t_extreme)} rows")
 extreme_mask = (df["batt_voltage"] > 5) | (df["batt_current"].abs() > 1.0)
 n_extreme = extreme_mask.sum()
 print(f"\n  ➡️  Total extreme rows to exclude from training: {n_extreme}")
-print(f"     These will be used as 'real anomaly candidates' for validation.")
+print("     These will be used as 'real anomaly candidates' for validation.")
 
 # %% [markdown]
 # ---
@@ -317,17 +383,26 @@ plot_df = df[~((df["batt_voltage"] > 5) | (df["batt_current"].abs() > 1.0))]
 
 fig, ax = plt.subplots(figsize=(10, 7))
 scatter = ax.scatter(
-    plot_df["temp_panel_z"], plot_df["batt_current"],
-    c=plot_df["batt_voltage"], cmap="magma", alpha=0.5, s=8, edgecolors="none",
+    plot_df["temp_panel_z"],
+    plot_df["batt_current"],
+    c=plot_df["batt_voltage"],
+    cmap="magma",
+    alpha=0.5,
+    s=8,
+    edgecolors="none",
 )
-ax.axvline(15, color="cyan", linestyle="--", linewidth=1.5, label="Eclipse Boundary (~15°C)")
+ax.axvline(
+    15, color="cyan", linestyle="--", linewidth=1.5, label="Eclipse Boundary (~15°C)"
+)
 ax.axhline(0, color="white", linestyle="-", linewidth=0.8, alpha=0.5)
 plt.colorbar(scatter, ax=ax, label="Battery Voltage (V)")
 
 ax.set_xlabel("Solar Panel Z Temperature (°C)")
 ax.set_ylabel("Battery Current (A)")
-ax.set_title("Physics Verification: Day/Night Operational States\n"
-             "Sunlight → Charging (+I), Eclipse → Discharging (-I)")
+ax.set_title(
+    "Physics Verification: Day/Night Operational States\n"
+    "Sunlight → Charging (+I), Eclipse → Discharging (-I)"
+)
 ax.legend(loc="upper left")
 
 save_fig(fig, "eclipse_scatter")
@@ -336,10 +411,10 @@ plt.show(block=False)
 # Print summary
 sunlight = df[df["temp_panel_z"] > 15]
 eclipse = df[df["temp_panel_z"] <= 15]
-print(f"Sunlight frames: {len(sunlight)} ({len(sunlight)/len(df)*100:.1f}%)")
+print(f"Sunlight frames: {len(sunlight)} ({len(sunlight) / len(df) * 100:.1f}%)")
 print(f"  Avg current: {sunlight['batt_current'].mean():+.3f} A (charging)")
 print(f"  Avg voltage: {sunlight['batt_voltage'].mean():.3f} V")
-print(f"Eclipse frames: {len(eclipse)} ({len(eclipse)/len(df)*100:.1f}%)")
+print(f"Eclipse frames: {len(eclipse)} ({len(eclipse) / len(df) * 100:.1f}%)")
 print(f"  Avg current: {eclipse['batt_current'].mean():+.3f} A (discharging)")
 print(f"  Avg voltage: {eclipse['batt_voltage'].mean():.3f} V")
 
@@ -349,8 +424,17 @@ fig, ax = plt.subplots(figsize=(8, 6))
 corr = df[ML_FEATURES].corr()
 mask = np.triu(np.ones_like(corr, dtype=bool))
 sns.heatmap(
-    corr, mask=mask, annot=True, fmt=".2f", cmap="RdBu_r", center=0,
-    square=True, linewidths=0.5, ax=ax, vmin=-1, vmax=1,
+    corr,
+    mask=mask,
+    annot=True,
+    fmt=".2f",
+    cmap="RdBu_r",
+    center=0,
+    square=True,
+    linewidths=0.5,
+    ax=ax,
+    vmin=-1,
+    vmax=1,
 )
 ax.set_title("Feature Correlation Matrix (ML Features)")
 save_fig(fig, "correlation_heatmap")
@@ -362,12 +446,17 @@ df_pair = df[ML_FEATURES].copy()
 df_pair["State"] = np.where(df["temp_panel_z"] > 15, "Sunlight", "Eclipse")
 
 pair_fig = sns.pairplot(
-    df_pair, hue="State", diag_kind="kde", corner=True,
+    df_pair,
+    hue="State",
+    diag_kind="kde",
+    corner=True,
     palette={"Sunlight": "#f0a500", "Eclipse": "#3a0ca3"},
     plot_kws={"alpha": 0.15, "s": 6, "edgecolor": "none"},
     diag_kws={"alpha": 0.6},
 )
-pair_fig.fig.suptitle("Feature Pairplot — Day/Night Operational States", y=1.02, fontweight="bold")
+pair_fig.fig.suptitle(
+    "Feature Pairplot — Day/Night Operational States", y=1.02, fontweight="bold"
+)
 save_fig(pair_fig.fig, "pairplot_day_night")
 plt.show()
 
@@ -395,21 +484,45 @@ longest_pass_id = pass_sizes.idxmax()
 longest = df[df["pass_id"] == longest_pass_id].copy()
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 7), sharex=True)
-fig.suptitle(f"Single Pass Dynamics ({len(longest)} frames, {longest['timestamp'].iloc[0].strftime('%Y-%m-%d %H:%M')} UTC)",
-             fontsize=13, fontweight="bold")
+fig.suptitle(
+    f"Single Pass Dynamics ({len(longest)} frames, {longest['timestamp'].iloc[0].strftime('%Y-%m-%d %H:%M')} UTC)",
+    fontsize=13,
+    fontweight="bold",
+)
 
 # Voltage
-ax1.plot(longest["timestamp"], longest["batt_voltage"], "b-", linewidth=2, label="Battery Voltage")
+ax1.plot(
+    longest["timestamp"],
+    longest["batt_voltage"],
+    "b-",
+    linewidth=2,
+    label="Battery Voltage",
+)
 ax1.fill_between(longest["timestamp"], longest["batt_voltage"], alpha=0.1, color="blue")
 ax1.set_ylabel("Voltage (V)", color="blue", fontweight="bold")
 ax1.legend(loc="upper left")
 ax1.grid(True, alpha=0.3)
 
 # Current + Panel Temp
-ax2.plot(longest["timestamp"], longest["batt_current"], "r-", linewidth=2, label="Battery Current")
-ax2.fill_between(longest["timestamp"], longest["batt_current"], 0, alpha=0.1, color="red")
+ax2.plot(
+    longest["timestamp"],
+    longest["batt_current"],
+    "r-",
+    linewidth=2,
+    label="Battery Current",
+)
+ax2.fill_between(
+    longest["timestamp"], longest["batt_current"], 0, alpha=0.1, color="red"
+)
 ax2_twin = ax2.twinx()
-ax2_twin.plot(longest["timestamp"], longest["temp_panel_z"], "g--", linewidth=1.5, alpha=0.8, label="Panel Z Temp")
+ax2_twin.plot(
+    longest["timestamp"],
+    longest["temp_panel_z"],
+    "g--",
+    linewidth=1.5,
+    alpha=0.8,
+    label="Panel Z Temp",
+)
 ax2.set_ylabel("Current (A)", color="red", fontweight="bold")
 ax2_twin.set_ylabel("Panel Temp (°C)", color="green", fontweight="bold")
 ax2.axhline(0, color="gray", linestyle="-", linewidth=0.5)
@@ -426,7 +539,7 @@ save_fig(fig, "pass_dynamics_micro")
 plt.show()
 
 # Pass statistics
-print(f"Pass statistics:")
+print("Pass statistics:")
 print(f"  Total passes detected: {df['pass_id'].nunique()}")
 print(f"  Median frames/pass:   {pass_sizes.median():.0f}")
 print(f"  Longest pass:          {pass_sizes.max()} frames")
@@ -442,19 +555,28 @@ end_time = start_time + pd.Timedelta(days=7)
 df_week = df[(df["timestamp"] >= start_time) & (df["timestamp"] <= end_time)]
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(14, 10), sharex=True)
-fig.suptitle(f"Meso-Scale Telemetry: 7-Day Window ({start_time.strftime('%Y-%m-%d')})",
-             fontsize=13, fontweight="bold")
+fig.suptitle(
+    f"Meso-Scale Telemetry: 7-Day Window ({start_time.strftime('%Y-%m-%d')})",
+    fontsize=13,
+    fontweight="bold",
+)
 
-ax1.scatter(df_week["timestamp"], df_week["batt_voltage"], s=4, alpha=0.5, c="steelblue")
+ax1.scatter(
+    df_week["timestamp"], df_week["batt_voltage"], s=4, alpha=0.5, c="steelblue"
+)
 ax1.set_ylabel("Battery Voltage (V)")
 ax1.grid(True, alpha=0.3)
 
-ax2.scatter(df_week["timestamp"], df_week["batt_current"], s=4, alpha=0.5, c="firebrick")
+ax2.scatter(
+    df_week["timestamp"], df_week["batt_current"], s=4, alpha=0.5, c="firebrick"
+)
 ax2.axhline(0, color="gray", linestyle="-", linewidth=0.5)
 ax2.set_ylabel("Battery Current (A)")
 ax2.grid(True, alpha=0.3)
 
-ax3.scatter(df_week["timestamp"], df_week["temp_panel_z"], s=4, alpha=0.5, c="forestgreen")
+ax3.scatter(
+    df_week["timestamp"], df_week["temp_panel_z"], s=4, alpha=0.5, c="forestgreen"
+)
 ax3.axhline(15, color="orange", linestyle="--", linewidth=1, label="Eclipse boundary")
 ax3.set_ylabel("Panel Z Temp (°C)")
 ax3.set_xlabel("Time (UTC)")
@@ -478,8 +600,9 @@ df_indexed = df.set_index("timestamp")
 daily = df_indexed[ML_FEATURES].resample("1D").agg(["mean", "std"]).dropna()
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
-fig.suptitle("Macro-Scale Health: Daily Averages (7 Months)",
-             fontsize=13, fontweight="bold")
+fig.suptitle(
+    "Macro-Scale Health: Daily Averages (7 Months)", fontsize=13, fontweight="bold"
+)
 
 # Voltage with confidence band
 v_mean = daily[("batt_voltage", "mean")]
@@ -491,9 +614,19 @@ ax1.legend(loc="upper left")
 ax1.grid(True, alpha=0.3)
 
 # Temperatures
-for feat, color, marker in [("temp_batt_a", "red", "s"), ("temp_panel_z", "green", "^")]:
+for feat, color, marker in [
+    ("temp_batt_a", "red", "s"),
+    ("temp_panel_z", "green", "^"),
+]:
     t_mean = daily[(feat, "mean")]
-    ax2.plot(t_mean.index, t_mean, f"{color[0]}-", linewidth=1.5, color=color, label=f"Daily Avg {feat}")
+    ax2.plot(
+        t_mean.index,
+        t_mean,
+        f"{color[0]}-",
+        linewidth=1.5,
+        color=color,
+        label=f"Daily Avg {feat}",
+    )
 ax2.set_ylabel("Temperature (°C)")
 ax2.set_xlabel("Date")
 ax2.legend(loc="upper right")
@@ -511,7 +644,9 @@ plt.show()
 
 # %%
 fig, ax = plt.subplots(figsize=(14, 2.5))
-ax.scatter(df["timestamp"], [1] * len(df), marker="|", alpha=0.15, color="purple", s=800)
+ax.scatter(
+    df["timestamp"], [1] * len(df), marker="|", alpha=0.15, color="purple", s=800
+)
 ax.set_yticks([])
 ax.set_title("Data Reception Density (7 Months)")
 ax.set_xlabel("Time (UTC)")
@@ -527,15 +662,17 @@ gaps = df["time_diff_sec"].dropna()
 sns.histplot(gaps[gaps < 300], bins=80, color="purple", alpha=0.7, ax=ax)
 ax.set_title("Time Gap Distribution (gaps < 5 min)")
 ax.set_xlabel("Seconds Between Frames")
-ax.axvline(gaps.median(), color="red", linestyle="--", label=f"Median: {gaps.median():.0f}s")
+ax.axvline(
+    gaps.median(), color="red", linestyle="--", label=f"Median: {gaps.median():.0f}s"
+)
 ax.legend()
 save_fig(fig, "time_gap_distribution")
 plt.show()
 
-print(f"Time gap statistics:")
+print("Time gap statistics:")
 print(f"  Median: {gaps.median():.0f}s")
 print(f"  Mean:   {gaps.mean():.0f}s")
-print(f"  Max:    {gaps.max():.0f}s ({gaps.max()/3600:.1f} hours)")
+print(f"  Max:    {gaps.max():.0f}s ({gaps.max() / 3600:.1f} hours)")
 print(f"  Gaps > 1 hour: {(gaps > 3600).sum()}")
 
 # %% [markdown]
@@ -548,7 +685,9 @@ print(f"  Gaps > 1 hour: {(gaps > 3600).sum()}")
 # %%
 # Prepare clean data (exclude extreme values)
 df_clean = df[~((df["batt_voltage"] > 5) | (df["batt_current"].abs() > 1.0))].copy()
-print(f"Clean dataset: {len(df_clean)} rows (excluded {len(df) - len(df_clean)} extreme values)")
+print(
+    f"Clean dataset: {len(df_clean)} rows (excluded {len(df) - len(df_clean)} extreme values)"
+)
 
 X_all = df_clean[ML_FEATURES].dropna()
 scaler = StandardScaler()
@@ -563,7 +702,13 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
 # Scree plot
 cum_var = np.cumsum(pca.explained_variance_ratio_) * 100
-ax1.bar(range(1, 6), pca.explained_variance_ratio_ * 100, alpha=0.7, color="teal", label="Individual")
+ax1.bar(
+    range(1, 6),
+    pca.explained_variance_ratio_ * 100,
+    alpha=0.7,
+    color="teal",
+    label="Individual",
+)
 ax1.plot(range(1, 6), cum_var, "ro-", linewidth=2, label="Cumulative")
 ax1.axhline(90, color="orange", linestyle="--", alpha=0.5, label="90% threshold")
 ax1.set_xlabel("Principal Component")
@@ -572,18 +717,37 @@ ax1.set_title("PCA Explained Variance")
 ax1.legend()
 
 # PC1 vs PC2 scatter
-eclipse_state = np.where(df_clean["temp_panel_z"].values[:len(X_pca)] > 15, "Sunlight", "Eclipse")
+eclipse_state = np.where(
+    df_clean["temp_panel_z"].values[: len(X_pca)] > 15, "Sunlight", "Eclipse"
+)
 colors = np.where(eclipse_state == "Sunlight", "#f0a500", "#3a0ca3")
 ax2.scatter(X_pca[:, 0], X_pca[:, 1], c=colors, alpha=0.3, s=6, edgecolors="none")
-ax2.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
-ax2.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+ax2.set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0] * 100:.1f}%)")
+ax2.set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1] * 100:.1f}%)")
 ax2.set_title(f"PCA: 2D Projection\nTotal Variance Explained: {cum_var[1]:.1f}%")
 
 # Custom legend
 from matplotlib.lines import Line2D
+
 legend_elements = [
-    Line2D([0], [0], marker="o", color="w", markerfacecolor="#f0a500", markersize=8, label="Sunlight"),
-    Line2D([0], [0], marker="o", color="w", markerfacecolor="#3a0ca3", markersize=8, label="Eclipse"),
+    Line2D(
+        [0],
+        [0],
+        marker="o",
+        color="w",
+        markerfacecolor="#f0a500",
+        markersize=8,
+        label="Sunlight",
+    ),
+    Line2D(
+        [0],
+        [0],
+        marker="o",
+        color="w",
+        markerfacecolor="#3a0ca3",
+        markersize=8,
+        label="Eclipse",
+    ),
 ]
 ax2.legend(handles=legend_elements)
 
@@ -595,7 +759,7 @@ plt.show()
 print("\nPCA Loadings (which features drive each component):")
 loadings = pd.DataFrame(
     pca.components_.T,
-    columns=[f"PC{i+1}" for i in range(5)],
+    columns=[f"PC{i + 1}" for i in range(5)],
     index=ML_FEATURES,
 )
 print(loadings.to_string(float_format="{:.3f}".format))
@@ -640,14 +804,19 @@ train_scaler = StandardScaler()
 X_train_scaled = train_scaler.fit_transform(X_train)
 X_test_scaled = train_scaler.transform(X_test)
 
-print(f"Train set: {len(X_train)} frames ({df_train['timestamp'].min().strftime('%Y-%m-%d')} → {df_train['timestamp'].max().strftime('%Y-%m-%d')})")
-print(f"Test set:  {len(X_test)} frames ({df_test['timestamp'].min().strftime('%Y-%m-%d')} → {df_test['timestamp'].max().strftime('%Y-%m-%d')})")
+print(
+    f"Train set: {len(X_train)} frames ({df_train['timestamp'].min().strftime('%Y-%m-%d')} → {df_train['timestamp'].max().strftime('%Y-%m-%d')})"
+)
+print(
+    f"Test set:  {len(X_test)} frames ({df_test['timestamp'].min().strftime('%Y-%m-%d')} → {df_test['timestamp'].max().strftime('%Y-%m-%d')})"
+)
 
 # %% [markdown]
 # ### 6.1 Synthetic Fault Injection
 #
 # We inject 3 physically-motivated fault types into the test data to create
 # known anomalies for evaluation.
+
 
 # %%
 def inject_faults(X_test, feature_names, scaler, n_per_fault=100, rng_seed=42):
@@ -683,7 +852,9 @@ def inject_faults(X_test, feature_names, scaler, n_per_fault=100, rng_seed=42):
         panel_fail_idx = sunlight_idx
     # Don't overwrite already-faulted rows
     fresh = np.array([i for i in panel_fail_idx if labels[i] == 0])
-    X_faulted[fresh, feat_idx["batt_current"]] = -0.3  # Force discharging during sunlight
+    X_faulted[
+        fresh, feat_idx["batt_current"]
+    ] = -0.3  # Force discharging during sunlight
     labels[fresh] = 1
     fault_types[fresh] = "panel_failure"
 
@@ -697,10 +868,12 @@ def inject_faults(X_test, feature_names, scaler, n_per_fault=100, rng_seed=42):
     fault_types[fresh_thermal] = "thermal_runaway"
 
     n_injected = labels.sum()
-    print(f"Fault injection summary:")
+    print("Fault injection summary:")
     for ft in ["sensor_stuck", "panel_failure", "thermal_runaway"]:
         print(f"  {ft}: {(fault_types == ft).sum()} frames")
-    print(f"  Total faulted: {n_injected} / {len(X_test)} ({n_injected/len(X_test)*100:.1f}%)")
+    print(
+        f"  Total faulted: {n_injected} / {len(X_test)} ({n_injected / len(X_test) * 100:.1f}%)"
+    )
 
     return X_faulted, labels, fault_types
 
@@ -713,6 +886,7 @@ X_test_faulted_scaled = train_scaler.transform(X_test_faulted)
 
 # %%
 results = {}
+
 
 def evaluate_model(name, anomaly_scores, y_true, train_time, infer_time, model_obj):
     """Compute standard anomaly detection metrics."""
@@ -731,7 +905,9 @@ def evaluate_model(name, anomaly_scores, y_true, train_time, infer_time, model_o
     recall_at_5pct = np.interp(0.05, fpr, tpr)
 
     # Model size (approximate)
-    import tempfile, os
+    import tempfile
+    import os
+
     with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
         joblib.dump(model_obj, f.name)
         model_size_kb = os.path.getsize(f.name) / 1024
@@ -754,8 +930,9 @@ def evaluate_model(name, anomaly_scores, y_true, train_time, infer_time, model_o
     print(f"  Recall@1% FPR:  {recall_at_1pct:.4f}")
     print(f"  Recall@5% FPR:  {recall_at_5pct:.4f}")
     print(f"  Train time:     {train_time:.3f}s")
-    print(f"  Infer time:     {infer_time*1000/len(y_true):.3f} ms/frame")
+    print(f"  Infer time:     {infer_time * 1000 / len(y_true):.3f} ms/frame")
     print(f"  Model size:     {model_size_kb:.1f} KB")
+
 
 # %%
 # --- Model 1: Isolation Forest ---
@@ -764,15 +941,21 @@ print("TRAINING MODELS")
 print("=" * 60)
 
 t0 = time.perf_counter()
-iso_forest = IsolationForest(n_estimators=200, contamination=0.02, random_state=42, n_jobs=-1)
+iso_forest = IsolationForest(
+    n_estimators=200, contamination=0.02, random_state=42, n_jobs=-1
+)
 iso_forest.fit(X_train_scaled)
 t_train_if = time.perf_counter() - t0
 
 t0 = time.perf_counter()
-if_scores = -iso_forest.decision_function(X_test_faulted_scaled)  # Negate: higher = more anomalous
+if_scores = -iso_forest.decision_function(
+    X_test_faulted_scaled
+)  # Negate: higher = more anomalous
 t_infer_if = time.perf_counter() - t0
 
-evaluate_model("Isolation Forest", if_scores, y_labels, t_train_if, t_infer_if, iso_forest)
+evaluate_model(
+    "Isolation Forest", if_scores, y_labels, t_train_if, t_infer_if, iso_forest
+)
 
 # %%
 # --- Model 2: One-Class SVM ---
@@ -813,10 +996,14 @@ t_train_ae = time.perf_counter() - t0
 
 t0 = time.perf_counter()
 X_reconstructed = autoencoder.predict(X_test_faulted_scaled)
-ae_errors = np.mean((X_test_faulted_scaled - X_reconstructed) ** 2, axis=1)  # MSE per frame
+ae_errors = np.mean(
+    (X_test_faulted_scaled - X_reconstructed) ** 2, axis=1
+)  # MSE per frame
 t_infer_ae = time.perf_counter() - t0
 
-evaluate_model("Autoencoder (5→3→2→3→5)", ae_errors, y_labels, t_train_ae, t_infer_ae, autoencoder)
+evaluate_model(
+    "Autoencoder (5→3→2→3→5)", ae_errors, y_labels, t_train_ae, t_infer_ae, autoencoder
+)
 
 # %%
 # --- Model 4: Elliptic Envelope (Baseline) ---
@@ -829,7 +1016,9 @@ t0 = time.perf_counter()
 ee_scores = -envelope.decision_function(X_test_faulted_scaled)
 t_infer_ee = time.perf_counter() - t0
 
-evaluate_model("Elliptic Envelope", ee_scores, y_labels, t_train_ee, t_infer_ee, envelope)
+evaluate_model(
+    "Elliptic Envelope", ee_scores, y_labels, t_train_ee, t_infer_ee, envelope
+)
 
 # %% [markdown]
 # ### 6.3 Model Comparison: ROC Curves
@@ -838,12 +1027,21 @@ evaluate_model("Elliptic Envelope", ee_scores, y_labels, t_train_ee, t_infer_ee,
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
 # ROC curves
-colors = {"Isolation Forest": "#2196F3", "One-Class SVM": "#FF9800",
-          "Autoencoder (5→3→2→3→5)": "#4CAF50", "Elliptic Envelope": "#9E9E9E"}
+colors = {
+    "Isolation Forest": "#2196F3",
+    "One-Class SVM": "#FF9800",
+    "Autoencoder (5→3→2→3→5)": "#4CAF50",
+    "Elliptic Envelope": "#9E9E9E",
+}
 
 for name, data in results.items():
-    ax1.plot(data["fpr"], data["tpr"], linewidth=2, color=colors.get(name, "gray"),
-             label=f"{name} (AUROC={data['AUROC']:.3f})")
+    ax1.plot(
+        data["fpr"],
+        data["tpr"],
+        linewidth=2,
+        color=colors.get(name, "gray"),
+        label=f"{name} (AUROC={data['AUROC']:.3f})",
+    )
 
 ax1.plot([0, 1], [0, 1], "k--", linewidth=0.5)
 ax1.set_xlabel("False Positive Rate")
@@ -858,8 +1056,14 @@ ax1.grid(True, alpha=0.3)
 for name, data in results.items():
     normal_scores = data["scores_norm"][y_labels == 0]
     fault_scores = data["scores_norm"][y_labels == 1]
-    ax2.hist(normal_scores, bins=50, alpha=0.3, color=colors.get(name, "gray"),
-             density=True, label=f"{name} (normal)")
+    ax2.hist(
+        normal_scores,
+        bins=50,
+        alpha=0.3,
+        color=colors.get(name, "gray"),
+        density=True,
+        label=f"{name} (normal)",
+    )
 
 ax2.set_xlabel("Normalized Anomaly Score")
 ax2.set_ylabel("Density")
@@ -896,7 +1100,9 @@ for model_name, data in results.items():
         ft_scores = scores[ft_mask]
         detected = (ft_scores > threshold).sum()
         total = ft_mask.sum()
-        print(f"  {ft:20s}: {detected}/{total} detected ({detected/total*100:.1f}%)")
+        print(
+            f"  {ft:20s}: {detected}/{total} detected ({detected / total * 100:.1f}%)"
+        )
 
     # Overall recall at this threshold
     predicted = scores > threshold
@@ -922,13 +1128,18 @@ feature_errors_df["is_fault"] = y_labels
 
 # Show which features light up for each fault type
 fig, axes = plt.subplots(1, 3, figsize=(16, 5), sharey=True)
-fig.suptitle("Autoencoder: Per-Feature Reconstruction Error by Fault Type",
-             fontsize=13, fontweight="bold")
+fig.suptitle(
+    "Autoencoder: Per-Feature Reconstruction Error by Fault Type",
+    fontsize=13,
+    fontweight="bold",
+)
 
 for i, ft in enumerate(fault_type_names):
     ax = axes[i]
     ft_data = feature_errors_df[feature_errors_df["fault_type"] == ft][ML_FEATURES]
-    normal_data = feature_errors_df[feature_errors_df["fault_type"] == "normal"][ML_FEATURES]
+    normal_data = feature_errors_df[feature_errors_df["fault_type"] == "normal"][
+        ML_FEATURES
+    ]
 
     # Mean error per feature
     ft_mean = ft_data.mean()
@@ -936,10 +1147,24 @@ for i, ft in enumerate(fault_type_names):
 
     x = np.arange(len(ML_FEATURES))
     width = 0.35
-    ax.bar(x - width/2, normal_mean, width, label="Normal", color="steelblue", alpha=0.7)
-    ax.bar(x + width/2, ft_mean, width, label=ft.replace("_", " ").title(), color="firebrick", alpha=0.7)
+    ax.bar(
+        x - width / 2, normal_mean, width, label="Normal", color="steelblue", alpha=0.7
+    )
+    ax.bar(
+        x + width / 2,
+        ft_mean,
+        width,
+        label=ft.replace("_", " ").title(),
+        color="firebrick",
+        alpha=0.7,
+    )
     ax.set_xticks(x)
-    ax.set_xticklabels([f.replace("temp_", "t_") for f in ML_FEATURES], rotation=45, ha="right", fontsize=9)
+    ax.set_xticklabels(
+        [f.replace("temp_", "t_") for f in ML_FEATURES],
+        rotation=45,
+        ha="right",
+        fontsize=9,
+    )
     ax.set_title(ft.replace("_", " ").title())
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
@@ -963,18 +1188,22 @@ plt.show()
 # ### 6.6 Comparison Summary Table
 
 # %%
-summary = pd.DataFrame({
-    name: {
-        "AUROC": f"{d['AUROC']:.4f}",
-        "Recall@1%FPR": f"{d['Recall@1%FPR']:.4f}",
-        "Recall@5%FPR": f"{d['Recall@5%FPR']:.4f}",
-        "Train Time": f"{d['Train Time (s)']:.3f}s",
-        "Inference": f"{d['Infer Time (ms/frame)']:.3f} ms/frame",
-        "Model Size": f"{d['Model Size (KB)']:.0f} KB",
-        "Interpretable": "✅ Per-feature" if "Autoencoder" in name else "❌ Score only",
+summary = pd.DataFrame(
+    {
+        name: {
+            "AUROC": f"{d['AUROC']:.4f}",
+            "Recall@1%FPR": f"{d['Recall@1%FPR']:.4f}",
+            "Recall@5%FPR": f"{d['Recall@5%FPR']:.4f}",
+            "Train Time": f"{d['Train Time (s)']:.3f}s",
+            "Inference": f"{d['Infer Time (ms/frame)']:.3f} ms/frame",
+            "Model Size": f"{d['Model Size (KB)']:.0f} KB",
+            "Interpretable": "✅ Per-feature"
+            if "Autoencoder" in name
+            else "❌ Score only",
+        }
+        for name, d in results.items()
     }
-    for name, d in results.items()
-}).T
+).T
 
 print("=" * 60)
 print("MODEL COMPARISON SUMMARY")
@@ -988,22 +1217,52 @@ print(summary.to_string())
 # Summary of visualizations that should be promoted to the live dashboard.
 
 # %%
-dashboard_widgets = pd.DataFrame([
-    {"Widget": "Live Feature Gauges", "Source": "§2 Distributions", "Update": "Per frame",
-     "Description": "Current V, A, °C with normal range bands (1st-99th percentile)"},
-    {"Widget": "Eclipse/Sunlight State", "Source": "§3 Physics", "Update": "Per frame",
-     "Description": "Panel temp > 15°C → Sunlight, else Eclipse"},
-    {"Widget": "Pass Timeline", "Source": "§4.1 Micro", "Update": "Per pass",
-     "Description": "V + I + T over the current satellite pass"},
-    {"Widget": "Long-Term Health", "Source": "§4.3 Macro", "Update": "Daily",
-     "Description": "Rolling average voltage + temperature trends"},
-    {"Widget": "Coverage Carpet", "Source": "§4.4 Density", "Update": "Daily",
-     "Description": "Data reception density timeline"},
-    {"Widget": "Anomaly Score", "Source": "§6 Models", "Update": "Per frame",
-     "Description": "Model output with threshold indicator"},
-    {"Widget": "Feature Contribution", "Source": "§6.5 AE", "Update": "Per anomaly",
-     "Description": "Which feature caused the anomaly flag (AE only)"},
-])
+dashboard_widgets = pd.DataFrame(
+    [
+        {
+            "Widget": "Live Feature Gauges",
+            "Source": "§2 Distributions",
+            "Update": "Per frame",
+            "Description": "Current V, A, °C with normal range bands (1st-99th percentile)",
+        },
+        {
+            "Widget": "Eclipse/Sunlight State",
+            "Source": "§3 Physics",
+            "Update": "Per frame",
+            "Description": "Panel temp > 15°C → Sunlight, else Eclipse",
+        },
+        {
+            "Widget": "Pass Timeline",
+            "Source": "§4.1 Micro",
+            "Update": "Per pass",
+            "Description": "V + I + T over the current satellite pass",
+        },
+        {
+            "Widget": "Long-Term Health",
+            "Source": "§4.3 Macro",
+            "Update": "Daily",
+            "Description": "Rolling average voltage + temperature trends",
+        },
+        {
+            "Widget": "Coverage Carpet",
+            "Source": "§4.4 Density",
+            "Update": "Daily",
+            "Description": "Data reception density timeline",
+        },
+        {
+            "Widget": "Anomaly Score",
+            "Source": "§6 Models",
+            "Update": "Per frame",
+            "Description": "Model output with threshold indicator",
+        },
+        {
+            "Widget": "Feature Contribution",
+            "Source": "§6.5 AE",
+            "Update": "Per anomaly",
+            "Description": "Which feature caused the anomaly flag (AE only)",
+        },
+    ]
+)
 
 print("=" * 60)
 print("DASHBOARD WIDGET INVENTORY")

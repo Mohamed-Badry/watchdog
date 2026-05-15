@@ -177,19 +177,25 @@ class UWE4Decoder(BaseDecoder):
         )
         if adapted["uptime"] is not None:
             adapted["uptime"] = int(adapted["uptime"])
-        adapted["missing_raw_fields"] = "|".join(missing_raw_fields) if missing_raw_fields else None
+        adapted["missing_raw_fields"] = (
+            "|".join(missing_raw_fields) if missing_raw_fields else None
+        )
         adapted["missing_raw_field_count"] = len(missing_raw_fields)
         adapted["frame_is_complete"] = len(missing_raw_fields) == 0
         return adapted
 
     @staticmethod
-    def _mean_if_complete(left: Optional[float], right: Optional[float]) -> Optional[float]:
+    def _mean_if_complete(
+        left: Optional[float], right: Optional[float]
+    ) -> Optional[float]:
         if left is None or right is None:
             return None
         return (left + right) / 2.0
 
     @staticmethod
-    def _sum_if_complete(left: Optional[float], right: Optional[float]) -> Optional[float]:
+    def _sum_if_complete(
+        left: Optional[float], right: Optional[float]
+    ) -> Optional[float]:
         if left is None or right is None:
             return None
         return left + right

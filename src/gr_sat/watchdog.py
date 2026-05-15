@@ -110,7 +110,9 @@ class OnlineWatchdog:
         if hasattr(frame, feature_name):
             value = getattr(frame, feature_name)
             if value is None or pd.isna(value):
-                raise ValueError(f"Missing required feature '{feature_name}' for inference.")
+                raise ValueError(
+                    f"Missing required feature '{feature_name}' for inference."
+                )
             return float(value)
 
         if feature_name == "volt_rolling_std":
@@ -151,7 +153,9 @@ class OnlineWatchdog:
         self.last_packet_at = timestamp
 
         try:
-            frame_result = process_frame_result(self.norad_id, payload, source, timestamp)
+            frame_result = process_frame_result(
+                self.norad_id, payload, source, timestamp
+            )
             if not frame_result.ok:
                 self.state = STATE_RECEIVING
                 return WatchdogResult(
@@ -163,7 +167,9 @@ class OnlineWatchdog:
 
             frame = frame_result.frame
             if self._recent_frames:
-                elapsed = (timestamp - self._recent_frames[-1].timestamp).total_seconds()
+                elapsed = (
+                    timestamp - self._recent_frames[-1].timestamp
+                ).total_seconds()
                 if elapsed > self._pass_gap_seconds:
                     self._recent_frames.clear()
             score = self._score_frame(frame)
@@ -180,7 +186,9 @@ class OnlineWatchdog:
                         threshold=self.metadata.threshold,
                         source=source,
                         features={
-                            feature_name: self._resolve_feature_value(frame, feature_name)
+                            feature_name: self._resolve_feature_value(
+                                frame, feature_name
+                            )
                             for feature_name in self.metadata.feature_names
                         },
                     )
@@ -220,7 +228,9 @@ class OnlineWatchdog:
         return {
             "norad_id": str(self.norad_id),
             "state": self.state,
-            "last_packet_at": self.last_packet_at.isoformat() if self.last_packet_at else None,
+            "last_packet_at": self.last_packet_at.isoformat()
+            if self.last_packet_at
+            else None,
             "threshold": self.metadata.threshold,
             "inference_mode": self.metadata.inference_mode,
             "feature_names": list(self.metadata.feature_names),
