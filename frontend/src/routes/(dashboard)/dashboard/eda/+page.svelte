@@ -205,18 +205,18 @@
           <div class="prose max-w-none xl:sticky xl:top-24">
             <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">1. Data Engineering & Sanity Checks</h2>
             <p>
-              Before engaging in unsupervised anomaly detection, the integrity of the data pipeline (`raw → interim → processed`) must be strictly validated. The backend ingestion service connects to the MQTT broker, buffers Kaitai-decoded frames, and performs SI-unit normalization to create the "Golden Features." We actively filter out known physical impossibilities early (e.g. 8V battery spikes) because they represent communication corruptions, not physical hardware anomalies.
+              Before looking for anomalies, we must make sure the data pipeline works correctly. The backend connects to the <a href="#glossary-mqtt" class="text-brand hover:underline">MQTT broker</a>, stores the data, and converts units to standard formats. We remove impossible data points early (like a battery showing 8V) because they mean there was a communication error, not a real hardware problem.
             </p>
             <div class="my-6 rounded-xl border border-border bg-surface/50 p-5">
-              <h4 class="mt-0 mb-2 text-sm font-semibold uppercase tracking-wider text-ink-3">Unit Conversion Audit</h4>
+              <h4 class="mt-0 mb-2 text-sm font-semibold uppercase tracking-wider text-ink-3">Unit Conversion</h4>
               <ul class="m-0 space-y-2 text-sm">
-                <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">batt_voltage</code>: mV → V (divisor 1000.0)</li>
-                <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">batt_current</code>: mA → A (divisor 1000.0)</li>
-                <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">temp_panel_z</code>: °C (direct pass-through)</li>
+                <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">batt_voltage</code>: mV to V (divided by 1000.0)</li>
+                <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">batt_current</code>: mA to A (divided by 1000.0)</li>
+                <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">temp_panel_z</code>: °C (no change)</li>
               </ul>
             </div>
             <p>
-              <strong>Observation:</strong> Clean, Gaussian-like or strict bimodal distributions on the right prove the parsers are correctly aligning byte boundaries. Spikes at exactly 0.0 or extreme outliers indicate parsing misalignments.
+              <strong>Observation:</strong> Clean bell curves or two distinct peaks on the right show that our data parsers are working correctly. Big spikes exactly at 0.0 or extreme outliers usually mean the parser made a mistake.
             </p>
           </div>
           <div class="flex flex-col gap-6">
@@ -315,15 +315,15 @@
           <div class="prose max-w-none xl:sticky xl:top-24">
             <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">4. The Edge Discontinuity</h2>
             <p>
-              Unlike datacenter server metrics, edge station inference is strictly constrained by Line-Of-Sight passes. The data is entirely discontinuous.
+              Unlike normal servers, satellite data is strictly limited by Line-Of-Sight passes over ground stations. The data is entirely disconnected.
             </p>
             <ul>
-              <li>Median gap <strong>within</strong> a pass: ~10-15s</li>
+              <li>Median gap <strong>within</strong> a pass: ~10 to 15s</li>
               <li>Median gap <strong>between</strong> passes: ~10 hours</li>
             </ul>
             <div class="mt-6 rounded-lg bg-brand/5 p-4 border border-brand/20">
               <p class="m-0 text-sm leading-relaxed text-ink-2">
-                <strong class="text-brand">Why LSTMs / Transformers fail here:</strong> Rolling history expires between passes. Attempting to use the frame from "10 hours ago" breaks physics predictions. We require <strong>Stateless Ensembles</strong> (evaluating each frame in a vacuum).
+                <strong class="text-brand">Why LSTMs / Transformers fail here:</strong> Rolling history expires between passes. Attempting to use the data from "10 hours ago" breaks physics predictions. We require <strong>Stateless Ensembles</strong> (evaluating each frame on its own).
               </p>
             </div>
           </div>
@@ -338,6 +338,29 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- SECTION 5: Glossary -->
+        <section class="border-t border-border pt-12">
+          <h2 class="text-xl font-bold tracking-tight text-ink mb-6">Glossary & Abbreviations</h2>
+          <dl class="space-y-4 text-sm text-ink-2">
+            <div id="glossary-mqtt" class="grid grid-cols-[120px_1fr] items-baseline gap-4">
+              <dt class="font-semibold text-ink">MQTT</dt>
+              <dd>Message Queuing Telemetry Transport. A lightweight messaging protocol used for connecting remote devices.</dd>
+            </div>
+            <div id="glossary-leo" class="grid grid-cols-[120px_1fr] items-baseline gap-4">
+              <dt class="font-semibold text-ink">LEO</dt>
+              <dd>Low Earth Orbit. An orbit relatively close to Earth's surface, typically below 2,000 km.</dd>
+            </div>
+            <div id="glossary-eclipse" class="grid grid-cols-[120px_1fr] items-baseline gap-4">
+              <dt class="font-semibold text-ink">Eclipse Cycle</dt>
+              <dd>The period when the satellite passes through the Earth's shadow, meaning it relies on battery power instead of solar panels.</dd>
+            </div>
+            <div id="glossary-autoencoder" class="grid grid-cols-[120px_1fr] items-baseline gap-4">
+              <dt class="font-semibold text-ink">Autoencoder</dt>
+              <dd>A machine learning model that learns normal patterns by compressing and recreating data. Used here for anomaly detection.</dd>
+            </div>
+          </dl>
         </section>
 
       </div>

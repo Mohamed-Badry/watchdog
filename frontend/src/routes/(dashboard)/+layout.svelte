@@ -2,17 +2,21 @@
   import { page } from "$app/stores";
   import { themeState, toggleTheme } from "$lib/theme.svelte";
   import { slide } from "svelte/transition";
-  import { Home, Satellite, Zap, LineChart, Activity, Menu, X, Moon, Sun, BookOpen } from "lucide-svelte";
+  import { Home, Satellite, Zap, LineChart, Activity, Menu, X, Moon, Sun, BookOpen, BrainCircuit } from "lucide-svelte";
 
   let { children } = $props();
 
-  const sidebarLinks = [
+  const dashboardLinks = [
     { href: "/dashboard", label: "Dashboard Home", icon: Home },
     { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
     { href: "/dashboard/operations", label: "Operations", icon: Satellite },
     { href: "/dashboard/live", label: "Live Watcher", icon: Zap },
+    { href: "/dashboard/ml", label: "ML Interface", icon: Activity },
+  ];
+
+  const analysisLinks = [
     { href: "/dashboard/eda", label: "EDA Report", icon: BookOpen },
-    { href: "/dashboard/ml", label: "ML Lab", icon: Activity },
+    { href: "/dashboard/ml-report", label: "Model Analysis", icon: BrainCircuit },
   ];
 
   let sidebarOpen = $state(false);
@@ -34,18 +38,40 @@
       </button>
     </div>
     
-    <nav class="flex-1 space-y-1 overflow-y-auto p-4">
-      {#each sidebarLinks as link}
-        {@const Icon = link.icon}
-        <a
-          href={link.href}
-          class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
-          onclick={() => sidebarOpen = false}
-        >
-          <Icon class="size-5 opacity-80" />
-          {link.label}
-        </a>
-      {/each}
+    <nav class="flex-1 space-y-6 overflow-y-auto p-4">
+      <div>
+        <p class="mb-2 px-4 text-[10px] font-semibold uppercase tracking-wider text-ink-3">Live Dashboards</p>
+        <div class="space-y-1">
+          {#each dashboardLinks as link}
+            {@const Icon = link.icon}
+            <a
+              href={link.href}
+              class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
+              onclick={() => sidebarOpen = false}
+            >
+              <Icon class="size-4 opacity-80" />
+              {link.label}
+            </a>
+          {/each}
+        </div>
+      </div>
+
+      <div>
+        <p class="mb-2 px-4 text-[10px] font-semibold uppercase tracking-wider text-ink-3">Notebooks</p>
+        <div class="space-y-1">
+          {#each analysisLinks as link}
+            {@const Icon = link.icon}
+            <a
+              href={link.href}
+              class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
+              onclick={() => sidebarOpen = false}
+            >
+              <Icon class="size-4 opacity-80" />
+              {link.label}
+            </a>
+          {/each}
+        </div>
+      </div>
     </nav>
 
     <div class="border-t border-border p-4">
