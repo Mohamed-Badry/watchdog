@@ -15,7 +15,7 @@
   let error = $derived(data.error);
 
   let noradId = $state<string>('all');
-  let dataLimit = $state<number>(5000); // Increased limit for better macro trends
+  let dataLimit = $state<number>(1000); // Increased limit for better macro trends
 
   let loading = $state(false);
   let telemetryFrames = $state<any[]>([]);
@@ -136,10 +136,10 @@
 </script>
 
 <div class="mx-auto w-full pb-24">
-  <header class="space-y-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out max-w-4xl">
+  <header class="space-y-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Analysis Report</p>
     <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Exploratory Data Analysis</h1>
-    <p class="text-lg leading-8 text-ink-2">
+    <p class="text-lg leading-8 text-ink-2 max-w-4xl">
       Physics-driven validation of raw telemetry data. This notebook-style report breaks down
       the fundamental orbital mechanics and multivariate correlations used to engineer the 
       golden features for our autoencoder models.
@@ -147,13 +147,13 @@
   </header>
 
   {#if error}
-    <div class="rounded-xl border border-brand/50 bg-brand/10 p-6 text-brand max-w-4xl">
+    <div class="rounded-xl border border-brand/50 bg-brand/10 p-6 text-brand">
       <h2 class="text-lg font-semibold">Connection Error</h2>
       <p class="mt-2 text-sm">{error}</p>
     </div>
   {:else}
     <!-- Controls (Minimal, inline) -->
-    <div class="mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4 max-w-4xl">
+    <div class="mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4">
       <div class="flex items-center gap-3">
         <label for="sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Target Profile</label>
         <select id="sat-select" bind:value={noradId} class="rounded-lg border border-border bg-panel px-3 py-1.5 text-sm text-ink outline-none transition hover:border-brand">
@@ -193,7 +193,7 @@
     </div>
 
     {#if !loading && telemetryFrames.length === 0}
-      <div class="rounded-2xl border border-border border-dashed py-16 text-center text-ink-3 max-w-4xl">
+      <div class="rounded-2xl border border-border border-dashed py-16 text-center text-ink-3">
         No telemetry data found for this profile.
       </div>
     {:else if telemetryFrames.length > 0}
