@@ -5,6 +5,7 @@ import os
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
@@ -50,7 +51,7 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_cors_origins(),
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -148,7 +149,8 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
         include_tracks: bool = Query(default=True),
     ) -> dict:
         try:
-            return data.predict_passes(
+            return await run_in_threadpool(
+                data.predict_passes,
                 lat=lat,
                 lon=lon,
                 elevation_m=elevation_m,

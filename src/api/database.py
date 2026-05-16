@@ -32,12 +32,19 @@ def load_database_settings() -> DatabaseSettings:
     return DatabaseSettings(url=os.getenv("DATABASE_URL"))
 
 
+_engine = None
+
+
 def get_engine():
+    global _engine
+    if _engine is not None:
+        return _engine
     settings = load_database_settings()
     if settings.configured:
         # Avoid asyncpg if we are using psycopg2 in requirements
         url = settings.url.replace("postgres://", "postgresql://")
-        return create_engine(url, pool_pre_ping=True)
+        _engine = create_engine(url, pool_pre_ping=True)
+        return _engine
     return None
 
 

@@ -750,9 +750,13 @@ class DashboardDataRepository:
         assert model_status.metadata is not None
         working = df.copy()
         try:
-            scaler, model, metadata = load_model_artifacts(
-                str(norad_id), self.models_dir
-            )
+            if not hasattr(self, "_loaded_models"):
+                self._loaded_models = {}
+            if norad_id not in self._loaded_models:
+                self._loaded_models[norad_id] = load_model_artifacts(
+                    str(norad_id), self.models_dir
+                )
+            scaler, model, metadata = self._loaded_models[norad_id]
             feature_names = list(metadata.feature_names)
             complete_mask = working[feature_names].notna().all(axis=1)
             if not complete_mask.any():
