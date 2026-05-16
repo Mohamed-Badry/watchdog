@@ -6,6 +6,7 @@
   import EclipseScatterPlot from '$lib/components/charts/EclipseScatterPlot.svelte';
   import CorrelationHeatmap from '$lib/components/charts/CorrelationHeatmap.svelte';
   import TimeGapHistogram from '$lib/components/charts/TimeGapHistogram.svelte';
+  import InterPassGapHistogram from '$lib/components/charts/InterPassGapHistogram.svelte';
   import MacroHealthPlot from '$lib/components/charts/MacroHealthPlot.svelte';
   import FeatureDistributionGrid from '$lib/components/charts/FeatureDistributionGrid.svelte';
 
@@ -317,9 +318,12 @@
             <p>
               Unlike normal servers, satellite data is strictly limited by Line-Of-Sight passes over ground stations. The data is entirely disconnected.
             </p>
+            <p>
+              The histogram to the right strictly visualizes <strong>Intra-Pass</strong> gaps (delays occurring <em>while</em> the satellite is actively overhead). It intentionally filters out the massive ~10-hour blackout periods between orbits. 
+            </p>
             <ul>
-              <li>Median gap <strong>within</strong> a pass: ~10 to 15s</li>
-              <li>Median gap <strong>between</strong> passes: ~10 hours</li>
+              <li><strong>The Mode (Peak Frequency):</strong> The vast majority of frames arrive within 0-10 seconds of each other during a solid connection.</li>
+              <li><strong>The Median:</strong> Because of secondary clusters of dropped packets or brief physical obstructions, the mathematical median is pushed much higher (often ~40-50s), as indicated by the red dashed line.</li>
             </ul>
             <div class="mt-6 rounded-lg bg-brand/5 p-4 border border-brand/20">
               <p class="m-0 text-sm leading-relaxed text-ink-2">
@@ -335,6 +339,16 @@
               </h3>
               <div>
                  <TimeGapHistogram {timestamps} />
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-border bg-panel p-6 shadow-sm">
+              <h3 class="mt-0 mb-6 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
+                <span class="inline-block h-3 w-1 rounded-sm" style="background: #94a3b8"></span>
+                Inter-Pass Time Gaps
+              </h3>
+              <div>
+                 <InterPassGapHistogram {timestamps} />
               </div>
             </div>
           </div>

@@ -130,8 +130,11 @@ Edge station inference is strictly constrained by Line-Of-Sight passes.
   gutter: 1.5em,
   [
     #v(1em)
-    - Median gap *within* a pass: ~10-15s
-    - Median gap *between* passes: ~10 hours!
+    The histogram explicitly visualizes *Intra-Pass* gaps (delays occurring while the satellite is actively overhead).
+
+    - *Mode (Peak Frequency):* ~0-10s
+    - *Median (Due to long tails/clusters):* ~39s
+    - *Gap between passes:* ~10 hours! (Filtered from plot)
 
     *Why LSTMs / Transformers fail here:*
     Rolling history expires between passes. Attempting to use the frame from "10 hours ago" breaks physics predictions.
