@@ -1,14 +1,249 @@
 <script lang="ts">
-  // Placeholder for the interactive ML Dashboard
+  import { env } from '$env/dynamic/public';
+  import type { PageData } from './$types';
+  import { untrack } from 'svelte';
+  import Tooltip from '$lib/components/ui/Tooltip.svelte';
+  import { getFeatureDescription } from '$lib/data/dictionary';
+  import AnomalyContributionChart from '$lib/components/charts/AnomalyContributionChart.svelte';
+
+  let { data }: { data: PageData } = $props();
+
+  let satellites = $derived(data.satellites || []);
+  let error = $derived(data.error);
+
+  let noradId = $state<string>('all');
+  let dataLimit = $state<number>(50);
+  let loading = $state(false);
+
+  let anomalies = $state<any[]>([]);
+  let selectedAnomalyId = $state<string | null>(null);
+
+  let selectedAnomaly = $derived(
+    selectedAnomalyId ? anomalies.find(a => (a.timestamp + a.norad_id) === selectedAnomalyId) : null
+  );
+
+  async function fetchAnomalies() {
+    loading = true;
+    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
+    let url = `${apiUrl}/api/anomalies/recent?limit=${dataLimit}`;
+    if (noradId !== 'all') {
+      url += `&norad_id=${noradId}`;
+    }
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        anomalies = json.anomalies || [];
+        if (anomalies.length > 0) {
+            selectedAnomalyId = anomalies[0].timestamp + anomalies[0].norad_id;
+        } else {
+            selectedAnomalyId = null;
+        }
+      } else {
+        console.error(`Failed to fetch anomalies: ${res.status}`);
+        anomalies = [];
+        selectedAnomalyId = null;
+      }
+    } catch (e) {
+      console.error(e);
+      anomalies = [];
+      selectedAnomalyId = null;
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Machine Learning</p>
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">ML Interface</h1>
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Live Dashboards</p>
+    <h1 class="text-3xl font-semibold tracking-tight text-ink">Inference Inspector</h1>
   </div>
 
-  <div class="flex-1 flex items-center justify-center rounded-[1.5rem] border border-border border-dashed p-10 text-center text-sm text-ink-3">
-    <p>Interactive Inference Dashboard Coming Soon.</p>
-  </div>
+  {#if error}
+    <div class="flex-none rounded-xl border border-brand/50 bg-brand/10 p-4 text-sm text-brand">
+      {error}
+    </div>
+  {:else}
+    <!-- Controls -->
+    <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
+      <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+        <label for="ml-sat-select" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
+        <select id="ml-sat-select" bind:value={noradId} class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand">
+          <option value="all">All Satellites</option>
+          {#each satellites as sat}
+            <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5 w-40">
+        <label for="ml-limit" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Fetch Limit</label>
+        <select id="ml-limit" bind:value={dataLimit} class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand">
+          <option value={50}>Last 50 Anomalies</option>
+          <option value={100}>Last 100 Anomalies</option>
+          <option value={200}>Last 200 Anomalies</option>
+        </select>
+      </div>
+
+      <button 
+        onclick={fetchAnomalies}
+        disabled={loading}
+        class="flex items-center justify-center rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:opacity-50"
+      >
+        {loading ? 'Fetching...' : 'Fetch Anomalies'}
+      </button>
+    </div>
+
+    <!-- Main Grid Layout -->
+    <div class="flex-1 min-h-0 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
+      
+      <!-- LEFT COLUMN: Anomaly Triage Queue -->
+      <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+        <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Anomaly Triage Queue</h2>
+          <span class="text-xs font-mono text-ink-3">{anomalies.length}</span>
+        </div>
+        
+        <div class="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+          {#if loading && anomalies.length === 0}
+            <div class="flex h-32 items-center justify-center">
+              <div class="h-6 w-6 animate-spin rounded-full border-2 border-surface border-t-brand"></div>
+            </div>
+          {:else if anomalies.length === 0}
+            <div class="p-6 text-center text-sm text-ink-3">
+              No anomalies found.
+            </div>
+          {:else}
+            {#each anomalies as anomaly}
+              {@const frameId = anomaly.timestamp + anomaly.norad_id}
+              <button
+                type="button"
+                class="w-full text-left rounded-lg border p-3 transition-all {selectedAnomalyId === frameId ? 'border-brand bg-brand/5 shadow-sm' : 'border-border bg-surface/50 hover:border-brand/40'}"
+                onclick={() => selectedAnomalyId = frameId}
+              >
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="rounded bg-brand/20 text-brand px-1.5 py-0.5 font-mono text-[10px] font-bold border border-brand/20">NORAD {anomaly.norad_id}</span>
+                  <span class="text-[10px] text-ink-3">{new Date(anomaly.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div class="flex items-baseline justify-between mt-2">
+                  <span class="text-sm font-medium text-ink">{new Date(anomaly.timestamp).toLocaleDateString()}</span>
+                  <div class="flex flex-col items-end">
+                    <span class="text-xs font-semibold text-brand">{anomaly.score.toFixed(3)}</span>
+                    <span class="text-[8px] uppercase tracking-wider text-ink-3">Score</span>
+                  </div>
+                </div>
+              </button>
+            {/each}
+          {/if}
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Inference Inspector -->
+      <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+        <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Root Cause Attribution</h2>
+          {#if selectedAnomaly}
+             <span class="text-xs font-mono text-ink-3">{new Date(selectedAnomaly.timestamp).toLocaleString()}</span>
+          {/if}
+        </div>
+        
+        <div class="flex-1 min-h-0 p-5 flex flex-col overflow-y-auto">
+          {#if !selectedAnomaly}
+            <div class="flex h-full items-center justify-center text-ink-3 text-sm">
+              Select an anomaly from the queue to inspect.
+            </div>
+          {:else}
+            <div class="flex flex-col gap-8">
+              
+              <!-- Severity Meter -->
+              <section class="flex flex-col items-center justify-center bg-surface/50 rounded-xl border border-border p-6 shadow-sm">
+                 <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-4">Anomaly Severity</h3>
+                 <div class="flex items-end gap-4">
+                   <div class="flex flex-col items-center">
+                     <span class="text-4xl font-bold tracking-tight text-brand">{selectedAnomaly.score.toFixed(3)}</span>
+                     <span class="text-[10px] uppercase tracking-wider text-ink-3 mt-1">Reconstruction Error</span>
+                   </div>
+                   <div class="h-10 border-r border-border mx-4"></div>
+                   <div class="flex flex-col items-center">
+                     <span class="text-2xl font-bold tracking-tight text-ink-2">{selectedAnomaly.threshold.toFixed(3)}</span>
+                     <span class="text-[10px] uppercase tracking-wider text-ink-3 mt-1">Detection Threshold</span>
+                   </div>
+                 </div>
+              </section>
+
+              <!-- Contribution Bar Chart -->
+              {#if selectedAnomaly.feature_contributions}
+                <section class="flex flex-col border border-border bg-surface/30 rounded-xl p-4 shadow-sm">
+                   <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-2 flex items-center gap-2">
+                    <span class="inline-block h-2 w-2 rounded-full bg-brand"></span>
+                    Feature Error Contribution
+                  </h3>
+                  <AnomalyContributionChart contributions={selectedAnomaly.feature_contributions} />
+                </section>
+              {/if}
+
+              <!-- Actual vs Expected Grid -->
+              <section class="flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 flex items-center gap-2">
+                    <span class="inline-block h-2 w-2 rounded-full bg-brand"></span>
+                    Actual vs. Expected (VAE)
+                  </h3>
+                  <p class="text-[10px] text-ink-3 max-w-sm text-right">
+                    The VAE model flags anomalies when physical relationships break. The feature with the highest delta (Contribution) is the root cause.
+                  </p>
+                </div>
+
+                {#if selectedAnomaly.feature_contributions && selectedAnomaly.reconstructed_features}
+                  {@const features = Object.entries(selectedAnomaly.feature_contributions).sort((a: any, b: any) => b[1] - a[1])}
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {#each features as [key, contribution], i}
+                      {@const isRootCause = i === 0}
+                      <div class="flex flex-col rounded-xl border {isRootCause ? 'border-brand bg-brand/5 shadow-md shadow-brand/10' : 'border-border bg-surface/50'} p-4 transition-colors">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                          <span class="text-[10px] font-semibold uppercase tracking-wider {isRootCause ? 'text-brand' : 'text-ink-3'} truncate">{key}</span>
+                          <Tooltip text={getFeatureDescription(key)} align={i % 3 === 2 ? 'right' : 'left'} />
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="flex flex-col">
+                            <span class="text-[9px] uppercase tracking-wider text-ink-3">Actual</span>
+                            <span class="font-mono text-sm font-medium text-ink mt-0.5">
+                              {Number(selectedAnomaly.features[key]).toFixed(3)}
+                            </span>
+                          </div>
+                          <div class="flex flex-col text-right">
+                            <span class="text-[9px] uppercase tracking-wider text-ink-3">Expected</span>
+                            <span class="font-mono text-sm font-medium text-ink-2 mt-0.5">
+                              {Number(selectedAnomaly.reconstructed_features[key]).toFixed(3)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div class="mt-2 pt-2 border-t {isRootCause ? 'border-brand/20' : 'border-border/50'} flex items-center justify-between">
+                          <span class="text-[9px] uppercase tracking-wider {isRootCause ? 'text-brand' : 'text-ink-3'}">Delta (Contribution)</span>
+                          <span class="font-mono text-xs font-bold {isRootCause ? 'text-brand' : 'text-ink'}">
+                            {Number(contribution).toFixed(4)}
+                          </span>
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                {:else}
+                  <div class="p-6 text-center text-sm text-ink-3 rounded-xl border border-border border-dashed bg-surface/30">
+                    Expected feature reconstruction data is not available for this anomaly. 
+                    <br><span class="text-xs opacity-70">(Did you restart the backend to clear the cache?)</span>
+                  </div>
+                {/if}
+              </section>
+              
+            </div>
+          {/if}
+        </div>
+      </div>
+      
+    </div>
+  {/if}
 </section>

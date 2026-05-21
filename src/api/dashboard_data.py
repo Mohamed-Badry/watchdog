@@ -278,15 +278,32 @@ class DashboardDataRepository:
         records_dict = records.to_dict(orient="records")
         anomalies_list = []
         
+        # Pre-load models for efficiency
+        models_cache = {}
+        def _get_model_artifacts(nid):
+            if nid not in models_cache:
+                status = self.model_status(nid)
+                if status.status == "ready":
+                    try:
+                        from gr_sat.model_artifacts import load_model_artifacts
+                        import torch
+                        scaler, vae, metadata = load_model_artifacts(str(nid), self.models_dir)
+                        models_cache[nid] = (scaler, vae, metadata, status.metadata.threshold if status.metadata else None)
+                    except Exception as e:
+                        import logging
+                        logging.getLogger("DashboardDataRepository").warning(f"Failed to load model for anomaly detail: {e}")
+                        models_cache[nid] = None
+                else:
+                    models_cache[nid] = None
+            return models_cache[nid]
+
         for row in records_dict:
+            r_norad_id = int(norad_id) if norad_id is not None else int(row["norad_id"])
+            model_info = _get_model_artifacts(r_norad_id)
+            
             threshold = None
-            if norad_id is not None:
-                model_status = self.model_status(int(norad_id))
-            else:
-                model_status = self.model_status(int(row["norad_id"]))
-                
-            if model_status.metadata is not None:
-                threshold = _json_value(model_status.metadata.threshold)
+            reconstructed_features = None
+            feature_contributions = None
 
             features = {
                 field: _json_value(row.get(field))
@@ -303,12 +320,47 @@ class DashboardDataRepository:
                     quality["missing_raw_fields"]
                 )
                 
+            if model_info is not None:
+                scaler, vae, metadata, threshold = model_info
+                threshold = _json_value(threshold)
+                
+                # Run inference to get expected values
+                try:
+                    import torch
+                    import numpy as np
+                    
+                    feat_names = metadata.feature_names
+                    input_vec = [features.get(f) for f in feat_names]
+                    if all(v is not None for v in input_vec):
+                        X = np.array([input_vec], dtype=np.float32)
+                        X_scaled = scaler.transform(X)
+                        X_tensor = torch.tensor(X_scaled)
+                        
+                        with torch.no_grad():
+                            recon, mu, logvar = vae(X_tensor)
+                        
+                        recon_np = recon.numpy()
+                        recon_unscaled = scaler.inverse_transform(recon_np)[0]
+                        
+                        reconstructed_features = {
+                            f: float(recon_unscaled[i]) for i, f in enumerate(feat_names)
+                        }
+                        
+                        feature_contributions = {
+                            f: float(abs(input_vec[i] - recon_unscaled[i])) for i, f in enumerate(feat_names)
+                        }
+                except Exception as e:
+                    import logging
+                    logging.getLogger("DashboardDataRepository").warning(f"Inference failed for {r_norad_id}: {e}")
+                
             anomalies_list.append({
                 "timestamp": _timestamp_iso(row["timestamp"]),
                 "norad_id": int(row["norad_id"]),
                 "score": _json_value(row.get("anomaly_score")),
                 "threshold": threshold,
                 "features": features,
+                "reconstructed_features": reconstructed_features,
+                "feature_contributions": feature_contributions,
                 "quality": quality,
             })
 
