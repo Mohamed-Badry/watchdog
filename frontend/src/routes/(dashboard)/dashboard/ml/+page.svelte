@@ -173,13 +173,13 @@
               </section>
 
               <!-- Contribution Bar Chart -->
-              {#if selectedAnomaly.feature_contributions}
+              {#if selectedAnomaly.feature_contributions && selectedAnomaly.reconstructed_features}
                 <section class="flex flex-col border border-border bg-surface/30 rounded-xl p-4 shadow-sm">
                    <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-2 flex items-center gap-2">
                     <span class="inline-block h-2 w-2 rounded-full bg-brand"></span>
                     Feature Error Contribution
                   </h3>
-                  <AnomalyContributionChart contributions={selectedAnomaly.feature_contributions} />
+                  <AnomalyContributionChart actual={selectedAnomaly.features} expected={selectedAnomaly.reconstructed_features} />
                 </section>
               {/if}
 
