@@ -174,18 +174,17 @@
                 <section class="flex flex-col min-h-0">
                   <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-3 flex items-center gap-2">
                     <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
-                    Kaitai Decoded State
+                    Raw Kaitai Decoded Struct
                   </h3>
                   <div class="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-sm">
-                    {#if selectedFrame.quality}
+                    {#if selectedFrame.kaitai_decoded}
                       <table class="w-full text-left text-sm">
                         <tbody class="divide-y divide-border/50">
-                          {#each Object.entries(selectedFrame.quality) as [key, value]}
+                          {#each Object.entries(selectedFrame.kaitai_decoded) as [key, value]}
                             <tr class="transition-colors hover:bg-panel/50">
                               <td class="py-3 pr-4 font-mono text-xs text-ink-3 w-1/3">
                                 <div class="flex items-center gap-1.5">
                                   {key}
-                                  <Tooltip text={getFeatureDescription(key)} align="left" />
                                 </div>
                               </td>
                               <td class="py-3 font-mono text-xs text-ink break-words">{JSON.stringify(value)}</td>
@@ -194,7 +193,7 @@
                         </tbody>
                       </table>
                     {:else}
-                      <p class="text-sm text-ink-3">No quality metadata available.</p>
+                      <p class="text-sm text-ink-3">No raw Kaitai structure available.</p>
                     {/if}
                   </div>
                 </section>

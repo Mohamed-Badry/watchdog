@@ -242,11 +242,28 @@ class DashboardDataRepository:
                     quality["missing_raw_fields"]
                 )
 
+            raw_frame_hex = _json_value(row.get("raw_frame"))
+            kaitai_decoded = None
+            if raw_frame_hex and isinstance(raw_frame_hex, str):
+                try:
+                    from gr_sat.telemetry import DecoderRegistry
+                    import gr_sat.decoders  # Ensure decoders are registered
+                    decoder = DecoderRegistry.get_decoder(int(row["norad_id"]))
+                    if decoder:
+                        payload_bytes = bytes.fromhex(raw_frame_hex)
+                        decoded_outcome = decoder.decode_with_diagnostics(payload_bytes)
+                        if decoded_outcome.ok:
+                            kaitai_decoded = decoded_outcome.data
+                except Exception as e:
+                    import logging
+                    logging.getLogger("DashboardDataRepository").warning(f"On-the-fly decode failed: {e}")
+
             frames.append({
                 "timestamp": _timestamp_iso(row["timestamp"]),
                 "norad_id": int(row["norad_id"]),
                 "source": "historical_processed_csv",
-                "raw_frame": _json_value(row.get("raw_frame")),
+                "raw_frame": raw_frame_hex,
+                "kaitai_decoded": kaitai_decoded,
                 "features": features,
                 "quality": quality,
                 "model": {
