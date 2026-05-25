@@ -8,10 +8,10 @@
 
   const dashboardLinks = [
     { href: "/dashboard", label: "Dashboard Home", icon: Home },
-    { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
-    { href: "/dashboard/inspector", label: "Inspector", icon: Search },
     { href: "/dashboard/operations", label: "Operations", icon: Satellite },
     { href: "/dashboard/live", label: "Live Watcher", icon: Zap },
+    { href: "/dashboard/inspector", label: "Inspector", icon: Search },
+    { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
     { href: "/dashboard/ml", label: "ML Interface", icon: Activity },
   ];
 

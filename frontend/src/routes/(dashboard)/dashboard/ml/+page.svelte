@@ -179,7 +179,12 @@
                     <span class="inline-block h-2 w-2 rounded-full bg-brand"></span>
                     Feature Error Contribution
                   </h3>
-                  <AnomalyContributionChart actual={selectedAnomaly.features} expected={selectedAnomaly.reconstructed_features} />
+                  <AnomalyContributionChart 
+                    actual={selectedAnomaly.features} 
+                    expected={selectedAnomaly.reconstructed_features} 
+                    scaledActual={selectedAnomaly.scaled_features || {}} 
+                    scaledExpected={selectedAnomaly.scaled_reconstructed_features || {}} 
+                  />
                 </section>
               {/if}
 

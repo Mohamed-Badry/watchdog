@@ -321,6 +321,8 @@ class DashboardDataRepository:
             threshold = None
             reconstructed_features = None
             feature_contributions = None
+            scaled_features = None
+            scaled_reconstructed_features = None
 
             features = {
                 field: _json_value(row.get(field))
@@ -363,6 +365,14 @@ class DashboardDataRepository:
                             f: float(recon_unscaled[i]) for i, f in enumerate(feat_names)
                         }
                         
+                        scaled_features = {
+                            f: float(X_scaled[0][i]) for i, f in enumerate(feat_names)
+                        }
+                        
+                        scaled_reconstructed_features = {
+                            f: float(recon_np[0][i]) for i, f in enumerate(feat_names)
+                        }
+                        
                         # Calculate contribution on scaled values (how the model actually sees it)
                         feature_contributions = {
                             f: float(abs(X_scaled[0][i] - recon_np[0][i])) for i, f in enumerate(feat_names)
@@ -378,6 +388,8 @@ class DashboardDataRepository:
                 "threshold": threshold,
                 "features": features,
                 "reconstructed_features": reconstructed_features,
+                "scaled_features": scaled_features,
+                "scaled_reconstructed_features": scaled_reconstructed_features,
                 "feature_contributions": feature_contributions,
                 "quality": quality,
             })
