@@ -219,3 +219,28 @@ body {
 [fill="#000001"] {
   stroke: var(--color-highlight) !important;
 }
+
+/* ── Entry Animations ──
+   Lightweight replacements for tailwindcss-animate utilities.
+   Used across all dashboard pages via class="animate-in fade-in slide-in-from-bottom-4". */
+@keyframes enter-fade {
+  from { opacity: 0; }
+}
+
+@keyframes enter-slide-bottom {
+  from { transform: translateY(1rem); }
+}
+
+.animate-in {
+  animation-duration: 500ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: enter-fade;
+}
+
+.slide-in-from-bottom-4 {
+  animation-name: enter-fade, enter-slide-bottom;
+}

@@ -5,6 +5,7 @@
    * Static benchmark data from Python analysis.
    */
   import { Plot, Line, Dot, RuleY } from 'svelteplot';
+  import { SERIES_TEMP_BATT, SERIES_BASELINE, SERIES_ZSCORE } from '$lib/chart-theme';
 
   const thermal = {
     vae: [{x:0.5,y:.45},{x:1,y:.49},{x:2,y:.58},{x:3,y:.71},{x:5,y:.81},{x:7,y:.93},{x:10,y:1},{x:15,y:1},{x:20,y:1},{x:30,y:1},{x:45,y:1}],
@@ -24,11 +25,11 @@
       x={{ label: 'Thermal Runaway Δ (°C)', nice: true }}
       y={{ label: false, domain: [0.4, 1.05], grid: true }}
       marginTop={16} marginRight={12} marginBottom={44} marginLeft={50}>
-      <RuleY data={[0.5]} stroke="#94a3b8" strokeDasharray="4 3" strokeOpacity={0.3} />
-      <Line data={thermal.vae} x="x" y="y" stroke="#e64848" strokeWidth={2} />
-      <Dot data={thermal.vae} x="x" y="y" fill="#e64848" r={4} />
-      <Line data={thermal.zs} x="x" y="y" stroke="#092e4b" strokeWidth={2} strokeDasharray="8 4" />
-      <Dot data={thermal.zs} x="x" y="y" fill="#092e4b" r={4} symbol="square" />
+      <RuleY data={[0.5]} stroke={SERIES_BASELINE} strokeDasharray="4 3" strokeOpacity={0.3} />
+      <Line data={thermal.vae} x="x" y="y" stroke={SERIES_TEMP_BATT} strokeWidth={2} />
+      <Dot data={thermal.vae} x="x" y="y" fill={SERIES_TEMP_BATT} r={4} />
+      <Line data={thermal.zs} x="x" y="y" stroke={SERIES_ZSCORE} strokeWidth={2} strokeDasharray="8 4" />
+      <Dot data={thermal.zs} x="x" y="y" fill={SERIES_ZSCORE} r={4} symbol="square" />
     </Plot>
   </div>
 
@@ -39,26 +40,26 @@
       x={{ label: 'Forced Current During Sunlight (A)', nice: true }}
       y={{ label: false, domain: [0.4, 1.05], grid: true }}
       marginTop={16} marginRight={12} marginBottom={44} marginLeft={50}>
-      <RuleY data={[0.5]} stroke="#94a3b8" strokeDasharray="4 3" strokeOpacity={0.3} />
-      <Line data={panel.vae} x="x" y="y" stroke="#e64848" strokeWidth={2} />
-      <Dot data={panel.vae} x="x" y="y" fill="#e64848" r={4} />
-      <Line data={panel.zs} x="x" y="y" stroke="#092e4b" strokeWidth={2} strokeDasharray="8 4" />
-      <Dot data={panel.zs} x="x" y="y" fill="#092e4b" r={4} symbol="square" />
+      <RuleY data={[0.5]} stroke={SERIES_BASELINE} strokeDasharray="4 3" strokeOpacity={0.3} />
+      <Line data={panel.vae} x="x" y="y" stroke={SERIES_TEMP_BATT} strokeWidth={2} />
+      <Dot data={panel.vae} x="x" y="y" fill={SERIES_TEMP_BATT} r={4} />
+      <Line data={panel.zs} x="x" y="y" stroke={SERIES_ZSCORE} strokeWidth={2} strokeDasharray="8 4" />
+      <Dot data={panel.zs} x="x" y="y" fill={SERIES_ZSCORE} r={4} symbol="square" />
     </Plot>
   </div>
 </div>
 
 <div class="mt-3 flex items-center justify-center gap-6 text-[0.65rem] text-ink-2">
   <span class="flex items-center gap-1.5">
-    <span class="inline-block h-0.5 w-5 rounded" style="background: #e64848"></span>
+    <span class="inline-block h-0.5 w-5 rounded" style="background: {SERIES_TEMP_BATT}"></span>
     VAE
   </span>
   <span class="flex items-center gap-1.5">
-    <span class="inline-block h-0.5 w-5 rounded border-t-2 border-dashed" style="border-color: #092e4b"></span>
+    <span class="inline-block h-0.5 w-5 rounded border-t-2 border-dashed" style="border-color: {SERIES_ZSCORE}"></span>
     Z-Score Baseline
   </span>
   <span class="flex items-center gap-1.5">
-    <span class="inline-block h-px w-5 border-t border-dashed" style="border-color: #94a3b8; opacity: 0.4"></span>
+    <span class="inline-block h-px w-5 border-t border-dashed" style="border-color: {SERIES_BASELINE}; opacity: 0.4"></span>
     Random Chance
   </span>
 </div>

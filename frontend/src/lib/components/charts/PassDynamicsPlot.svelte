@@ -7,6 +7,7 @@
    * Bottom: Battery Current (red) + Panel Z Temp (green dashed)
    */
   import { Plot, Line, AreaY } from 'svelteplot';
+  import { SERIES_VOLTAGE, SERIES_TEMP_BATT, SERIES_TEMP_PANEL } from '$lib/chart-theme';
 
   type Frame = {
     timestamp: string;
@@ -37,9 +38,9 @@
         y={{ label: false, grid: true, nice: true }}
         marginTop={12} marginRight={12} marginBottom={20} marginLeft={46}>
         <AreaY data={plotData} x="date" y="batt_voltage"
-               fill="#4361ee" fillOpacity={0.12} />
+               fill={SERIES_VOLTAGE} fillOpacity={0.12} />
         <Line data={plotData} x="date" y="batt_voltage"
-              stroke="#4361ee" strokeWidth={2} />
+              stroke={SERIES_VOLTAGE} strokeWidth={2} />
       </Plot>
     {/if}
   </div>
@@ -55,19 +56,19 @@
         y={{ label: false, grid: true, nice: true }}
         marginTop={12} marginRight={12} marginBottom={32} marginLeft={46}>
         <AreaY data={plotData} x="date" y="batt_current"
-               fill="#e64848" fillOpacity={0.08} />
+               fill={SERIES_TEMP_BATT} fillOpacity={0.08} />
         <Line data={plotData} x="date" y="batt_current"
-              stroke="#e64848" strokeWidth={2} />
+              stroke={SERIES_TEMP_BATT} strokeWidth={2} />
         <Line data={plotData} x="date" y="temp_panel_z"
-              stroke="#2ec4b6" strokeWidth={1.5}
+              stroke={SERIES_TEMP_PANEL} strokeWidth={1.5}
               strokeDasharray="6 3" />
       </Plot>
       <div class="mt-1 flex items-center justify-center gap-5 text-[0.55rem] text-ink-3">
         <span class="flex items-center gap-1">
-          <span class="inline-block h-0.5 w-4" style="background: #e64848"></span> Battery Current
+          <span class="inline-block h-0.5 w-4" style="background: {SERIES_TEMP_BATT}"></span> Battery Current
         </span>
         <span class="flex items-center gap-1">
-          <span class="inline-block h-0.5 w-4 border-t border-dashed" style="border-color: #2ec4b6"></span> Panel Z Temp
+          <span class="inline-block h-0.5 w-4 border-t border-dashed" style="border-color: {SERIES_TEMP_PANEL}"></span> Panel Z Temp
         </span>
       </div>
     {/if}

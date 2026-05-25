@@ -5,12 +5,9 @@ class Theme {
 
   constructor() {
     if (browser) {
-      const stored = localStorage.getItem('theme');
-      if (stored) {
-        this.isLight = stored === 'light';
-      } else {
-        this.isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-      }
+      // Read from the DOM class that was already set by the blocking script in app.html.
+      // This avoids a hydration mismatch where Svelte state says "dark" but DOM says "light".
+      this.isLight = document.documentElement.classList.contains('light');
       
       // Automatically sync DOM when state changes
       $effect.root(() => {

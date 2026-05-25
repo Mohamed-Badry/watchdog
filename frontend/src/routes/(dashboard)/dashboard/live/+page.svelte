@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public";
   import type { PageData } from "./$types";
   import { untrack } from "svelte";
+  import { apiFetch } from "$lib/api";
+  import type { TelemetryFrame } from "$lib/types/api";
 
   import AnomalyTimelinePlot from "$lib/components/charts/AnomalyTimelinePlot.svelte";
 
@@ -14,26 +15,19 @@
   let limit = $state<number>(25);
   let isLive = $state<boolean>(true);
 
-  let frames = $state<any[]>([]);
+  let frames = $state<TelemetryFrame[]>([]);
   let loading = $state(false);
   let selectedTimestamp = $state<string | null>(null);
 
   async function fetchRecent() {
     loading = true;
-    const apiUrl =
-      typeof window !== "undefined"
-        ? env.PUBLIC_API_URL || "http://127.0.0.1:8000"
-        : "http://backend:8000";
-    let url = `${apiUrl}/api/telemetry/recent?limit=${limit}`;
+    let path = `/api/telemetry/recent?limit=${limit}`;
     if (noradId !== "all") {
-      url += `&norad_id=${noradId}`;
+      path += `&norad_id=${noradId}`;
     }
     try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        frames = data.frames || [];
-      }
+      const data = await apiFetch<{ frames: TelemetryFrame[] }>(path);
+      frames = data.frames || [];
     } catch (e) {
       console.error("Failed to fetch recent telemetry", e);
     } finally {
@@ -58,6 +52,10 @@
     return () => clearInterval(interval);
   });
 </script>
+
+<svelte:head>
+  <title>Live Watcher — Watchdog</title>
+</svelte:head>
 
 <section class="flex h-full min-h-0 flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <!-- 1. HEADER: Title & Global Controls -->
@@ -138,7 +136,7 @@
           </div>
         {:else}
           <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            {#each frames as frame (frame.timestamp + frame.norad_id)}
+            {#each frames as frame (frame.timestamp + String(frame.norad_id))}
               <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
               <article 
                 class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/30 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-highlight bg-highlight/5 shadow-md shadow-highlight/10' : 'border-border bg-surface/50'}"
@@ -191,10 +189,10 @@
     <!-- ANOMALY TIMELINE (Pinned to Bottom) -->
     {#if frames.length > 0}
       {@const timelineFrames = frames
-        .filter((f: any) => f.model?.anomaly_score != null)
-        .map((f: any) => ({
+        .filter((f) => f.model?.anomaly_score != null)
+        .map((f) => ({
           timestamp: f.timestamp,
-          anomaly_score: f.model.anomaly_score,
+          anomaly_score: f.model.anomaly_score!,
           is_anomaly: f.model.is_anomaly,
         }))}
       

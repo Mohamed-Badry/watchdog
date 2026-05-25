@@ -5,7 +5,7 @@
    */
   import { Plot, RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
-  import { BRAND } from '$lib/chart-theme';
+  import { SERIES_BASELINE } from '$lib/chart-theme';
 
   let { timestamps = [] } = $props<{ timestamps: string[] }>();
 
@@ -54,17 +54,17 @@
       marginTop={12} marginRight={12} marginBottom={40} marginLeft={44}>
 
       <RectY {...binned}
-             fill="#94a3b8" fillOpacity={0.6}
+             fill={SERIES_BASELINE} fillOpacity={0.6}
              stroke="var(--color-panel)" strokeWidth={1} />
 
       <!-- Median reference line -->
       <RuleX data={[median()]}
-             stroke="#94a3b8" strokeWidth={2}
+             stroke={SERIES_BASELINE} strokeWidth={2}
              strokeDasharray="6 3" strokeOpacity={0.7} />
     </Plot>
     <div class="mt-2 flex items-center justify-center gap-4 text-xs text-ink-3">
       <span class="flex items-center gap-1.5">
-        <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: #94a3b8; opacity: 0.7"></span>
+        <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: {SERIES_BASELINE}; opacity: 0.7"></span>
         Median: {median().toFixed(1)} hrs
       </span>
       <span>{gaps().length.toLocaleString()} inter-pass gaps</span>

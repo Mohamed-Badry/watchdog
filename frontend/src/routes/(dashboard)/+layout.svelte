@@ -34,7 +34,7 @@
       <a class="text-lg font-semibold tracking-[0.18em] text-brand uppercase" href="/">
         Watchdog
       </a>
-      <button class="md:hidden text-ink hover:text-brand transition-colors" onclick={toggleSidebar}>
+      <button class="md:hidden text-ink hover:text-brand transition-colors" onclick={toggleSidebar} aria-label="Close sidebar">
         <X class="size-5" />
       </button>
     </div>
@@ -99,7 +99,7 @@
   <div class="flex flex-1 flex-col min-h-0 overflow-hidden">
     <!-- Topbar (mobile only) -->
     <header class="flex h-16 shrink-0 items-center justify-between border-b border-border bg-panel px-6 md:hidden">
-      <button onclick={toggleSidebar} class="text-ink-2 hover:text-brand transition-colors">
+      <button onclick={toggleSidebar} class="text-ink-2 hover:text-brand transition-colors" aria-label="Open sidebar">
         <Menu class="size-5" />
       </button>
       <a class="text-lg font-semibold tracking-[0.18em] text-brand uppercase" href="/">
@@ -118,9 +118,9 @@
 
 <!-- Backdrop -->
 {#if sidebarOpen}
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+  <button
+    class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden cursor-default"
     onclick={toggleSidebar}
-  ></div>
+    aria-label="Close sidebar overlay"
+  ></button>
 {/if}

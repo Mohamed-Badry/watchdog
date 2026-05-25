@@ -8,6 +8,10 @@
   let { data }: { data: PageData } = $props();
 </script>
 
+<svelte:head>
+  <title>Model Analysis — Watchdog</title>
+</svelte:head>
+
 <div class="mx-auto w-full pb-24">
   <header class="space-y-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out max-w-4xl">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Analysis Report</p>

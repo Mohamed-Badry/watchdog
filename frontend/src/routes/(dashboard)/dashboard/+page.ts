@@ -1,25 +1,21 @@
 import type { PageLoad } from './$types';
-import { env } from '$env/dynamic/public';
+import { apiFetch } from '$lib/api';
+import type { DashboardSummary } from '$lib/types/api';
 
 export const load: PageLoad = async ({ fetch }) => {
-    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
-    
     try {
-        const [summaryRes, statusRes] = await Promise.all([
-            fetch(`${apiUrl}/api/dashboard/summary`),
-            fetch(`${apiUrl}/api/status`)
+        const [summary, systemStatus] = await Promise.all([
+            apiFetch<DashboardSummary>('/api/dashboard/summary', undefined, fetch),
+            apiFetch('/api/status', undefined, fetch),
         ]);
 
-        return {
-            summary: summaryRes.ok ? await summaryRes.json() : null,
-            systemStatus: statusRes.ok ? await statusRes.json() : null
-        };
+        return { summary, systemStatus };
     } catch (e) {
-        console.error("Error fetching dashboard data:", e);
+        console.error('Error fetching dashboard data:', e);
         return {
             summary: null,
             systemStatus: null,
-            error: "Could not connect to the backend API."
+            error: 'Could not connect to the backend API.',
         };
     }
 };

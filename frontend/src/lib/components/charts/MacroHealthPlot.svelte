@@ -7,7 +7,7 @@
    * Bottom: Daily average temp_batt_a (red) + temp_panel_z (green)
    */
   import { Plot, Line, AreaY } from 'svelteplot';
-  import { COMPACT_MARGIN } from '$lib/chart-theme';
+  import { COMPACT_MARGIN, SERIES_VOLTAGE, SERIES_TEMP_BATT, SERIES_TEMP_PANEL } from '$lib/chart-theme';
 
   type Frame = {
     timestamp: string;
@@ -78,25 +78,25 @@
         >
           <!-- ±2σ band -->
           <AreaY data={dailyStats()} x="date" y1="v_sigma_low" y2="v_sigma_high"
-                 fill="#4361ee" fillOpacity={0.16} />
+                 fill={SERIES_VOLTAGE} fillOpacity={0.16} />
 
           <!-- Mean and ±2σ lines -->
           <Line data={dailyStats()} x="date" y="v_mean"
-                stroke="#4361ee" strokeWidth={2} />
+                stroke={SERIES_VOLTAGE} strokeWidth={2} />
           <Line data={dailyStats()} x="date" y="v_sigma_low"
-                stroke="#4361ee" strokeWidth={1.2}
+                stroke={SERIES_VOLTAGE} strokeWidth={1.2}
                 strokeDasharray="5 4" strokeOpacity={0.55} />
           <Line data={dailyStats()} x="date" y="v_sigma_high"
-                stroke="#4361ee" strokeWidth={1.2}
+                stroke={SERIES_VOLTAGE} strokeWidth={1.2}
                 strokeDasharray="5 4" strokeOpacity={0.55} />
         </Plot>
         <div class="mt-2 flex items-center justify-center gap-5 text-xs text-ink-3">
           <span class="flex items-center gap-1.5">
-            <span class="inline-block h-0.5 w-4 rounded" style="background: #4361ee"></span>
+            <span class="inline-block h-0.5 w-4 rounded" style="background: {SERIES_VOLTAGE}"></span>
             Daily Mean
           </span>
           <span class="flex items-center gap-1.5">
-            <span class="inline-block h-px w-4 border-t border-dashed" style="border-color: #4361ee; opacity: 0.65"></span>
+            <span class="inline-block h-px w-4 border-t border-dashed" style="border-color: {SERIES_VOLTAGE}; opacity: 0.65"></span>
             ±2σ
           </span>
         </div>
@@ -123,19 +123,19 @@
         >
         <!-- Battery temp -->
         <Line data={tempData.filter(d => !isNaN(d.t_batt))} x="date" y="t_batt"
-              stroke="#e64848" strokeWidth={1.8} />
+              stroke={SERIES_TEMP_BATT} strokeWidth={1.8} />
 
         <!-- Panel Z temp -->
         <Line data={tempData.filter(d => !isNaN(d.t_panel))} x="date" y="t_panel"
-              stroke="#2ec4b6" strokeWidth={1.8} />
+              stroke={SERIES_TEMP_PANEL} strokeWidth={1.8} />
       </Plot>
       <div class="mt-2 flex items-center justify-center gap-6 text-xs text-ink-3">
         <span class="flex items-center gap-1.5">
-          <span class="inline-block h-0.5 w-4 rounded" style="background: #e64848"></span>
+          <span class="inline-block h-0.5 w-4 rounded" style="background: {SERIES_TEMP_BATT}"></span>
           Daily Avg Batt Temp A
         </span>
         <span class="flex items-center gap-1.5">
-          <span class="inline-block h-0.5 w-4 rounded" style="background: #2ec4b6"></span>
+          <span class="inline-block h-0.5 w-4 rounded" style="background: {SERIES_TEMP_PANEL}"></span>
           Daily Avg Panel Z Temp
         </span>
       </div>

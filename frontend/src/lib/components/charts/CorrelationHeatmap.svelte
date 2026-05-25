@@ -7,6 +7,7 @@
    * Uses Cell mark for the grid, Text for annotations.
    */
   import { Plot, Cell, Text } from 'svelteplot';
+  import { CORR_NEGATIVE, CORR_NEUTRAL, CORR_POSITIVE } from '$lib/chart-theme';
 
   type FrameFeatures = Record<string, number | null>;
 
@@ -68,7 +69,7 @@
     height={380}
     x={{ type: 'band', label: false, domain: FEATURES.map(f => LABELS[f]) }}
     y={{ type: 'band', label: false, domain: [...FEATURES].reverse().map(f => LABELS[f]) }}
-    color={{ type: 'linear', domain: [-1, 0, 1], scheme: ['#2166ac', '#f7f7f7', '#b2182b'], label: 'Correlation' }}
+    color={{ type: 'linear', domain: [-1, 0, 1], scheme: [CORR_NEGATIVE, CORR_NEUTRAL, CORR_POSITIVE], label: 'Correlation' }}
     marginTop={8}
     marginRight={8}
     marginBottom={60}

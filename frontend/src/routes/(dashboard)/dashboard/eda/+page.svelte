@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { env } from '$env/dynamic/public';
   import type { PageData } from './$types';
-  import { untrack } from 'svelte';
+  import { apiFetch } from '$lib/api';
+  import type { TelemetryFrame } from '$lib/types/api';
 
   import EclipseScatterPlot from '$lib/components/charts/EclipseScatterPlot.svelte';
   import CorrelationHeatmap from '$lib/components/charts/CorrelationHeatmap.svelte';
@@ -19,7 +19,7 @@
   let dataLimit = $state<number>(1000); // Increased limit for better macro trends
 
   let loading = $state(false);
-  let telemetryFrames = $state<any[]>([]);
+  let telemetryFrames = $state<TelemetryFrame[]>([]);
 
   type FeatureMap = Record<string, unknown>;
   type NormalizedFeatures = Record<string, number | null> & {
@@ -73,20 +73,13 @@
 
   async function fetchTelemetry() {
     loading = true;
-    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
-    let url = `${apiUrl}/api/telemetry/recent?limit=${dataLimit}`;
+    let path = `/api/telemetry/recent?limit=${dataLimit}`;
     if (noradId !== 'all') {
-      url += `&norad_id=${noradId}`;
+      path += `&norad_id=${noradId}`;
     }
     try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        telemetryFrames = json.frames || [];
-      } else {
-        console.error(`Failed to fetch telemetry: ${res.status}`);
-        telemetryFrames = [];
-      }
+      const json = await apiFetch<{ frames: TelemetryFrame[] }>(path);
+      telemetryFrames = json.frames || [];
     } catch (e) {
       console.error(e);
       telemetryFrames = [];
@@ -98,8 +91,8 @@
   // Derive feature arrays from frames
   let featureFrames = $derived(
     telemetryFrames
-      .filter((f: any): f is { features: FeatureMap } => !!f.features && typeof f.features === 'object')
-      .map((f: { features: FeatureMap }) => normalizeFeatures(f.features))
+      .filter((f): f is TelemetryFrame & { features: FeatureMap } => !!f.features && typeof f.features === 'object')
+      .map((f) => normalizeFeatures(f.features as FeatureMap))
   );
 
   let eclipseFrames = $derived(
@@ -120,21 +113,25 @@
 
   let macroFrames = $derived(
     telemetryFrames
-      .filter((f: any): f is { timestamp: string; features: FeatureMap } => !!f.timestamp && !!f.features && typeof f.features === 'object')
-      .map((f: any) => ({
+      .filter((f) => !!f.timestamp && !!f.features && typeof f.features === 'object')
+      .map((f) => ({
         timestamp: f.timestamp,
-        batt_voltage: batteryVoltage(f.features),
-        temp_batt_a: featureNumber(f.features, ['temp_batt_a']),
-        temp_panel_z: featureNumber(f.features, ['temp_panel_z']),
+        batt_voltage: batteryVoltage(f.features as FeatureMap),
+        temp_batt_a: featureNumber(f.features as FeatureMap, ['temp_batt_a']),
+        temp_panel_z: featureNumber(f.features as FeatureMap, ['temp_panel_z']),
       }))
   );
 
   let timestamps = $derived(
     telemetryFrames
-      .filter((f: any) => f.timestamp)
-      .map((f: any) => f.timestamp)
+      .filter((f) => f.timestamp)
+      .map((f) => f.timestamp)
   );
 </script>
+
+<svelte:head>
+  <title>EDA Report — Watchdog</title>
+</svelte:head>
 
 <div class="mx-auto w-full pb-24">
   <header class="space-y-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">

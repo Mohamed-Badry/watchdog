@@ -2,6 +2,10 @@
   // Placeholder for the Analytics Dashboard
 </script>
 
+<svelte:head>
+  <title>Analytics — Watchdog</title>
+</svelte:head>
+
 <section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Deep Dive</p>

@@ -10,17 +10,18 @@
    */
   import { Plot, RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
+  import { FEATURE_COLORS, SERIES_VOLTAGE, SERIES_CURRENT, SERIES_TEMP_PANEL, SERIES_TEAL } from '$lib/chart-theme';
 
   type FrameFeatures = Record<string, number | null>;
 
   let { frames = [] } = $props<{ frames: FrameFeatures[] }>();
 
   const FEATURES = [
-    { key: 'batt_voltage', label: 'Battery Voltage (V)', color: '#4361ee' },
-    { key: 'batt_current', label: 'Battery Current (A)', color: '#3a86ff' },
-    { key: 'temp_batt_a', label: 'Temp Batt A (°C)', color: '#2ec4b6' },
-    { key: 'temp_batt_b', label: 'Temp Batt B (°C)', color: '#20b2aa' },
-    { key: 'temp_panel_z', label: 'Panel Z Temp (°C)', color: '#8ac926' },
+    { key: 'batt_voltage', label: 'Battery Voltage (V)', color: FEATURE_COLORS.batt_voltage },
+    { key: 'batt_current', label: 'Battery Current (A)', color: FEATURE_COLORS.batt_current },
+    { key: 'temp_batt_a', label: 'Temp Batt A (°C)', color: FEATURE_COLORS.temp_batt_a },
+    { key: 'temp_batt_b', label: 'Temp Batt B (°C)', color: FEATURE_COLORS.temp_batt_b },
+    { key: 'temp_panel_z', label: 'Panel Z Temp (°C)', color: FEATURE_COLORS.temp_panel_z },
   ] as const;
 
   function computeStats(values: number[]) {

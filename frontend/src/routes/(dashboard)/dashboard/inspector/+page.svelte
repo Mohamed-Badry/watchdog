@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { env } from '$env/dynamic/public';
   import type { PageData } from './$types';
-  import { untrack } from 'svelte';
+  import { apiFetch } from '$lib/api';
+  import type { TelemetryFrame } from '$lib/types/api';
   import Tooltip from '$lib/components/ui/Tooltip.svelte';
   import { getFeatureDescription } from '$lib/data/dictionary';
 
@@ -14,7 +14,7 @@
   let dataLimit = $state<number>(50);
   let loading = $state(false);
 
-  let telemetryFrames = $state<any[]>([]);
+  let telemetryFrames = $state<TelemetryFrame[]>([]);
   let selectedFrameId = $state<string | null>(null);
 
   let selectedFrame = $derived(
@@ -23,24 +23,16 @@
 
   async function fetchTelemetry() {
     loading = true;
-    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
-    let url = `${apiUrl}/api/telemetry/recent?limit=${dataLimit}`;
+    let path = `/api/telemetry/recent?limit=${dataLimit}`;
     if (noradId !== 'all') {
-      url += `&norad_id=${noradId}`;
+      path += `&norad_id=${noradId}`;
     }
     try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        telemetryFrames = json.frames || [];
-        if (telemetryFrames.length > 0) {
-            selectedFrameId = telemetryFrames[0].timestamp + telemetryFrames[0].norad_id;
-        } else {
-            selectedFrameId = null;
-        }
+      const json = await apiFetch<{ frames: TelemetryFrame[] }>(path);
+      telemetryFrames = json.frames || [];
+      if (telemetryFrames.length > 0) {
+        selectedFrameId = telemetryFrames[0].timestamp + telemetryFrames[0].norad_id;
       } else {
-        console.error(`Failed to fetch telemetry: ${res.status}`);
-        telemetryFrames = [];
         selectedFrameId = null;
       }
     } catch (e) {
@@ -57,7 +49,16 @@
     // Split into pairs of 2 characters and join with space
     return hexStr.match(/.{1,2}/g)?.join(' ') || hexStr;
   }
+
+  // Auto-fetch on mount
+  $effect(() => {
+    fetchTelemetry();
+  });
 </script>
+
+<svelte:head>
+  <title>Inspector — Watchdog</title>
+</svelte:head>
 
 <section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">

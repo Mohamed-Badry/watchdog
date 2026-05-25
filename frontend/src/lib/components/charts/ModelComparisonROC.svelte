@@ -4,15 +4,16 @@
    * Uses static benchmark data from the Python analysis.
    */
   import { Plot, Line } from 'svelteplot';
+  import { SERIES_TEMP_BATT, SERIES_AMBER, SERIES_CURRENT, SERIES_BASELINE } from '$lib/chart-theme';
 
   const MODELS = [
-    { name: 'VAE', auroc: 0.982, color: '#e64848',
+    { name: 'VAE', auroc: 0.982, color: SERIES_TEMP_BATT,
       pts: [{fpr:0,tpr:0},{fpr:.005,tpr:.85},{fpr:.02,tpr:.93},{fpr:.05,tpr:.96},{fpr:.1,tpr:.98},{fpr:.15,tpr:.99},{fpr:.2,tpr:.995},{fpr:.4,tpr:1},{fpr:.7,tpr:1},{fpr:1,tpr:1}] },
-    { name: 'One-Class SVM', auroc: 0.813, color: '#f59e0b',
+    { name: 'One-Class SVM', auroc: 0.813, color: SERIES_AMBER,
       pts: [{fpr:0,tpr:0},{fpr:.005,tpr:.59},{fpr:.02,tpr:.61},{fpr:.05,tpr:.63},{fpr:.1,tpr:.65},{fpr:.15,tpr:.67},{fpr:.2,tpr:.69},{fpr:.4,tpr:.76},{fpr:.7,tpr:.85},{fpr:1,tpr:1}] },
-    { name: 'Isolation Forest', auroc: 0.809, color: '#3a86ff',
+    { name: 'Isolation Forest', auroc: 0.809, color: SERIES_CURRENT,
       pts: [{fpr:0,tpr:0},{fpr:.005,tpr:.05},{fpr:.02,tpr:.25},{fpr:.05,tpr:.37},{fpr:.1,tpr:.48},{fpr:.15,tpr:.58},{fpr:.2,tpr:.65},{fpr:.4,tpr:.81},{fpr:.7,tpr:.91},{fpr:1,tpr:1}] },
-    { name: 'Z-Score (Baseline)', auroc: 0.724, color: '#94a3b8',
+    { name: 'Z-Score (Baseline)', auroc: 0.724, color: SERIES_BASELINE,
       pts: [{fpr:0,tpr:0},{fpr:.005,tpr:.15},{fpr:.02,tpr:.28},{fpr:.05,tpr:.41},{fpr:.1,tpr:.52},{fpr:.15,tpr:.59},{fpr:.2,tpr:.64},{fpr:.4,tpr:.75},{fpr:.7,tpr:.88},{fpr:1,tpr:1}] },
   ];
   const diag = [{fpr:0,tpr:0},{fpr:1,tpr:1}];
@@ -23,7 +24,7 @@
     x={{ domain: [0, 1], label: 'False Positive Rate', grid: true }}
     y={{ domain: [0, 1], label: 'True Positive Rate (Recall)', grid: true }}
     marginTop={28} marginRight={28} marginBottom={44} marginLeft={52}>
-    <Line data={diag} x="fpr" y="tpr" stroke="#94a3b8" strokeWidth={1} strokeDasharray="6 4" strokeOpacity={0.3} />
+    <Line data={diag} x="fpr" y="tpr" stroke={SERIES_BASELINE} strokeWidth={1} strokeDasharray="6 4" strokeOpacity={0.3} />
     {#each MODELS as m}
       <Line data={m.pts} x="fpr" y="tpr" stroke={m.color} strokeWidth={2.5} />
     {/each}
@@ -31,7 +32,7 @@
 </div>
 <div class="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-ink-2">
   <span class="flex items-center gap-1.5">
-    <span class="inline-block h-px w-5 border-t border-dashed" style="border-color: #94a3b8; opacity: 0.5"></span>
+    <span class="inline-block h-px w-5 border-t border-dashed" style="border-color: {SERIES_BASELINE}; opacity: 0.5"></span>
     Random baseline
   </span>
   {#each MODELS as m}

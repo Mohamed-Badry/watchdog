@@ -1,45 +1,83 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { onMount, onDestroy } from 'svelte';
-  import { env } from '$env/dynamic/public';
+  import { getApiUrl } from '$lib/api';
+  import type { DashboardSummary } from '$lib/types/api';
   import SparklinePlot from '$lib/components/charts/SparklinePlot.svelte';
-  
+  import { Satellite, Radio, AlertTriangle, Globe } from 'lucide-svelte';
+
   let { data }: { data: PageData } = $props();
-  
-  let summary = $state(data.summary);
-  let error = $state(data.error);
+
+  let summary = $state<DashboardSummary | null>(data.summary);
+  let error = $state<string | undefined>(data.error);
 
   $effect(() => {
     summary = data.summary;
     error = data.error;
   });
 
-  let ws: WebSocket;
+  // ── WebSocket with exponential-backoff reconnection ────────────────────────
+  let ws: WebSocket | null = null;
+  let retryDelay = 1000;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let destroyed = false;
 
-  onMount(() => {
-    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
+  function connectWs() {
+    if (destroyed) return;
+
+    const apiUrl = getApiUrl();
     const wsUrl = apiUrl.replace(/^http/, 'ws') + '/api/ws/dashboard';
-    
+
     ws = new WebSocket(wsUrl);
-    
+
+    ws.onopen = () => {
+      retryDelay = 1000; // Reset backoff on successful connect
+    };
+
     ws.onmessage = (event) => {
       try {
         summary = JSON.parse(event.data);
         error = undefined;
-      } catch (e: any) {
-        console.error("Failed to parse websocket message", e);
+      } catch (e: unknown) {
+        console.error('Failed to parse websocket message', e);
       }
     };
 
-    ws.onerror = (e) => {
-      console.error("Dashboard websocket error", e);
+    ws.onerror = () => {
+      // onerror always fires before onclose, just let onclose handle reconnect
     };
+
+    ws.onclose = () => {
+      if (destroyed) return;
+      retryTimer = setTimeout(() => {
+        retryDelay = Math.min(retryDelay * 2, 30_000);
+        connectWs();
+      }, retryDelay);
+    };
+  }
+
+  onMount(() => {
+    connectWs();
   });
 
   onDestroy(() => {
+    destroyed = true;
+    if (retryTimer) clearTimeout(retryTimer);
     if (ws) ws.close();
   });
+
+  // ── Stat card config (lucide icons instead of emojis) ─────────────────────
+  const statCards = [
+    { label: 'Active Satellites', key: 'satellite_count' as const, icon: Satellite },
+    { label: 'Total Frames',     key: 'frame_count' as const,     icon: Radio },
+    { label: 'Anomalies Detected', key: 'anomaly_count' as const, icon: AlertTriangle },
+    { label: 'Total Passes',     key: 'pass_count' as const,      icon: Globe },
+  ];
 </script>
+
+<svelte:head>
+  <title>Dashboard — Watchdog</title>
+</svelte:head>
 
 {#if error}
   <div class="rounded-xl border border-brand/50 bg-brand/10 p-6 text-brand">
@@ -47,7 +85,7 @@
     <p class="mt-2 text-sm">{error}</p>
   </div>
 {:else if summary}
-  <section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+  <section class="flex flex-col h-full min-h-0 gap-5">
     <div class="flex-none space-y-1">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">System Overview</p>
       <h1 class="text-3xl font-semibold tracking-tight text-ink">Dashboard Home</h1>
@@ -55,16 +93,15 @@
 
     <!-- Totals -->
     <div class="flex-none grid gap-4 md:grid-cols-4">
-      {#each [
-        { label: 'Active Satellites', value: summary.totals.satellite_count, icon: '🛰' },
-        { label: 'Total Frames', value: summary.totals.frame_count.toLocaleString(), icon: '📡' },
-        { label: 'Anomalies Detected', value: summary.totals.anomaly_count.toLocaleString(), icon: '⚠' },
-        { label: 'Total Passes', value: summary.totals.pass_count.toLocaleString(), icon: '🌍' }
-      ] as stat}
+      {#each statCards as stat}
+        {@const Icon = stat.icon}
+        {@const value = summary.totals[stat.key]}
         <article class="group relative overflow-hidden rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
-          <div class="absolute -right-2 -top-2 text-3xl opacity-[0.06] transition-opacity group-hover:opacity-[0.12]">{stat.icon}</div>
+          <div class="absolute -right-2 -top-2 opacity-[0.06] transition-opacity group-hover:opacity-[0.12]">
+            <Icon class="size-10" />
+          </div>
           <p class="text-xs font-medium text-ink-3">{stat.label}</p>
-          <p class="mt-1 text-2xl font-semibold text-brand tracking-tight">{stat.value}</p>
+          <p class="mt-1 text-2xl font-semibold text-brand tracking-tight">{typeof value === 'number' ? value.toLocaleString() : value}</p>
         </article>
       {/each}
     </div>
@@ -119,10 +156,11 @@
               </div>
             {/if}
           </div>
-        </div>      </div>
+        </div>
+      </div>
 
       <!-- Center/Right Col -->
-      <div class="flex flex-col gap-5 min-h-0">        
+      <div class="flex flex-col gap-5 min-h-0">
         <!-- Throughput Sparkline -->
         {#if summary.throughput_buckets && summary.throughput_buckets.length > 0}
           <div class="flex-none chart-card">
@@ -130,7 +168,7 @@
               <p class="chart-card-title">Throughput (24h)</p>
               <div class="text-right">
                 <span class="text-xl font-semibold tracking-tight text-ink">
-                  {summary.throughput_buckets.reduce((s: number, b: any) => s + b.frame_count, 0).toLocaleString()}
+                  {summary.throughput_buckets.reduce((s, b) => s + b.frame_count, 0).toLocaleString()}
                 </span>
                 <span class="text-[10px] uppercase tracking-wider text-ink-3 ml-1">total frames</span>
               </div>

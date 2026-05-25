@@ -5,11 +5,12 @@
    * Static benchmark data from Python analysis.
    */
   import { Plot, BarY } from 'svelteplot';
+  import { ML_NORMAL, ML_FAULT } from '$lib/chart-theme';
 
   const NORMAL = 'Normal baseline';
   const FAULT = 'Injected fault';
-  const NORMAL_COLOR = '#4f7fb5';
-  const FAULT_COLOR = '#b13a4b';
+  const NORMAL_COLOR = ML_NORMAL;
+  const FAULT_COLOR = ML_FAULT;
 
   const FEATURES = [
     { key: 'batt_voltage', label: 'Voltage' },

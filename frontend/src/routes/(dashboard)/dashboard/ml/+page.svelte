@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { env } from '$env/dynamic/public';
   import type { PageData } from './$types';
-  import { untrack } from 'svelte';
+  import { apiFetch } from '$lib/api';
+  import type { AnomalyRecord } from '$lib/types/api';
   import Tooltip from '$lib/components/ui/Tooltip.svelte';
   import { getFeatureDescription } from '$lib/data/dictionary';
   import AnomalyContributionChart from '$lib/components/charts/AnomalyContributionChart.svelte';
@@ -15,7 +15,7 @@
   let dataLimit = $state<number>(50);
   let loading = $state(false);
 
-  let anomalies = $state<any[]>([]);
+  let anomalies = $state<AnomalyRecord[]>([]);
   let selectedAnomalyId = $state<string | null>(null);
 
   let selectedAnomaly = $derived(
@@ -24,24 +24,16 @@
 
   async function fetchAnomalies() {
     loading = true;
-    const apiUrl = typeof window !== 'undefined' ? (env.PUBLIC_API_URL || 'http://127.0.0.1:8000') : 'http://backend:8000';
-    let url = `${apiUrl}/api/anomalies/recent?limit=${dataLimit}`;
+    let path = `/api/anomalies/recent?limit=${dataLimit}`;
     if (noradId !== 'all') {
-      url += `&norad_id=${noradId}`;
+      path += `&norad_id=${noradId}`;
     }
     try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const json = await res.json();
-        anomalies = json.anomalies || [];
-        if (anomalies.length > 0) {
-            selectedAnomalyId = anomalies[0].timestamp + anomalies[0].norad_id;
-        } else {
-            selectedAnomalyId = null;
-        }
+      const json = await apiFetch<{ anomalies: AnomalyRecord[] }>(path);
+      anomalies = json.anomalies || [];
+      if (anomalies.length > 0) {
+        selectedAnomalyId = anomalies[0].timestamp + anomalies[0].norad_id;
       } else {
-        console.error(`Failed to fetch anomalies: ${res.status}`);
-        anomalies = [];
         selectedAnomalyId = null;
       }
     } catch (e) {
@@ -52,7 +44,16 @@
       loading = false;
     }
   }
+
+  // Auto-fetch on mount
+  $effect(() => {
+    fetchAnomalies();
+  });
 </script>
+
+<svelte:head>
+  <title>ML Interface — Watchdog</title>
+</svelte:head>
 
 <section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">

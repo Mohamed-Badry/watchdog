@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { env } from '$env/dynamic/public';
+  import { apiFetch } from '$lib/api';
+  import type { StationLocation, PassPrediction, TrackPoint } from '$lib/types/api';
 
   import PassTimelinePlot from '$lib/components/charts/PassTimelinePlot.svelte';
   import GroundStationMap from '$lib/components/operations/GroundStationMap.svelte';
@@ -8,33 +9,6 @@
   type SatelliteSummary = {
     name: string;
     norad_id: number;
-  };
-
-  type StationLocation = {
-    id?: string;
-    label: string;
-    lat: number;
-    lon: number;
-    elevationM: number;
-  };
-
-  type TrackPoint = {
-    time?: string | Date;
-    lat: number;
-    lon: number;
-    elevation?: number;
-    azimuth?: number;
-    range_km?: number;
-  };
-
-  type PassPrediction = {
-    satellite: string;
-    norad_id: number;
-    aos: Date;
-    los: Date;
-    max_elevation: number;
-    direction: string;
-    track?: TrackPoint[];
   };
 
   type LastRun = {
@@ -169,15 +143,18 @@
     return remainder === 0 ? `${hours} hr` : `${hours} hr ${remainder} min`;
   }
 
-  function mapPass(rawPass: any): PassPrediction {
+  function mapPass(rawPass: Record<string, unknown>): PassPrediction {
     return {
-      ...rawPass,
-      aos: new Date(rawPass.aos),
-      los: new Date(rawPass.los),
-      track: (rawPass.track ?? []).map((point: any) => ({
+      satellite: rawPass.satellite as string,
+      norad_id: rawPass.norad_id as number,
+      max_elevation: rawPass.max_elevation as number,
+      direction: rawPass.direction as string,
+      aos: new Date(rawPass.aos as string),
+      los: new Date(rawPass.los as string),
+      track: ((rawPass.track as Record<string, unknown>[]) ?? []).map((point) => ({
         ...point,
-        time: point.time ? new Date(point.time) : undefined,
-      })),
+        time: point.time ? new Date(point.time as string) : undefined,
+      })) as TrackPoint[],
     };
   }
 
@@ -186,8 +163,6 @@
     requestError = null;
     selectedPassIndex = 0;
 
-    const apiUrl =
-      typeof window !== 'undefined' ? env.PUBLIC_API_URL || 'http://127.0.0.1:8000' : 'http://backend:8000';
     const params = new URLSearchParams({
       lat: String(station.lat),
       lon: String(station.lon),
@@ -203,13 +178,9 @@
     }
 
     try {
-      const res = await fetch(`${apiUrl}/api/operations/passes?${params.toString()}`);
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        throw new Error(payload?.detail || `Pass calculation failed with HTTP ${res.status}`);
-      }
-
-      const json = await res.json();
+      const json = await apiFetch<{ passes: Record<string, unknown>[] }>(
+        `/api/operations/passes?${params.toString()}`
+      );
       passes = (json.passes ?? []).map(mapPass);
       lastRun = {
         requestedAt: new Date(),
@@ -227,6 +198,10 @@
     }
   }
 </script>
+
+<svelte:head>
+  <title>Operations — Watchdog</title>
+</svelte:head>
 
 <section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">
