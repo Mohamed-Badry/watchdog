@@ -96,21 +96,23 @@
       {#each statCards as stat}
         {@const Icon = stat.icon}
         {@const value = summary.totals[stat.key]}
-        <article class="group relative overflow-hidden rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
-          <div class="absolute -right-2 -top-2 opacity-[0.06] transition-opacity group-hover:opacity-[0.12]">
-            <Icon class="size-10" />
+        <article class="group flex items-center justify-between rounded-[1.25rem] border border-border bg-panel p-5 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
+          <div class="flex flex-col">
+            <p class="text-xs font-semibold uppercase tracking-wider text-ink-3">{stat.label}</p>
+            <p class="mt-1 text-3xl font-bold tracking-tight text-brand">{typeof value === 'number' ? value.toLocaleString() : value}</p>
           </div>
-          <p class="text-xs font-medium text-ink-3">{stat.label}</p>
-          <p class="mt-1 text-2xl font-semibold text-brand tracking-tight">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand shadow-inner transition-colors group-hover:bg-brand group-hover:text-white">
+            <Icon class="size-6" />
+          </div>
         </article>
       {/each}
     </div>
 
     <!-- Main Grid Layout -->
-    <div class="flex-1 min-h-0 grid gap-5 lg:grid-cols-[1fr_1.5fr] xl:grid-cols-[1.5fr_2fr]">
+    <div class="flex-1 min-h-0 grid gap-6 xl:grid-cols-[1fr_2fr]">
 
-      <!-- Left Col (Component Health & Recent Anomalies) -->
-      <div class="flex flex-col gap-5 min-h-0">
+      <!-- Left Col (Component Health & Active Profiles) -->
+      <div class="flex flex-col gap-6 min-h-0">
         <!-- Service Status -->
         <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
@@ -132,40 +134,54 @@
           </div>
         </div>
 
-        <!-- Recent Anomalies -->
-        <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden">
+        <!-- Active Profiles Table -->
+        <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
-            <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Recent Anomalies</h2>
+            <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Active Profiles</h2>
           </div>
-          <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4">
-            {#each summary.recent_anomalies as anomaly}
-              <div class="relative overflow-hidden shrink-0 rounded-xl border border-brand/30 bg-brand/5 p-5 transition-all duration-300 hover:border-brand/50">
-                <div class="flex items-center justify-between">
-                  <span class="rounded-md bg-brand/20 px-2.5 py-1 text-[11px] font-semibold tracking-widest text-brand">NORAD {anomaly.norad_id}</span>
-                  <span class="text-xs font-medium text-ink-3">{new Date(anomaly.timestamp).toLocaleTimeString()}</span>
-                </div>
-                <div class="mt-4 flex items-baseline gap-2">
-                  <span class="text-3xl font-bold tracking-tight text-ink">{anomaly.score?.toFixed(2) || 'N/A'}</span>
-                  <span class="text-xs font-semibold uppercase tracking-wider text-ink-3">score</span>
-                </div>
-              </div>
-            {/each}
-            {#if summary.recent_anomalies.length === 0}
-              <div class="p-6 text-center text-sm text-ink-3">
-                No recent anomalies detected.
-              </div>
-            {/if}
+          <div class="flex-1 min-h-0 overflow-y-auto relative">
+            <table class="w-full text-left text-xs">
+              <thead class="sticky top-0 bg-surface/90 backdrop-blur text-ink-3 shadow-sm z-10">
+                <tr>
+                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Satellite</th>
+                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Decoder</th>
+                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Model Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                {#each summary.active_satellites as sat}
+                  <tr class="transition-colors hover:bg-surface/80">
+                    <td class="px-4 py-3">
+                      <span class="font-semibold text-ink">{sat.name}</span>
+                      <span class="ml-2 rounded border border-border bg-surface px-1.5 py-0.5 text-[9px] text-ink-3">NORAD {sat.norad_id}</span>
+                    </td>
+                    <td class="px-4 py-3 text-ink-2">{sat.decoder || 'Generic'}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center gap-1 rounded bg-panel border border-border px-1.5 py-0.5 text-[10px] font-medium {sat.model.status === 'ready' ? 'text-emerald-500' : 'text-brand'}">
+                        <span class="h-1.5 w-1.5 rounded-full {sat.model.status === 'ready' ? 'bg-emerald-500' : 'bg-brand'}"></span>
+                        {sat.model.status}
+                      </span>
+                    </td>
+                  </tr>
+                {/each}
+                {#if summary.active_satellites.length === 0}
+                  <tr>
+                    <td colspan="3" class="px-4 py-8 text-center text-ink-3">No satellites active.</td>
+                  </tr>
+                {/if}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- Center/Right Col -->
-      <div class="flex flex-col gap-5 min-h-0">
+      <!-- Right Col (Throughput & Anomalies) -->
+      <div class="flex flex-col gap-6 min-h-0">
         <!-- Throughput Sparkline -->
         {#if summary.throughput_buckets && summary.throughput_buckets.length > 0}
-          <div class="flex-none chart-card">
+          <div class="flex-none chart-card border border-border rounded-[1.25rem] bg-panel p-4 shadow-sm backdrop-blur">
             <div class="flex items-center justify-between mb-2">
-              <p class="chart-card-title">Throughput (24h)</p>
+              <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Throughput (24h)</h2>
               <div class="text-right">
                 <span class="text-xl font-semibold tracking-tight text-ink">
                   {summary.throughput_buckets.reduce((s, b) => s + b.frame_count, 0).toLocaleString()}
@@ -179,45 +195,36 @@
           </div>
         {/if}
 
-        <!-- Active Profiles Table -->
-        <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
-          <div class="bg-surface/35 p-4 border-b border-border shrink-0">
-            <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Active Profiles</h2>
+        <!-- Recent Anomalies -->
+        <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden">
+          <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
+            <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Recent Anomalies</h2>
+            <span class="text-xs font-mono text-ink-3">{summary.recent_anomalies.length} recorded</span>
           </div>
-          <div class="flex-1 min-h-0 overflow-y-auto relative">
-            <table class="w-full text-left text-xs">
-              <thead class="sticky top-0 bg-surface/90 backdrop-blur text-ink-3 shadow-sm z-10">
-                <tr>
-                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Satellite</th>
-                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Decoder</th>
-                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Frames</th>
-                  <th class="px-4 py-3 font-medium uppercase tracking-wider">Model Status</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-border">
-                {#each summary.active_satellites as sat}
-                  <tr class="transition-colors hover:bg-surface/80">
-                    <td class="px-4 py-3">
-                      <span class="font-semibold text-ink">{sat.name}</span>
-                      <span class="ml-2 rounded border border-border bg-surface px-1 py-0.5 text-[9px] text-ink-3">NORAD {sat.norad_id}</span>
-                    </td>
-                    <td class="px-4 py-3 text-ink-2">{sat.decoder || 'Generic'}</td>
-                    <td class="px-4 py-3 font-mono text-ink-2">{sat.dataset.row_count.toLocaleString()}</td>
-                    <td class="px-4 py-3">
-                      <span class="inline-flex items-center gap-1 rounded bg-panel border border-border px-1.5 py-0.5 text-[10px] font-medium {sat.model.status === 'ready' ? 'text-emerald-500' : 'text-brand'}">
-                        <span class="h-1.5 w-1.5 rounded-full {sat.model.status === 'ready' ? 'bg-emerald-500' : 'bg-brand'}"></span>
-                        {sat.model.status}
-                      </span>
-                    </td>
-                  </tr>
+          <div class="flex-1 min-h-0 overflow-y-auto p-5">
+            {#if summary.recent_anomalies.length === 0}
+              <div class="flex h-full items-center justify-center p-6 text-center text-sm text-ink-3">
+                No recent anomalies detected.
+              </div>
+            {:else}
+              <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+                {#each summary.recent_anomalies as anomaly}
+                  <a href="/dashboard/ml" class="group relative overflow-hidden rounded-xl border border-brand/30 bg-brand/5 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand hover:shadow-md hover:shadow-brand/10">
+                    <div class="flex items-center justify-between mb-4">
+                      <span class="rounded-md bg-brand/20 px-2 py-0.5 text-[10px] font-bold tracking-widest text-brand border border-brand/20">NORAD {anomaly.norad_id}</span>
+                      <span class="text-[10px] font-medium text-ink-3 bg-surface/50 px-2 py-0.5 rounded border border-border/50">{new Date(anomaly.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-auto">
+                      <div class="flex flex-col">
+                        <span class="text-3xl font-bold tracking-tight text-ink group-hover:text-brand transition-colors">{anomaly.score?.toFixed(2) || 'N/A'}</span>
+                        <span class="text-[9px] font-semibold uppercase tracking-wider text-ink-3">Reconstruction Score</span>
+                      </div>
+                      <span class="text-xs font-medium text-ink-3">{new Date(anomaly.timestamp).toLocaleDateString()}</span>
+                    </div>
+                  </a>
                 {/each}
-                {#if summary.active_satellites.length === 0}
-                  <tr>
-                    <td colspan="4" class="px-4 py-8 text-center text-ink-3">No satellites active.</td>
-                  </tr>
-                {/if}
-              </tbody>
-            </table>
+              </div>
+            {/if}
           </div>
         </div>
       </div>
