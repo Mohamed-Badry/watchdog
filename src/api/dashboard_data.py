@@ -449,6 +449,106 @@ class DashboardDataRepository:
             "buckets": buckets,
         }
 
+    def analytics_report(self, norad_id: int | None = None) -> dict[str, Any]:
+        df = self._combined_frames(norad_id)
+        if df.empty:
+            return {}
+
+        working = df.copy()
+        working["_day"] = working["timestamp"].dt.floor("D")
+
+        # 1. Throughput & Pass Metrics
+        throughput_daily = (
+            working.groupby("_day", dropna=True)
+            .agg(
+                frame_count=("timestamp", "size"),
+                dropped_suspects=("dropped_packet_suspect", "sum"),
+                irregular_sampling=("sampling_irregular", "sum")
+            )
+            .sort_index()
+            .tail(30)
+            .reset_index()
+        )
+        
+        pass_metrics = []
+        if "pass_duration_sec" in working.columns and "pass_frame_count" in working.columns:
+            # We want to sample passes to visualize duration vs frame count
+            pass_df = working.dropna(subset=["pass_id", "pass_duration_sec", "pass_frame_count"])
+            pass_df = pass_df.drop_duplicates(subset=["pass_id"]).tail(200)
+            for _, row in pass_df.iterrows():
+                pass_metrics.append({
+                    "pass_id": int(row["pass_id"]),
+                    "duration_sec": float(row["pass_duration_sec"]),
+                    "frame_count": int(row["pass_frame_count"]),
+                    "timestamp": _timestamp_iso(row["timestamp"])
+                })
+
+        # 2. Pipeline Data Quality
+        # We don't have the explicit failed count in this DF, but we can look at complete vs partial
+        complete_count = int(working["frame_is_complete"].sum())
+        total_count = len(working)
+        partial_count = total_count - complete_count
+
+        # Count missing fields
+        missing_counts = {}
+        if "missing_raw_fields" in working.columns:
+            for fields_str in working["missing_raw_fields"].dropna():
+                fields = _missing_fields_value(fields_str)
+                for f in fields:
+                    if f and f != "null":
+                        missing_counts[f] = missing_counts.get(f, 0) + 1
+        
+        missing_list = [{"field": k, "count": v} for k, v in missing_counts.items()]
+        missing_list.sort(key=lambda x: x["count"], reverse=True)
+
+        # 3. Macro Health (Seasonal Drift)
+        # Daily averages over the last 180 days with a 7-day rolling mean for the trendline
+        macro_health = (
+            working.groupby("_day", dropna=True)
+            .agg(
+                batt_voltage_raw_mean=("batt_voltage", "mean"),
+                batt_voltage_std=("batt_voltage", "std"),
+                temp_panel_z_raw_mean=("temp_panel_z", "mean"),
+                temp_panel_z_std=("temp_panel_z", "std")
+            )
+            .sort_index()
+            .tail(180)
+        )
+        
+        # Calculate rolling means
+        macro_health["batt_voltage_mean"] = macro_health["batt_voltage_raw_mean"].rolling(window=7, min_periods=1).mean()
+        macro_health["temp_panel_z_mean"] = macro_health["temp_panel_z_raw_mean"].rolling(window=7, min_periods=1).mean()
+        
+        macro_health = macro_health.reset_index()
+
+        return {
+            "generated_at": _now_iso(),
+            "norad_id": norad_id,
+            "throughput_30d": [
+                {
+                    "date": _timestamp_iso(row["_day"]),
+                    "frame_count": int(row["frame_count"]),
+                    "dropped_suspects": int(row["dropped_suspects"]),
+                    "irregular_sampling": int(row["irregular_sampling"])
+                } for _, row in throughput_daily.iterrows()
+            ],
+            "pass_metrics": pass_metrics,
+            "quality": {
+                "complete_frames": complete_count,
+                "partial_frames": partial_count,
+                "missing_fields": missing_list[:15] # Top 15 missing fields
+            },
+            "macro_health": [
+                {
+                    "date": _timestamp_iso(row["_day"]),
+                    "batt_voltage_mean": float(row["batt_voltage_mean"]) if pd.notna(row["batt_voltage_mean"]) else None,
+                    "batt_voltage_std": float(row["batt_voltage_std"]) if pd.notna(row["batt_voltage_std"]) else None,
+                    "temp_panel_z_mean": float(row["temp_panel_z_mean"]) if pd.notna(row["temp_panel_z_mean"]) else None,
+                    "temp_panel_z_std": float(row["temp_panel_z_std"]) if pd.notna(row["temp_panel_z_std"]) else None,
+                } for _, row in macro_health.iterrows()
+            ]
+        }
+
     def predict_passes(
         self,
         lat: float,

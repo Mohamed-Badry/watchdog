@@ -137,6 +137,13 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @app.get("/api/analytics")
+    def analytics_report(norad_id: int | None = None) -> dict:
+        try:
+            return data.analytics_report(norad_id=norad_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     @app.get("/api/operations/passes")
     async def operations_passes(
         lat: float = Query(..., ge=-90.0, le=90.0),
