@@ -44,6 +44,7 @@
     *   Build `DashboardLayout` with sidebar + footer (no antenna bg, no Overview/Team tabs).
     *   Create dashboard home with placeholder cards.
     *   Implement `database.py` and `GET /api/status`.
+    *   **Current Task:** Revamp the Analytics Page (`/dashboard/analytics`) to follow `DASHBOARD_SVELTEPLOT_PLAN.md` conventions (components, styling).
 *   **Dashboard Sub-Pages (Planned):**
     *   `/dashboard` — Home (service status, recent anomalies, throughput sparkline).
     *   `/dashboard/operations` — Pass prediction, skyplots, scheduling (Skyfield).
