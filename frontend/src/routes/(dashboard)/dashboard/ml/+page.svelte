@@ -120,17 +120,17 @@
               {@const frameId = anomaly.timestamp + anomaly.norad_id}
               <button
                 type="button"
-                class="w-full text-left rounded-lg border p-3 transition-all {selectedAnomalyId === frameId ? 'border-brand bg-brand/5 shadow-sm' : 'border-border bg-surface/50 hover:border-brand/40'}"
+                class="w-full text-left rounded-lg border p-3 transition-all {selectedAnomalyId === frameId ? 'border-critical bg-critical/5 shadow-sm shadow-critical/10' : 'border-border bg-surface/50 hover:border-critical/40'}"
                 onclick={() => selectedAnomalyId = frameId}
               >
                 <div class="flex items-center justify-between mb-1.5">
-                  <span class="rounded bg-brand/20 text-brand px-1.5 py-0.5 font-mono text-[10px] font-bold border border-brand/20">NORAD {anomaly.norad_id}</span>
+                  <span class="rounded bg-critical/20 text-critical px-1.5 py-0.5 font-mono text-[10px] font-bold border border-critical/20">NORAD {anomaly.norad_id}</span>
                   <span class="text-[10px] text-ink-3">{new Date(anomaly.timestamp).toLocaleTimeString()}</span>
                 </div>
                 <div class="flex items-baseline justify-between mt-2">
                   <span class="text-sm font-medium text-ink">{new Date(anomaly.timestamp).toLocaleDateString()}</span>
                   <div class="flex flex-col items-end">
-                    <span class="text-xs font-semibold text-brand">{anomaly.score.toFixed(3)}</span>
+                    <span class="text-xs font-semibold text-critical">{anomaly.score.toFixed(3)}</span>
                     <span class="text-[8px] uppercase tracking-wider text-ink-3">Score</span>
                   </div>
                 </div>
@@ -162,7 +162,7 @@
                  <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-4">Anomaly Severity</h3>
                  <div class="flex items-end gap-4">
                    <div class="flex flex-col items-center">
-                     <span class="text-4xl font-bold tracking-tight text-brand">{selectedAnomaly.score.toFixed(3)}</span>
+                     <span class="text-4xl font-bold tracking-tight text-critical">{selectedAnomaly.score.toFixed(3)}</span>
                      <span class="text-[10px] uppercase tracking-wider text-ink-3 mt-1">Reconstruction Error</span>
                    </div>
                    <div class="h-10 border-r border-border mx-4"></div>
@@ -177,7 +177,7 @@
               {#if selectedAnomaly.feature_contributions && selectedAnomaly.reconstructed_features}
                 <section class="flex flex-col border border-border bg-surface/30 rounded-xl p-4 shadow-sm">
                    <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 mb-2 flex items-center gap-2">
-                    <span class="inline-block h-2 w-2 rounded-full bg-brand"></span>
+                    <span class="inline-block h-2 w-2 rounded-full bg-critical"></span>
                     Feature Error Contribution
                   </h3>
                   <AnomalyContributionChart 
@@ -193,7 +193,7 @@
               <section class="flex flex-col">
                 <div class="flex items-center justify-between mb-4">
                   <h3 class="text-xs font-semibold uppercase tracking-wider text-ink-3 flex items-center gap-2">
-                    <span class="inline-block h-2 w-2 rounded-full bg-brand"></span>
+                    <span class="inline-block h-2 w-2 rounded-full bg-critical"></span>
                     Actual vs. Expected (VAE)
                   </h3>
                   <p class="text-[10px] text-ink-3 max-w-sm text-right">
@@ -207,9 +207,9 @@
                   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {#each features as [key, contribution], i}
                       {@const isRootCause = i === 0}
-                      <div class="flex flex-col rounded-xl border {isRootCause ? 'border-brand bg-brand/5 shadow-md shadow-brand/10' : 'border-border bg-surface/50'} p-4 transition-colors">
+                      <div class="flex flex-col rounded-xl border {isRootCause ? 'border-critical bg-critical/5 shadow-md shadow-critical/10' : 'border-border bg-surface/50'} p-4 transition-colors">
                         <div class="flex items-center justify-between gap-2 mb-3">
-                          <span class="text-[10px] font-semibold uppercase tracking-wider {isRootCause ? 'text-brand' : 'text-ink-3'} truncate">{key}</span>
+                          <span class="text-[10px] font-semibold uppercase tracking-wider {isRootCause ? 'text-critical' : 'text-ink-3'} truncate">{key}</span>
                           <Tooltip text={getFeatureDescription(key)} align={i % 3 === 2 ? 'right' : 'left'} />
                         </div>
                         
@@ -228,9 +228,9 @@
                           </div>
                         </div>
 
-                        <div class="mt-2 pt-2 border-t {isRootCause ? 'border-brand/20' : 'border-border/50'} flex items-center justify-between">
-                          <span class="text-[9px] uppercase tracking-wider {isRootCause ? 'text-brand' : 'text-ink-3'}">Delta (Contribution)</span>
-                          <span class="font-mono text-xs font-bold {isRootCause ? 'text-brand' : 'text-ink'}">
+                        <div class="mt-2 pt-2 border-t {isRootCause ? 'border-critical/20' : 'border-border/50'} flex items-center justify-between">
+                          <span class="text-[9px] uppercase tracking-wider {isRootCause ? 'text-critical' : 'text-ink-3'}">Delta (Contribution)</span>
+                          <span class="font-mono text-xs font-bold {isRootCause ? 'text-critical' : 'text-ink'}">
                             {Number(contribution).toFixed(4)}
                           </span>
                         </div>

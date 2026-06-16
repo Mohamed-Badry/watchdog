@@ -109,7 +109,7 @@
               <p class="text-sm leading-relaxed text-ink-2">
                 The Kaitai Struct decoders map the raw hex byte-stream into meaningful physics variables. 
                 A <span class="font-bold text-emerald-500">Complete</span> frame parsed all required fields. 
-                A <span class="font-bold text-brand">Partial</span> frame suffered transmission corruption, resulting in missing telemetry values.
+                A <span class="font-bold text-warning">Partial</span> frame suffered transmission corruption, resulting in missing telemetry values.
               </p>
             </div>
 
@@ -120,10 +120,10 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-2">Complete Frames</p>
                 <p class="text-5xl font-bold tracking-tight text-emerald-500 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">{analytics.quality.complete_frames.toLocaleString()}</p>
               </div>
-              <div class="rounded-[1.25rem] border border-brand/20 bg-brand/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-brand/40">
-                <div class="absolute -inset-2 bg-gradient-to-tr from-brand/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-brand mb-2">Partial Frames</p>
-                <p class="text-5xl font-bold tracking-tight text-brand drop-shadow-[0_0_12px_rgba(177,33,66,0.3)]">{analytics.quality.partial_frames.toLocaleString()}</p>
+              <div class="rounded-[1.25rem] border border-warning/20 bg-warning/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-warning/40">
+                <div class="absolute -inset-2 bg-gradient-to-tr from-warning/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-warning mb-2">Partial Frames</p>
+                <p class="text-5xl font-bold tracking-tight text-warning drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]">{analytics.quality.partial_frames.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@
           <!-- Chart Card -->
           <div class="rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
             <h3 class="mt-0 mb-6 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
-              <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
+              <span class="inline-block h-3 w-1 rounded-sm bg-warning"></span>
               Top Missing Fields
             </h3>
             

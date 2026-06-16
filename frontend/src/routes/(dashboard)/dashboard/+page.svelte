@@ -11,6 +11,14 @@
   let summary = $state<DashboardSummary | null>(data.summary);
   let error = $state<string | undefined>(data.error);
 
+  function getSeverityColor(score: number | undefined | null) {
+    if (!score) return 'var(--color-info)'; // Default
+    if (score >= 0.7) return 'var(--color-critical)'; // Rose Red
+    if (score >= 0.45) return 'var(--color-warning)'; // Amber
+    if (score >= 0.3) return 'var(--color-brand)'; // Amethyst
+    return 'var(--color-info)'; // Blue
+  }
+
   $effect(() => {
     summary = data.summary;
     error = data.error;
@@ -209,14 +217,16 @@
             {:else}
               <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {#each summary.recent_anomalies as anomaly}
-                  <a href="/dashboard/ml" class="group relative overflow-hidden rounded-xl border border-brand/30 bg-brand/5 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-brand hover:shadow-md hover:shadow-brand/10">
-                    <div class="flex items-center justify-between mb-4">
-                      <span class="rounded-md bg-brand/20 px-2 py-0.5 text-[10px] font-bold tracking-widest text-brand border border-brand/20">NORAD {anomaly.norad_id}</span>
+                  {@const severityHex = getSeverityColor(anomaly.score)}
+                  <a href="/dashboard/ml" class="group relative overflow-hidden rounded-xl border bg-surface/20 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md" style="border-color: {severityHex};">
+                    <div class="absolute inset-0 opacity-5" style="background-color: {severityHex};"></div>
+                    <div class="relative flex items-center justify-between mb-4">
+                      <span class="rounded-md px-2 py-0.5 text-[10px] font-bold tracking-widest border" style="color: {severityHex}; border-color: {severityHex}; background-color: color-mix(in srgb, {severityHex} 15%, transparent);">NORAD {anomaly.norad_id}</span>
                       <span class="text-[10px] font-medium text-ink-3 bg-surface/50 px-2 py-0.5 rounded border border-border/50">{new Date(anomaly.timestamp).toLocaleTimeString()}</span>
                     </div>
-                    <div class="flex items-baseline justify-between mt-auto">
+                    <div class="relative flex items-baseline justify-between mt-auto">
                       <div class="flex flex-col">
-                        <span class="text-3xl font-bold tracking-tight text-ink group-hover:text-brand transition-colors">{anomaly.score?.toFixed(2) || 'N/A'}</span>
+                        <span class="text-3xl font-bold tracking-tight text-ink transition-colors group-hover:text-[var(--hover-color)]" style="--hover-color: {severityHex};">{anomaly.score?.toFixed(2) || 'N/A'}</span>
                         <span class="text-[9px] font-semibold uppercase tracking-wider text-ink-3">Reconstruction Score</span>
                       </div>
                       <span class="text-xs font-medium text-ink-3">{new Date(anomaly.timestamp).toLocaleDateString()}</span>

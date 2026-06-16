@@ -6,9 +6,10 @@
  */
 
 // ── Core palette ────────────────────────────────────────────────────────────
-export const BRAND = '#b12142';
-export const BRAND_GLOW = 'rgba(177, 33, 66, 0.6)';
-export const MUTED = '#6c7a96';
+export const BRAND = '#8b5cf6'; // Amethyst Purple
+export const BRAND_GLOW = 'rgba(139, 92, 246, 0.6)';
+export const MUTED = '#71717a'; // Zinc 500
+export const ALERT = '#f43f5e'; // Rose Red for alerts
 export const OK = 'var(--color-ok)';
 export const INK = 'var(--color-ink)';
 export const INK2 = 'var(--color-ink-2)';
@@ -18,21 +19,21 @@ export const BORDER = 'var(--color-border)';
 // ── Semantic chart colors ───────────────────────────────────────────────────
 export const WATCHDOG_COLORS = {
   nominal: MUTED,
-  anomaly: BRAND,
+  anomaly: ALERT,
   reference: '#94a3b8',
-  threshold: BRAND,
-  success: '#34d399',
+  threshold: ALERT,
+  success: '#10b981',
 } as const;
 
 // ── Data series palette ─────────────────────────────────────────────────────
 /** Voltage, primary EDA line color */
-export const SERIES_VOLTAGE = '#4361ee';
+export const SERIES_VOLTAGE = '#8b5cf6'; // Amethyst
 /** Temperature — battery */
-export const SERIES_TEMP_BATT = '#e64848';
+export const SERIES_TEMP_BATT = '#f43f5e'; // Rose
 /** Temperature — panel Z */
-export const SERIES_TEMP_PANEL = '#2ec4b6';
+export const SERIES_TEMP_PANEL = '#14b8a6'; // Teal
 /** Battery current, secondary blue */
-export const SERIES_CURRENT = '#3a86ff';
+export const SERIES_CURRENT = '#6366f1'; // Indigo
 /** Histogram / distribution accent */
 export const SERIES_HISTOGRAM = '#9b59b6';
 /** Neutral / z-score baseline */
@@ -43,19 +44,19 @@ export const SERIES_AMBER = '#f59e0b';
 export const SERIES_GREEN = '#8ac926';
 /** Teal secondary */
 export const SERIES_TEAL = '#20b2aa';
-/** Z-Score dark line (dark navy for sensitivity sweep) */
-export const SERIES_ZSCORE = '#092e4b';
+/** Z-Score line (brighter blue for visibility) */
+export const SERIES_ZSCORE = '#38bdf8';
 
 // ── ML chart colors ─────────────────────────────────────────────────────────
 /** Feature contribution: normal reconstruction */
-export const ML_NORMAL = '#4f7fb5';
+export const ML_NORMAL = '#8b5cf6'; // Amethyst
 /** Feature contribution: faulty reconstruction */
-export const ML_FAULT = '#b13a4b';
+export const ML_FAULT = '#f43f5e'; // Rose
 
 // ── Correlation heatmap ─────────────────────────────────────────────────────
-export const CORR_NEGATIVE = '#2166ac';
-export const CORR_NEUTRAL = '#f7f7f7';
-export const CORR_POSITIVE = '#b2182b';
+export const CORR_NEGATIVE = '#14b8a6'; // Teal
+export const CORR_NEUTRAL = 'var(--color-surface)'; // Adapt to light/dark
+export const CORR_POSITIVE = '#f43f5e'; // Rose
 
 // ── Per-feature distribution palette ────────────────────────────────────────
 export const FEATURE_COLORS: Record<string, string> = {

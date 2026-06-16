@@ -7,7 +7,6 @@
    * Uses Cell mark for the grid, Text for annotations.
    */
   import { Plot, Cell, Text } from 'svelteplot';
-  import { CORR_NEGATIVE, CORR_NEUTRAL, CORR_POSITIVE } from '$lib/chart-theme';
 
   type FrameFeatures = Record<string, number | null>;
 
@@ -69,7 +68,7 @@
     height={380}
     x={{ type: 'band', label: false, domain: FEATURES.map(f => LABELS[f]) }}
     y={{ type: 'band', label: false, domain: [...FEATURES].reverse().map(f => LABELS[f]) }}
-    color={{ type: 'linear', domain: [-1, 0, 1], scheme: [CORR_NEGATIVE, CORR_NEUTRAL, CORR_POSITIVE], label: 'Correlation' }}
+    color={{ type: 'linear', domain: [-1, 1], scheme: 'magma', label: 'Correlation' }}
     marginTop={8}
     marginRight={8}
     marginBottom={60}
@@ -82,7 +81,7 @@
     <!-- Annotate with correlation values (skip diagonal) -->
     <Text data={cells().filter(d => d.x !== d.y)} x="x" y="y"
           text={d => d.r.toFixed(2)}
-          fill={d => Math.abs(d.r) > 0.5 ? 'white' : 'var(--color-ink-2)'}
+          fill={d => d.r > 0.3 ? '#18181b' : 'white'}
           fontSize={12} fontWeight="600"
           textAnchor="middle" dy={4} />
   </Plot>

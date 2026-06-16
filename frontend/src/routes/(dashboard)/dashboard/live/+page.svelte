@@ -143,14 +143,14 @@
                 onclick={() => selectedTimestamp = selectedTimestamp === frame.timestamp ? null : frame.timestamp}
               >
                 <!-- Status Indicator Bar -->
-                <div class="absolute inset-y-0 left-0 w-1 {frame.model?.is_anomaly ? 'bg-brand shadow-[0_0_8px_rgba(177,33,66,0.8)]' : 'bg-emerald-500/50'}"></div>
+                <div class="absolute inset-y-0 left-0 w-1 {frame.model?.is_anomaly ? 'bg-critical shadow-[0_0_8px_rgba(244,63,94,0.8)]' : 'bg-emerald-500/50'}"></div>
 
                 <!-- Card Header: NORAD, Quality, Timestamp, Score -->
                 <div class="flex items-start justify-between gap-3 pl-2">
                   <div class="space-y-1.5">
                     <div class="flex items-center gap-2">
                       <span class="rounded border border-border bg-panel px-2 py-1 font-mono text-xs font-bold text-ink-3">NORAD {frame.norad_id}</span>
-                      <span class="text-xs font-medium {frame.quality?.frame_is_complete ? 'text-emerald-500' : 'text-brand'}">
+                      <span class="text-xs font-medium {frame.quality?.frame_is_complete ? 'text-emerald-500' : 'text-warning'}">
                         {frame.quality?.frame_is_complete ? "Complete" : "Partial"}
                       </span>
                     </div>
@@ -159,7 +159,7 @@
 
                   <div class="text-right">
                     <p class="text-xs font-semibold uppercase tracking-wider text-ink-3">Anomaly Score</p>
-                    <p class="text-2xl font-bold tracking-tight {frame.model?.is_anomaly ? 'text-brand' : 'text-ink'}">
+                    <p class="text-2xl font-bold tracking-tight {frame.model?.is_anomaly ? 'text-critical' : 'text-ink'}">
                       {frame.model?.anomaly_score !== null ? frame.model.anomaly_score.toFixed(2) : "-"}
                     </p>
                   </div>
