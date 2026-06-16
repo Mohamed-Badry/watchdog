@@ -34,7 +34,7 @@ entity AnomalyModelArtifact {
     train_row_count: Integer
     
     -- Operating parameters
-    operating_threshold: Float
+    threshold: Float
     
     feature_names: List<String>
     diagnosis_feature_names: List<String>
@@ -47,7 +47,7 @@ entity TelemetryInference {
     anomaly_score: Float
     
     -- Stage 1: Detection
-    is_anomaly: anomaly_score > model.operating_threshold
+    is_anomaly: anomaly_score > model.threshold
     
     -- Stage 2: Diagnosis (evaluated when is_anomaly is true)
     top_contributing_feature: String? when is_anomaly = true
@@ -104,4 +104,14 @@ rule GenerateBenchmarkFaults {
     ensures: BenchmarkReport.created(
         model: model
     )
+}
+
+external entity SystemOperator {}
+
+surface CLI {
+    facing operator: SystemOperator
+
+    provides:
+        TrainModelRequested(satellite: telemetry/SatelliteProfile)
+        BenchmarkRequested(model: AnomalyModelArtifact)
 }

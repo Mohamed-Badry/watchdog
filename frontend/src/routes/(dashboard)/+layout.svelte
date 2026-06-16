@@ -2,7 +2,16 @@
   import { page } from "$app/stores";
   import { themeState, toggleTheme } from "$lib/theme.svelte";
   import { slide } from "svelte/transition";
+  import { setPlotDefaults } from "svelteplot";
   import { Home, Satellite, Zap, LineChart, Activity, Menu, X, Moon, Sun, BookOpen, BrainCircuit, Search } from "lucide-svelte";
+
+  setPlotDefaults({
+    style: {
+      fontSize: 11,
+      fontFamily: '"IBM Plex Sans", sans-serif',
+    },
+    color: { scheme: 'observable10' },
+  });
 
   let { children } = $props();
 

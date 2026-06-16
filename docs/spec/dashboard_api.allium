@@ -18,9 +18,13 @@ value SatelliteIdentity {
     name: String
 }
 
+value TimeWindow {
+    start: Timestamp?
+    end: Timestamp?
+}
+
 value DatasetSummary {
-    window_start: Timestamp?
-    window_end: Timestamp?
+    window: TimeWindow
     row_count: Integer
     anomaly_count: Integer
     partial_frame_count: Integer
