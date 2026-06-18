@@ -89,7 +89,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: builder
     container_name: watchdog_frontend
+    command: bun run dev --host 0.0.0.0
     ports:
       - "5173:5173"
     volumes:
@@ -102,8 +104,13 @@ services:
     restart: unless-stopped
     develop:
       watch:
-        # Source changes: bind-mounted, Vite HMR handles them.
-        # Dep / config changes: need a rebuild to re-run bun install.
+        # Sync source files instantly so Vite HMR can hot-reload without container rebuilds
+        - action: sync
+          path: frontend/src
+          target: /app/src
+        - action: sync
+          path: frontend/static
+          target: /app/static
         - action: rebuild
           path: frontend/package.json
         - action: rebuild

@@ -19,12 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 
 WORKDIR /app
 
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-
 RUN groupadd -r svelte && useradd -m -r -g svelte svelte
-RUN chown -R svelte:svelte /app
+
+COPY --from=builder --chown=svelte:svelte /app/build ./build
+COPY --from=builder --chown=svelte:svelte /app/node_modules ./node_modules
+COPY --from=builder --chown=svelte:svelte /app/package.json ./package.json
+
 USER svelte
 
 ENV PORT=5173
