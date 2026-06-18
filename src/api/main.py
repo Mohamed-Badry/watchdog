@@ -153,7 +153,7 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
                             await websocket.send_json({"type": "push_anomaly_alert", "alert": anomaly})
                 
                 await asyncio.sleep(2)
-        except WebSocketDisconnect:
+        except (WebSocketDisconnect, RuntimeError):
             pass
         finally:
             receiver_task.cancel()
