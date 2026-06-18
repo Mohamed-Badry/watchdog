@@ -66,7 +66,7 @@
         }
         if (track && track.length > 0) {
           const latlngs = track.map((p: TrackPoint) => L!.latLng(p.lat, p.lon));
-          trackLayer = L!.polyline(latlngs, { color: '#b12142', weight: 3, dashArray: '5, 5' }).addTo(map!);
+          trackLayer = L!.polyline(latlngs, { color: '#8b5cf6', weight: 3, dashArray: '5, 5' }).addTo(map!);
         }
       });
     }

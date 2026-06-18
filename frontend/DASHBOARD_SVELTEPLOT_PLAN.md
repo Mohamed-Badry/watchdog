@@ -105,7 +105,7 @@ Create `src/lib/chart-theme.ts`:
 
 ```ts
 // Shared SveltePlot defaults for the Watchdog dashboard.
-export const BRAND = '#b12142';
+export const BRAND = '#8b5cf6';
 export const MUTED = '#6c7a96';
 export const OK    = 'var(--color-ok)';
 export const INK   = 'var(--color-ink)';
@@ -236,7 +236,7 @@ export function addNominalCount(b: { frame_count: number; anomaly_count: number 
 
 <Plot height={400} x={{ type: 'band', label: null }}
       y={{ grid: true, label: 'Frames' }}
-      color={{ domain: ['Nominal', 'Anomaly'], range: ['#6c7a96', '#b12142'] }}>
+      color={{ domain: ['Nominal', 'Anomaly'], range: ['#6c7a96', '#8b5cf6'] }}>
   <BarY data={longData} x="date" y="count" fill="type"
         offset="stack" fillOpacity={0.7} rx={2} />
   <Tip data={longData} x="date" y="count" fill="type" />
@@ -268,7 +268,7 @@ export function addNominalCount(b: { frame_count: number; anomaly_count: number 
       y={{ grid: true, label: yAxisLabel ?? 'Frequency' }}>
   <RectY data={data}
          {...binX({ y: 'count' }, { x: 'value', thresholds: binCount })}
-         fill="#b12142" fillOpacity={0.55} rx={2} />
+         fill="#8b5cf6" fillOpacity={0.55} rx={2} />
 </Plot>
 ```
 
@@ -293,7 +293,7 @@ export function addNominalCount(b: { frame_count: number; anomaly_count: number 
 <Plot height={280}
       x={{ grid: true, label: xAxisLabel, nice: true }}
       y={{ grid: true, label: yAxisLabel, nice: true }}
-      color={{ domain: [false, true], range: ['#6c7a96', '#b12142'], legend: true }}>
+      color={{ domain: [false, true], range: ['#6c7a96', '#8b5cf6'], legend: true }}>
   <Dot data={points} x="x" y="y" fill="a"
        r={d => d.a ? 4.5 : 3.5}
        fillOpacity={d => d.a ? 0.85 : 0.35} stroke="none" />
@@ -328,10 +328,10 @@ export function addNominalCount(b: { frame_count: number; anomaly_count: number 
       y={{ domain: [0, 1], label: 'True Positive Rate', grid: true }}>
   <Line data={diag} x="fpr" y="tpr"
         stroke="#94a3b8" strokeWidth={1} strokeDasharray="4 4" strokeOpacity={0.5} />
-  <Line data={sorted} x="fpr" y="tpr" stroke="#b12142" strokeWidth={2} />
+  <Line data={sorted} x="fpr" y="tpr" stroke="#8b5cf6" strokeWidth={2} />
   {#if currentFpr != null && currentTpr != null}
     <Dot data={opPoint} x="fpr" y="tpr"
-         fill="#b12142" r={6} stroke="white" strokeWidth={2} />
+         fill="#8b5cf6" r={6} stroke="white" strokeWidth={2} />
     <Text data={opPoint} x="fpr" y="tpr"
           text={d => `(${d.fpr.toFixed(2)}, ${d.tpr.toFixed(2)})`}
           dy={-12} fontSize={10} fill="var(--color-ink-2)" />
@@ -361,7 +361,7 @@ export function addNominalCount(b: { frame_count: number; anomaly_count: number 
       x={{ type: 'band', label: 'Threshold' }}
       y={{ grid: true, label: 'F1 Score', domain: [0, 1] }}>
   <BarY data={sweepData} x={d => d.threshold.toFixed(2)} y="f1_score"
-        fill={d => Math.abs(d.threshold - currentThreshold) < 0.02 ? '#b12142' : '#6c7a96'}
+        fill={d => Math.abs(d.threshold - currentThreshold) < 0.02 ? '#8b5cf6' : '#6c7a96'}
         fillOpacity={d => Math.abs(d.threshold - currentThreshold) < 0.02 ? 0.9 : 0.45}
         rx={2} />
   <Tip data={sweepData} x={d => d.threshold.toFixed(2)} y="f1_score" />
@@ -394,7 +394,7 @@ Replaces the fragile CSS-positioned inline Gantt with a proper temporal bar char
   <RuleX data={[now]} x={d => d}
          stroke="var(--color-ok)" strokeWidth={2} strokeDasharray="4 2" />
   <BarX data={passes} x1="aos" x2="los" y="satellite"
-        fill="#b12142" fillOpacity={0.8} rx={3} />
+        fill="#8b5cf6" fillOpacity={0.8} rx={3} />
   <Tip data={passes} x1="aos" x2="los" y="satellite" />
 </Plot>
 ```
@@ -424,9 +424,9 @@ Missing from current Live Watcher — adds real-time anomaly score visualization
 <Plot height={200}
       x={{ type: 'utc', label: null }}
       y={{ label: 'Score', grid: true }}
-      color={{ domain: [false, true], range: ['#6c7a96', '#b12142'] }}>
+      color={{ domain: [false, true], range: ['#6c7a96', '#8b5cf6'] }}>
   <RuleY data={[threshold]} y={d => d}
-         stroke="#b12142" strokeDasharray="6 3" strokeOpacity={0.6} />
+         stroke="#8b5cf6" strokeDasharray="6 3" strokeOpacity={0.6} />
   <Line data={plotData} x="date" y="anomaly_score"
         stroke="var(--color-ink-3)" strokeWidth={1} strokeOpacity={0.4} />
   <Dot data={plotData} x="date" y="anomaly_score" fill="is_anomaly"

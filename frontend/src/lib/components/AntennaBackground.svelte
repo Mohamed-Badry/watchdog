@@ -6,7 +6,7 @@
    * animated signal beams.  Default palette tuned for the dark-navy page bg:
    *   - Antenna idle:  deep slate  (#1c2a3e)  — subtle, barely there
    *   - Antenna active: steel blue (#7eb8da)  — holographic glow
-   *   - Signal beam:   brand red   (#B12142)  — consistent with theme
+   *   - Signal beam:   brand purple (#8b5cf6)  — consistent with theme
    *
    * Colors can be overridden via props for light-mode palettes.
    * The canvas is fixed full-screen behind all content by default.
@@ -40,7 +40,7 @@
     // Theme
     lightMode = false,
     // Colors — tuned for dark-navy page background
-    beamColor = "#B12142", // project brand red — signal beam
+    beamColor = "#8b5cf6", // project brand purple — signal beam
     colorOff = "#1c2a3e", // deep slate — subtle idle dish
     colorOn = "#7eb8da", // steel blue — holographic active glow
     // Geometry (keep original proportions)

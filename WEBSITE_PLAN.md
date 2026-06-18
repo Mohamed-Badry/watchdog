@@ -143,7 +143,7 @@ The site uses **two distinct layout shells**:
 
 ### B. Color Palette
 Derived from the academic Typst templates, adapting to web conventions:
-- **Primary Accent:** Pinkish Red (`#B12142`) - Used for highlights, active states, and H1 banners.
+- **Primary Accent:** Purple (`#8B5CF6`) - Used for highlights, active states, and H1 banners.
 - **Secondary Accent:** Muted Slate Gray (`#6C7A96`) - Used for secondary text, borders, and sub-headers.
 - **Light Mode Base:** Near-white (`#F8FAFC`) with dark text (`#111827`).
 - **Dark Mode Base:** AMOLED black (`#000000`) with light text (`#F8FAFC`).

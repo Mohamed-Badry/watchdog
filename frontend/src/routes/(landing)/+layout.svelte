@@ -15,7 +15,7 @@
   // ── Antenna Theme Configuration ───────────────────────────────────────────
   let antennaColorOff = $derived(themeState.isLight ? "#a0b0c0" : "#1c2a3e");
   let antennaColorOn = $derived(themeState.isLight ? "#3a5068" : "#7eb8da");
-  let antennaBeamColor = $derived(themeState.isLight ? "#8a1833" : "#B12142");
+  let antennaBeamColor = $derived(themeState.isLight ? "#7c3aed" : "#8b5cf6");
   let antennaMaxDist = $derived(themeState.isLight ? 350 : 400);
   let antennaSignalFadeScale = $derived(themeState.isLight ? 1.3 : 1.7);
   let antennaBaseFadeScale = $derived(themeState.isLight ? 1.0 : 1.5);
