@@ -20,21 +20,33 @@
     { href: "/dashboard/ml-report", label: "Model Analysis", icon: BrainCircuit },
   ];
 
-  let sidebarOpen = $state(false);
+  let desktopSidebarOpen = $state(true);
+  let mobileSidebarOpen = $state(false);
 
   function toggleSidebar() {
-    sidebarOpen = !sidebarOpen;
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      mobileSidebarOpen = !mobileSidebarOpen;
+    } else {
+      desktopSidebarOpen = !desktopSidebarOpen;
+    }
+  }
+
+  function handleNavClick() {
+    mobileSidebarOpen = false;
   }
 </script>
 
-<div class="flex min-h-screen bg-surface text-ink transition-colors">
+<div class="flex min-h-screen bg-surface text-ink transition-colors overflow-x-hidden">
   <!-- Sidebar -->
-  <aside class="fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border bg-panel shadow-panel backdrop-blur transition-transform duration-300 md:translate-x-0 {sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:sticky md:top-0 md:h-screen md:flex md:w-64">
+  <aside class="fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border bg-panel shadow-panel backdrop-blur transition-all duration-300 md:sticky md:top-0 md:h-screen {mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} {desktopSidebarOpen ? 'md:translate-x-0 md:ml-0' : 'md:-translate-x-full md:-ml-64'}">
     <div class="flex h-16 items-center justify-between border-b border-border px-6">
       <a class="text-lg font-semibold tracking-[0.18em] text-brand uppercase" href="/">
         Watchdog
       </a>
-      <button class="md:hidden text-ink hover:text-brand transition-colors" onclick={toggleSidebar} aria-label="Close sidebar">
+      <button class="text-ink-2 hover:text-brand transition-colors p-1.5 -mr-1.5 rounded-lg hover:bg-surface hidden md:block" onclick={toggleSidebar} aria-label="Collapse sidebar">
+        <Menu class="size-5" />
+      </button>
+      <button class="md:hidden text-ink-2 hover:text-brand transition-colors p-1.5 -mr-1.5 rounded-lg hover:bg-surface" onclick={toggleSidebar} aria-label="Close sidebar">
         <X class="size-5" />
       </button>
     </div>
@@ -48,7 +60,7 @@
             <a
               href={link.href}
               class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
-              onclick={() => sidebarOpen = false}
+              onclick={handleNavClick}
             >
               <Icon class="size-4 opacity-80" />
               {link.label}
@@ -65,7 +77,7 @@
             <a
               href={link.href}
               class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
-              onclick={() => sidebarOpen = false}
+              onclick={handleNavClick}
             >
               <Icon class="size-4 opacity-80" />
               {link.label}
@@ -75,7 +87,7 @@
       </div>
     </nav>
 
-    <div class="border-t border-border p-4">
+    <div class="border-t border-border p-4 pb-24 md:pb-4">
       <button
         onclick={toggleTheme}
         class="group relative flex w-full items-center justify-between overflow-hidden rounded-xl border border-border bg-surface/50 px-4 py-3 text-sm font-medium text-ink-2 transition-all hover:border-brand/50 hover:bg-surface hover:text-ink hover:shadow-sm"
@@ -96,28 +108,64 @@
   </aside>
 
   <!-- Main Content -->
-  <div class="flex flex-1 flex-col min-h-0 overflow-hidden">
-    <!-- Topbar (mobile only) -->
-    <header class="flex h-16 shrink-0 items-center justify-between border-b border-border bg-panel px-6 md:hidden">
-      <button onclick={toggleSidebar} class="text-ink-2 hover:text-brand transition-colors" aria-label="Open sidebar">
-        <Menu class="size-5" />
-      </button>
-      <a class="text-lg font-semibold tracking-[0.18em] text-brand uppercase" href="/">
+  <div class="flex flex-1 flex-col min-h-0 overflow-hidden pb-16 md:pb-0">
+    <!-- Topbar -->
+    <header class="flex h-14 shrink-0 items-center border-b border-border bg-panel/80 backdrop-blur-md px-6 sticky top-0 z-30 transition-all duration-300 {desktopSidebarOpen ? 'md:-mt-14 md:border-b-transparent md:opacity-0 pointer-events-none' : 'md:mt-0 pointer-events-auto'}">
+      <!-- Mobile Center Logo -->
+      <a class="text-[13px] font-bold tracking-[0.2em] text-brand uppercase md:hidden absolute left-1/2 -translate-x-1/2" href="/">
         Watchdog
       </a>
-      <div class="w-5"></div> <!-- Spacer for flex justify-between -->
+      
+      <!-- Desktop Burger & Logo -->
+      <div class="hidden md:flex items-center gap-4">
+        <button class="text-ink-2 hover:text-brand transition-colors p-1.5 -ml-1.5 rounded-lg hover:bg-surface pointer-events-auto" onclick={toggleSidebar} aria-label="Open sidebar">
+          <Menu class="size-5" />
+        </button>
+        <a class="text-[13px] font-bold tracking-[0.2em] text-brand uppercase" href="/">
+          Watchdog
+        </a>
+      </div>
     </header>
 
     <main class="flex-1 relative min-h-0">
-      <div class="absolute inset-0 w-full h-full flex flex-col overflow-y-auto p-6 md:p-8 lg:p-10">
+      <div class="absolute inset-0 w-full h-full flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-5 md:p-8 lg:p-10">
         {@render children()}
       </div>
     </main>
   </div>
+  
+  <!-- Premium Mobile Bottom Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border bg-panel/90 backdrop-blur-xl pb-safe">
+    {#each dashboardLinks.slice(0, 4) as link}
+      {@const Icon = link.icon}
+      {@const isActive = $page.url.pathname === link.href}
+      <a
+        href={link.href}
+        class="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors {isActive ? 'text-brand' : 'text-ink-3 hover:text-ink-2'}"
+      >
+        <div class="relative flex items-center justify-center {isActive ? 'scale-110' : 'scale-100'} transition-transform duration-300">
+          <Icon class="size-[1.1rem]" />
+          {#if isActive}
+            <span class="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-brand shadow-[0_0_8px_rgba(139,92,246,0.6)]"></span>
+          {/if}
+        </div>
+        <span class="text-[9px] font-medium tracking-wide {isActive ? 'text-brand' : 'text-ink-3'}">
+          {link.label.split(' ')[0]}
+        </span>
+      </a>
+    {/each}
+    <button
+      onclick={toggleSidebar}
+      class="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-ink-3 hover:text-ink-2"
+    >
+      <Menu class="size-[1.1rem]" />
+      <span class="text-[9px] font-medium tracking-wide text-ink-3">Menu</span>
+    </button>
+  </nav>
 </div>
 
 <!-- Backdrop -->
-{#if sidebarOpen}
+{#if mobileSidebarOpen}
   <button
     class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden cursor-default"
     onclick={toggleSidebar}

@@ -1,9 +1,10 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Time Gap Distribution — Intra-pass frame cadence histogram
    * Reproduces docs/figures/time_gap_distribution.png
    */
-  import { Plot, RectY, RuleX } from 'svelteplot';
+  import { RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
   import { SERIES_HISTOGRAM, SERIES_TEMP_BATT } from '$lib/chart-theme';
 
@@ -42,8 +43,8 @@
 
 <div class="w-full">
   {#if gaps().length > 0}
-    <Plot height={320}
-      x={{ label: 'Seconds Between Frames', nice: true }}
+    <ResponsivePlot height={320}
+      x={{ label: 'Seconds Between Frames', labelAnchor: 'center', nice: true }}
       y={{ label: 'Count', grid: true }}
       marginTop={12} marginRight={12} marginBottom={40} marginLeft={44}>
 
@@ -55,7 +56,7 @@
       <RuleX data={[median()]}
              stroke={SERIES_TEMP_BATT} strokeWidth={2}
              strokeDasharray="6 3" strokeOpacity={0.7} />
-    </Plot>
+    </ResponsivePlot>
     <div class="mt-2 flex items-center justify-center gap-4 text-xs text-ink-3">
       <span class="flex items-center gap-1.5">
         <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: {SERIES_TEMP_BATT}; opacity: 0.7"></span>

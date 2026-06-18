@@ -1,9 +1,10 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Multi-model ROC comparison with AUROC labels.
    * Uses static benchmark data from the Python analysis.
    */
-  import { Plot, Line } from 'svelteplot';
+  import { Line } from 'svelteplot';
   import { SERIES_TEMP_BATT, SERIES_AMBER, SERIES_CURRENT, SERIES_BASELINE } from '$lib/chart-theme';
 
   const MODELS = [
@@ -19,16 +20,16 @@
   const diag = [{fpr:0,tpr:0},{fpr:1,tpr:1}];
 </script>
 
-<div class="h-full w-full max-w-2xl mx-auto">
-  <Plot height={450}
-    x={{ domain: [0, 1], label: 'False Positive Rate', grid: true }}
+<div class="h-full w-full mx-auto">
+  <ResponsivePlot height={450}
+    x={{ domain: [0, 1], label: 'False Positive Rate', labelAnchor: 'center', grid: true }}
     y={{ domain: [0, 1], label: 'True Positive Rate (Recall)', grid: true }}
     marginTop={28} marginRight={28} marginBottom={44} marginLeft={52}>
     <Line data={diag} x="fpr" y="tpr" stroke={SERIES_BASELINE} strokeWidth={1} strokeDasharray="6 4" strokeOpacity={0.3} />
     {#each MODELS as m}
       <Line data={m.pts} x="fpr" y="tpr" stroke={m.color} strokeWidth={2.5} />
     {/each}
-  </Plot>
+  </ResponsivePlot>
 </div>
 <div class="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-ink-2">
   <span class="flex items-center gap-1.5">

@@ -203,7 +203,7 @@
   <title>Operations — Watchdog</title>
 </svelte:head>
 
-<section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+<section class="flex flex-col lg:h-full lg:min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Operations Center</p>
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Pass Planning Console</h1>
@@ -217,11 +217,11 @@
   {:else}
     <!-- HORIZONTAL CONTROL BAR -->
     <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
-      <label class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+      <label class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Preset Station</span>
         <select
           value={selectedStationId}
-          class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
           onchange={(event) => selectStation((event.currentTarget as HTMLSelectElement).value)}
         >
           {#each stationPresets as preset}
@@ -231,11 +231,11 @@
         </select>
       </label>
 
-      <label class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+      <label class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite</span>
         <select
           bind:value={selectedNoradId}
-          class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
         >
           <option value="all">All Satellites</option>
           {#each satellites as satellite}
@@ -244,11 +244,11 @@
         </select>
       </label>
 
-      <label class="flex flex-col gap-1.5 w-40">
+      <label class="flex flex-col gap-1.5 w-full sm:w-40">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Lookahead</span>
         <select
           bind:value={lookaheadHours}
-          class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
         >
           {#each lookaheadOptions as option}
             <option value={option.value}>{option.label}</option>
@@ -256,11 +256,11 @@
         </select>
       </label>
 
-      <label class="flex flex-col gap-1.5 w-40">
+      <label class="flex flex-col gap-1.5 w-full sm:w-40">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Min Elevation</span>
         <select
           bind:value={minElevation}
-          class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
         >
           {#each elevationOptions as option}
             <option value={option.value}>{option.label}</option>
@@ -270,7 +270,7 @@
 
       <button
         type="button"
-        class="flex items-center justify-center rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
+        class="flex items-center justify-center w-full sm:w-auto rounded-lg bg-brand px-5 py-3.5 text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60 mt-2 sm:mt-0"
         disabled={loading}
         onclick={fetchPassPredictions}
       >
@@ -285,10 +285,10 @@
     {/if}
 
     <!-- MAIN GRID (Fills remaining height) -->
-    <div class="flex-1 min-h-0 grid gap-5 lg:grid-cols-[400px_minmax(0,1fr)] xl:grid-cols-[450px_minmax(0,1fr)]">
+    <div class="lg:flex-1 lg:min-h-0 grid gap-5 lg:grid-cols-[400px_minmax(0,1fr)] xl:grid-cols-[450px_minmax(0,1fr)]">
       
       <!-- LEFT COLUMN: Map & Coordinates -->
-      <section class="flex flex-col rounded-[1.5rem] border border-border bg-panel p-5 shadow-panel backdrop-blur overflow-hidden">
+      <section class="flex flex-col min-h-[300px] rounded-[1.5rem] border border-border bg-panel p-5 shadow-panel backdrop-blur overflow-hidden">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Station Map</h2>
           <span class="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-medium text-ink-3">
@@ -308,7 +308,7 @@
             <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Label</span>
             <input
               value={station.label}
-              class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+              class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
               oninput={(event) => updateStationField('label', (event.currentTarget as HTMLInputElement).value)}
             />
           </label>
@@ -317,7 +317,7 @@
             <input
               type="number" min="-90" max="90" step="0.0001"
               value={station.lat}
-              class="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+              class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 font-mono text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
               oninput={(event) => updateStationField('lat', (event.currentTarget as HTMLInputElement).value)}
             />
           </label>
@@ -326,7 +326,7 @@
             <input
               type="number" min="-180" max="180" step="0.0001"
               value={station.lon}
-              class="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+              class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 font-mono text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
               oninput={(event) => updateStationField('lon', (event.currentTarget as HTMLInputElement).value)}
             />
           </label>
@@ -335,7 +335,7 @@
             <input
               type="number" min="-500" max="10000" step="1"
               value={station.elevationM}
-              class="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
+              class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 font-mono text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
               oninput={(event) => updateStationField('elevationM', (event.currentTarget as HTMLInputElement).value)}
             />
           </label>
@@ -343,7 +343,7 @@
       </section>
 
       <!-- RIGHT COLUMN: Pass Results (Timeline & List) -->
-      <section class="flex flex-col flex-1 min-h-0 overflow-hidden rounded-[1.5rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <section class="flex flex-col lg:flex-1 min-h-[200px] overflow-hidden rounded-[1.5rem] border border-border bg-panel shadow-panel backdrop-blur">
         {#if loading}
           <div class="flex flex-1 items-center justify-center">
             <div class="h-8 w-8 animate-spin rounded-full border-4 border-surface border-t-brand"></div>
@@ -364,7 +364,7 @@
             </div>
 
             {#if passes.length > 0}
-              <div class="grid grid-cols-4 divide-x divide-border">
+              <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
                 <div class="p-3 text-center">
                   <p class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Passes</p>
                   <p class="mt-1 text-lg font-semibold text-ink">{passes.length}</p>
@@ -396,7 +396,7 @@
             </div>
 
             <!-- Scrollable Pass List -->
-            <div class="flex-1 min-h-0 overflow-y-auto p-4">
+            <div class="lg:flex-1 lg:min-h-0 overflow-y-auto max-h-[400px] lg:max-h-none p-4">
               <div class="grid gap-3 xl:grid-cols-2">
                 {#each passes as pass, index}
                   <button
@@ -415,7 +415,7 @@
                         {pass.max_elevation}°
                       </span>
                     </div>
-                    <div class="mt-4 grid grid-cols-3 gap-2 text-xs">
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                       <div>
                         <p class="text-[10px] uppercase tracking-wider text-ink-3">AOS</p>
                         <p class="mt-0.5 font-medium text-ink">{formatDateTime(pass.aos)}</p>

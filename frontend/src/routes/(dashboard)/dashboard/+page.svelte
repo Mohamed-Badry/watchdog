@@ -95,21 +95,21 @@
     <p class="mt-2 text-sm">{error}</p>
   </div>
 {:else if summary}
-  <section class="flex flex-col h-full min-h-0 gap-5">
+  <section class="flex flex-col xl:h-full xl:min-h-0 gap-5">
     <div class="flex-none space-y-1">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">System Overview</p>
       <h1 class="text-3xl font-semibold tracking-tight text-ink">Dashboard Home</h1>
     </div>
 
     <!-- Totals -->
-    <div class="flex-none grid gap-4 md:grid-cols-4">
+    <div class="flex-none grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
       {#each statCards as stat}
         {@const Icon = stat.icon}
         {@const value = summary.totals[stat.key]}
         <article class="group flex items-center justify-between rounded-[1.25rem] border border-border bg-panel p-5 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
           <div class="flex flex-col">
             <p class="text-xs font-semibold uppercase tracking-wider text-ink-3">{stat.label}</p>
-            <p class="mt-1 text-3xl font-bold tracking-tight text-brand">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+            <p class="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-brand">{typeof value === 'number' ? value.toLocaleString() : value}</p>
           </div>
           <div class="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand shadow-inner transition-colors group-hover:bg-brand group-hover:text-white">
             <Icon class="size-6" />
@@ -119,10 +119,10 @@
     </div>
 
     <!-- Main Grid Layout -->
-    <div class="flex-1 min-h-0 grid gap-6 xl:grid-cols-[1fr_2fr]">
+    <div class="xl:flex-1 xl:min-h-0 grid gap-6 grid-cols-1 xl:grid-cols-[1fr_2fr]">
 
       <!-- Left Col (Component Health & Active Profiles) -->
-      <div class="flex flex-col gap-6 min-h-0">
+      <div class="flex flex-col gap-6 xl:min-h-0">
         <!-- Service Status -->
         <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
@@ -145,11 +145,11 @@
         </div>
 
         <!-- Active Profiles Table -->
-        <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+        <div class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
             <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Active Profiles</h2>
           </div>
-          <div class="flex-1 min-h-0 overflow-y-auto relative">
+          <div class="lg:flex-1 lg:min-h-0 overflow-y-auto relative">
             <table class="w-full text-left text-xs">
               <thead class="sticky top-0 bg-surface/90 backdrop-blur text-ink-3 shadow-sm z-10">
                 <tr>
@@ -186,7 +186,7 @@
       </div>
 
       <!-- Right Col (Throughput & Anomalies) -->
-      <div class="flex flex-col gap-6 min-h-0">
+      <div class="flex flex-col gap-6 xl:min-h-0">
         <!-- Throughput Sparkline -->
         {#if summary.throughput_buckets && summary.throughput_buckets.length > 0}
           <div class="flex-none chart-card border border-border rounded-[1.25rem] bg-panel p-4 shadow-sm backdrop-blur">
@@ -200,13 +200,13 @@
               </div>
             </div>
             <div class="h-16 w-full">
-              <SparklinePlot data={summary.throughput_buckets} width={900} height={60} />
+              <SparklinePlot data={summary.throughput_buckets} height={60} />
             </div>
           </div>
         {/if}
 
         <!-- Recent Anomalies -->
-        <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden">
+        <div class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div class="flex flex-col sm:flex-row sm:items-center gap-4">
               <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3 whitespace-nowrap">Recent Anomalies</h2>
@@ -231,13 +231,13 @@
             </div>
             <span class="text-xs font-mono text-ink-3 xl:text-right whitespace-nowrap">{summary.recent_anomalies.length} recorded</span>
           </div>
-          <div class="flex-1 min-h-0 overflow-y-auto p-5">
+          <div class="xl:flex-1 xl:min-h-0 overflow-y-auto p-5">
             {#if summary.recent_anomalies.length === 0}
               <div class="flex h-full items-center justify-center p-6 text-center text-sm text-ink-3">
                 No recent anomalies detected.
               </div>
             {:else}
-              <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {#each summary.recent_anomalies as anomaly}
                   {@const severityHex = getSeverityColor(anomaly.score)}
                   <a href="/dashboard/ml" class="group relative overflow-hidden rounded-xl border bg-surface/20 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md" style="border-color: {severityHex};">
@@ -248,7 +248,7 @@
                     </div>
                     <div class="relative flex items-baseline justify-between mt-auto">
                       <div class="flex flex-col">
-                        <span class="text-3xl font-bold tracking-tight text-ink transition-colors group-hover:text-[var(--hover-color)]" style="--hover-color: {severityHex};">{anomaly.score?.toFixed(2) || 'N/A'}</span>
+                        <span class="text-2xl sm:text-3xl font-bold tracking-tight text-ink transition-colors group-hover:text-[var(--hover-color)]" style="--hover-color: {severityHex};">{anomaly.score?.toFixed(2) || 'N/A'}</span>
                         <span class="text-[9px] font-semibold uppercase tracking-wider text-ink-3">Reconstruction Score</span>
                       </div>
                       <span class="text-xs font-medium text-ink-3">{new Date(anomaly.timestamp).toLocaleDateString()}</span>

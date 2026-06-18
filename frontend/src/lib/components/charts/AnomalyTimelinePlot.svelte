@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Plot, Dot, Line, RuleY, RuleX } from 'svelteplot';
+  import ResponsivePlot from './ResponsivePlot.svelte';
+  import { Dot, Line, RuleY, RuleX } from 'svelteplot';
   import { BRAND, MUTED, COMPACT_MARGIN } from '$lib/chart-theme';
 
   let { frames, threshold, selectedTimestamp } = $props<{
@@ -39,7 +40,7 @@
 </script>
 
 <div class="h-full w-full">
-  <Plot
+  <ResponsivePlot
     height={130}
     x={{ type: 'utc', label: false }}
     y={{ label: false, grid: true, domain: [0, yMax] }}
@@ -70,7 +71,7 @@
       <Dot data={selectedData} x="date" y="anomaly_score"
            r={7} fill="var(--color-highlight)" stroke="#000001" strokeWidth={2} />
     {/if}
-  </Plot>
+  </ResponsivePlot>
 </div>
 
 <div class="mt-2 flex items-center justify-center gap-5 text-xs text-ink-3">

@@ -55,7 +55,7 @@
   <title>ML Interface — Watchdog</title>
 </svelte:head>
 
-<section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+<section class="flex flex-col lg:h-full lg:min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Live Dashboards</p>
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Inference Inspector</h1>
@@ -68,9 +68,9 @@
   {:else}
     <!-- Controls -->
     <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
-      <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+      <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <label for="ml-sat-select" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
-        <select id="ml-sat-select" bind:value={noradId} class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand">
+        <select id="ml-sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
           <option value="all">All Satellites</option>
           {#each satellites as sat}
             <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
@@ -78,9 +78,9 @@
         </select>
       </div>
 
-      <div class="flex flex-col gap-1.5 w-40">
+      <div class="flex flex-col gap-1.5 w-full sm:w-40">
         <label for="ml-limit" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Fetch Limit</label>
-        <select id="ml-limit" bind:value={dataLimit} class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand">
+        <select id="ml-limit" bind:value={dataLimit} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
           <option value={50}>Last 50 Anomalies</option>
           <option value={100}>Last 100 Anomalies</option>
           <option value={200}>Last 200 Anomalies</option>
@@ -90,23 +90,22 @@
       <button 
         onclick={fetchAnomalies}
         disabled={loading}
-        class="flex items-center justify-center rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:opacity-50"
+        class="flex items-center justify-center w-full sm:w-auto rounded-xl sm:rounded-lg bg-brand px-5 py-3.5 sm:py-2 text-base sm:text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:opacity-50 mt-2 sm:mt-0"
       >
         {loading ? 'Fetching...' : 'Fetch Anomalies'}
       </button>
     </div>
 
     <!-- Main Grid Layout -->
-    <div class="flex-1 min-h-0 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
+    <div class="lg:flex-1 lg:min-h-0 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
       
       <!-- LEFT COLUMN: Anomaly Triage Queue -->
-      <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <div class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
         <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Anomaly Triage Queue</h2>
           <span class="text-xs font-mono text-ink-3">{anomalies.length}</span>
         </div>
-        
-        <div class="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+        <div class="lg:flex-1 lg:min-h-0 overflow-y-auto max-h-[400px] lg:max-h-none p-3 space-y-2">
           {#if loading && anomalies.length === 0}
             <div class="flex h-32 items-center justify-center">
               <div class="h-6 w-6 animate-spin rounded-full border-2 border-surface border-t-brand"></div>
@@ -141,7 +140,7 @@
       </div>
 
       <!-- RIGHT COLUMN: Inference Inspector -->
-      <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <div class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
         <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Root Cause Attribution</h2>
           {#if selectedAnomaly}
@@ -149,7 +148,7 @@
           {/if}
         </div>
         
-        <div class="flex-1 min-h-0 p-5 flex flex-col overflow-y-auto">
+        <div class="lg:flex-1 lg:min-h-0 p-5 flex flex-col overflow-y-auto">
           {#if !selectedAnomaly}
             <div class="flex h-full items-center justify-center text-ink-3 text-sm">
               Select an anomaly from the queue to inspect.
@@ -200,7 +199,7 @@
               </div>
 
               <!-- Actual vs Expected Grid -->
-              <section class="flex flex-col flex-1 min-h-0 overflow-y-auto pr-2 pb-2">
+              <section class="flex flex-col lg:flex-1 lg:min-h-0 overflow-y-auto pr-2 pb-2">
                 <div class="flex flex-col 2xl:flex-row gap-6">
                   
                   <div class="flex flex-col flex-1 min-w-0">
@@ -223,7 +222,7 @@
                           <div class="flex flex-col rounded-xl border {isRootCause ? 'border-critical bg-critical/5 shadow-md shadow-critical/10' : 'border-border bg-surface/50'} p-4 transition-colors">
                             <div class="flex items-center justify-between gap-2 mb-3">
                               <span class="text-[10px] font-semibold uppercase tracking-wider {isRootCause ? 'text-critical' : 'text-ink-3'} truncate">{key}</span>
-                              <Tooltip text={getFeatureDescription(key)} align={i % 2 === 1 ? 'right' : 'left'} />
+                              <Tooltip text={getFeatureDescription(key)} align="right" />
                             </div>
                             
                             <div class="flex items-center justify-between mb-2">
@@ -259,11 +258,11 @@
                   </div>
 
                   <!-- Right Sidebar: Context Variables -->
-                  {#if Object.keys(selectedAnomaly.features).some(f => !selectedAnomaly.feature_contributions[f])}
-                    {@const contextFeatures = Object.keys(selectedAnomaly.features).filter(f => !selectedAnomaly.feature_contributions.hasOwnProperty(f))}
+                  {#if selectedAnomaly.feature_contributions && Object.keys(selectedAnomaly.features).some(f => !selectedAnomaly.feature_contributions![f])}
+                    {@const contextFeatures = Object.keys(selectedAnomaly.features).filter(f => !selectedAnomaly.feature_contributions!.hasOwnProperty(f))}
                     <div class="flex flex-col 2xl:w-[220px] shrink-0 border-t 2xl:border-t-0 2xl:border-l border-border/50 pt-5 2xl:pt-0 2xl:pl-6">
                       <h4 class="text-[10px] font-semibold uppercase tracking-wider text-ink-3 mb-4">Context Variables (Masked)</h4>
-                      <div class="grid grid-cols-2 2xl:grid-cols-1 gap-3">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-1 gap-3">
                         {#each contextFeatures as ctxFeature}
                            <div class="flex flex-col gap-1 border-l-2 border-brand/40 pl-3 py-0.5" title={getFeatureDescription(ctxFeature)}>
                              <span class="text-[9px] uppercase tracking-wider text-ink-3 leading-none">{ctxFeature}</span>

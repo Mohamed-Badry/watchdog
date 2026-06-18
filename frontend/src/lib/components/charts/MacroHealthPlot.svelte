@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Macro-Scale Health — Dual-panel: Voltage with ±2σ band + Temperature overlay
    * Reproduces docs/figures/timeseries_macro_7month.png
@@ -6,7 +7,7 @@
    * Top: Daily average battery voltage with ±2σ band
    * Bottom: Daily average temp_batt_a (red) + temp_panel_z (green)
    */
-  import { Plot, Line, AreaY } from 'svelteplot';
+  import { Line, AreaY } from 'svelteplot';
   import { COMPACT_MARGIN, SERIES_VOLTAGE, SERIES_TEMP_BATT, SERIES_TEMP_PANEL } from '$lib/chart-theme';
 
   type Frame = {
@@ -67,7 +68,7 @@
       Battery Voltage (V) — Daily Average with ±2σ Band
     </p>
     {#if dailyStats().length > 0}
-        <Plot
+        <ResponsivePlot
           height={200}
           x={{ type: 'utc', label: false }}
           y={{ label: false, grid: true, nice: true }}
@@ -89,7 +90,7 @@
           <Line data={dailyStats()} x="date" y="v_sigma_high"
                 stroke={SERIES_VOLTAGE} strokeWidth={1.2}
                 strokeDasharray="5 4" strokeOpacity={0.55} />
-        </Plot>
+        </ResponsivePlot>
         <div class="mt-2 flex items-center justify-center gap-5 text-xs text-ink-3">
           <span class="flex items-center gap-1.5">
             <span class="inline-block h-0.5 w-4 rounded" style="background: {SERIES_VOLTAGE}"></span>
@@ -112,7 +113,7 @@
     </p>
     {#if dailyStats().length > 0}
       {@const tempData = dailyStats().filter(d => !isNaN(d.t_batt) || !isNaN(d.t_panel))}
-        <Plot
+        <ResponsivePlot
           height={200}
           x={{ type: 'utc', label: false }}
           y={{ label: false, grid: true, nice: true }}
@@ -128,7 +129,7 @@
         <!-- Panel Z temp -->
         <Line data={tempData.filter(d => !isNaN(d.t_panel))} x="date" y="t_panel"
               stroke={SERIES_TEMP_PANEL} strokeWidth={1.8} />
-      </Plot>
+      </ResponsivePlot>
       <div class="mt-2 flex items-center justify-center gap-6 text-xs text-ink-3">
         <span class="flex items-center gap-1.5">
           <span class="inline-block h-0.5 w-4 rounded" style="background: {SERIES_TEMP_BATT}"></span>

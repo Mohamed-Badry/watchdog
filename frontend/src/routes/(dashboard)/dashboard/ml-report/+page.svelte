@@ -12,7 +12,7 @@
   <title>Model Analysis — Watchdog</title>
 </svelte:head>
 
-<div class="mx-auto w-full pb-24">
+<div class="mx-auto w-full max-w-7xl pb-24">
   <header class="space-y-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out max-w-4xl">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Analysis Report</p>
     <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Model Architecture & Benchmarks</h1>
@@ -23,8 +23,7 @@
 
   <div class="space-y-32">
     
-    <!-- SECTION 1: Model Selection & ROC -->
-    <section class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
+    <section class="grid gap-12 xl:grid-cols-2 items-start">
       <div class="prose max-w-none xl:sticky xl:top-24">
         <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">1. Model Selection & Noise Filtering</h2>
         <p>

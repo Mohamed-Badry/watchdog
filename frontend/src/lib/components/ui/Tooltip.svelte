@@ -13,7 +13,7 @@
   <Info class="size-3 text-ink-3 hover:text-brand transition-colors cursor-pointer" />
   
   <!-- Tooltip Bubble -->
-  <div class="pointer-events-none absolute top-full z-50 mt-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100
+  <div class="pointer-events-none invisible absolute top-full z-50 mt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100
     {align === 'center' ? 'left-1/2 -translate-x-1/2' : ''}
     {align === 'left' ? 'left-0' : ''}
     {align === 'right' ? 'right-0' : ''}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Feature Distribution Grid — Multi-panel histograms with stats
    * Reproduces docs/figures/feature_distributions.png
@@ -8,7 +9,7 @@
    * - Mean (μ) and ±2σ reference lines
    * - Per-feature color coding
    */
-  import { Plot, RectY, RuleX } from 'svelteplot';
+  import { RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
   import { FEATURE_COLORS, SERIES_VOLTAGE, SERIES_CURRENT, SERIES_TEMP_PANEL, SERIES_TEAL } from '$lib/chart-theme';
 
@@ -58,7 +59,7 @@
         {/if}
       </div>
       {#if panel.values.length > 0}
-        <Plot
+        <ResponsivePlot
           height={160}
           x={{ label: false, nice: true }}
           y={{ label: false, grid: true }}
@@ -79,7 +80,7 @@
           <RuleX data={[panel.stats.mean + 2 * panel.stats.std]}
                  stroke="var(--color-brand)" strokeWidth={1.5}
                  strokeDasharray="4 3" strokeOpacity={0.75} />
-        </Plot>
+        </ResponsivePlot>
         <div class="mt-1 flex justify-center gap-4 text-[0.55rem] text-ink-3">
           <span class="flex items-center gap-1">
             <span class="inline-block h-px w-3" style="background: {panel.color}"></span> μ

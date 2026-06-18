@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Pass Dynamics — Dual-axis time series within a single pass
    * Reproduces docs/figures/pass_dynamics_micro.png
@@ -6,7 +7,7 @@
    * Top: Battery Voltage with filled area
    * Bottom: Battery Current (red) + Panel Z Temp (green dashed)
    */
-  import { Plot, Line, AreaY } from 'svelteplot';
+  import { Line, AreaY } from 'svelteplot';
   import { SERIES_VOLTAGE, SERIES_TEMP_BATT, SERIES_TEMP_PANEL } from '$lib/chart-theme';
 
   type Frame = {
@@ -33,7 +34,7 @@
       Battery Voltage (V)
     </p>
     {#if plotData.length > 0}
-      <Plot height={140}
+      <ResponsivePlot height={140}
         x={{ type: 'utc', label: false }}
         y={{ label: false, grid: true, nice: true }}
         marginTop={12} marginRight={12} marginBottom={20} marginLeft={46}>
@@ -41,7 +42,7 @@
                fill={SERIES_VOLTAGE} fillOpacity={0.12} />
         <Line data={plotData} x="date" y="batt_voltage"
               stroke={SERIES_VOLTAGE} strokeWidth={2} />
-      </Plot>
+      </ResponsivePlot>
     {/if}
   </div>
 
@@ -51,7 +52,7 @@
       Current (A) &amp; Panel Temp (°C)
     </p>
     {#if plotData.length > 0}
-      <Plot height={160}
+      <ResponsivePlot height={160}
         x={{ type: 'utc', label: false }}
         y={{ label: false, grid: true, nice: true }}
         marginTop={12} marginRight={12} marginBottom={32} marginLeft={46}>
@@ -62,7 +63,7 @@
         <Line data={plotData} x="date" y="temp_panel_z"
               stroke={SERIES_TEMP_PANEL} strokeWidth={1.5}
               strokeDasharray="6 3" />
-      </Plot>
+      </ResponsivePlot>
       <div class="mt-1 flex items-center justify-center gap-5 text-[0.55rem] text-ink-3">
         <span class="flex items-center gap-1">
           <span class="inline-block h-0.5 w-4" style="background: {SERIES_TEMP_BATT}"></span> Battery Current

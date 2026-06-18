@@ -114,16 +114,16 @@
             </div>
 
             <!-- Stats -->
-            <div class="xl:col-span-2 grid grid-cols-2 gap-6">
+            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div class="rounded-[1.25rem] border border-emerald-500/20 bg-emerald-500/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-emerald-500/40">
                 <div class="absolute -inset-2 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-2">Complete Frames</p>
-                <p class="text-5xl font-bold tracking-tight text-emerald-500 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">{analytics.quality.complete_frames.toLocaleString()}</p>
+                <p class="text-3xl sm:text-5xl font-bold tracking-tight text-emerald-500 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">{analytics.quality.complete_frames.toLocaleString()}</p>
               </div>
               <div class="rounded-[1.25rem] border border-warning/20 bg-warning/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-warning/40">
                 <div class="absolute -inset-2 bg-gradient-to-tr from-warning/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-warning mb-2">Partial Frames</p>
-                <p class="text-5xl font-bold tracking-tight text-warning drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]">{analytics.quality.partial_frames.toLocaleString()}</p>
+                <p class="text-3xl sm:text-5xl font-bold tracking-tight text-warning drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]">{analytics.quality.partial_frames.toLocaleString()}</p>
               </div>
             </div>
           </div>

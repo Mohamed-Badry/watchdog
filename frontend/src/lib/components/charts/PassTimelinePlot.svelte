@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Plot, BarX, RuleX } from 'svelteplot';
+  import ResponsivePlot from './ResponsivePlot.svelte';
+  import { BarX, RuleX } from 'svelteplot';
   import { BRAND, COMPACT_MARGIN } from '$lib/chart-theme';
 
   type Pass = { satellite: string; aos: Date; los: Date; max_elevation: number };
@@ -21,14 +22,14 @@
 </script>
 
 <div class="h-full w-full">
-  <Plot
+  <ResponsivePlot
     height={chartHeight}
     x={{ type: 'utc', domain: [now, endTime], label: false }}
     y={{ type: 'band', domain: satelliteRows, label: false }}
     marginTop={COMPACT_MARGIN.top + 4}
     marginRight={COMPACT_MARGIN.right}
     marginBottom={COMPACT_MARGIN.bottom}
-    marginLeft={100}
+    marginLeft={60}
   >
     <!-- "Now" reference line -->
     <RuleX data={[now]}
@@ -40,7 +41,7 @@
           fill={BRAND} fillOpacity={0.8}
           stroke={BRAND} strokeWidth={0.5} strokeOpacity={0.3}
           title={(d: Pass) => `${d.satellite}: ${d.max_elevation}° max elev`} />
-  </Plot>
+  </ResponsivePlot>
 </div>
 
 <div class="mb-5 flex items-center justify-center gap-5 text-xs text-ink-3">

@@ -45,7 +45,7 @@
     </div>
 
     <div class="space-y-6">
-      <h1 class="max-w-4xl text-5xl font-semibold tracking-tight text-ink sm:text-7xl">
+      <h1 class="max-w-4xl text-4xl font-semibold tracking-tight text-ink sm:text-5xl md:text-7xl">
         {SUBTITLE}
       </h1>
       <p class="max-w-2xl text-lg leading-8 text-ink-2 md:text-xl">
@@ -79,7 +79,7 @@
 
     <div use:gsapAction={{ animation: staggerFeatures }} class="grid gap-8 md:grid-cols-3">
       <!-- Feature 1 -->
-      <div class="group rounded-3xl border border-border bg-panel p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
+      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
         <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
           <Activity class="size-6" />
         </div>
@@ -90,7 +90,7 @@
       </div>
 
       <!-- Feature 2 -->
-      <div class="group rounded-3xl border border-border bg-panel p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
+      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
         <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
           <LineChart class="size-6" />
         </div>
@@ -101,7 +101,7 @@
       </div>
 
       <!-- Feature 3 -->
-      <div class="group rounded-3xl border border-border bg-panel p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
+      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
         <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
           <Radio class="size-6" />
         </div>

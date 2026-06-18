@@ -74,6 +74,10 @@ body {
   background: rgba(139, 92, 246, 0.25);
 }
 
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
 /* ── SveltePlot theme bridge ──
    Deep integration with project design tokens. */
 :root {
@@ -131,13 +135,20 @@ body {
 .chart-card {
   position: relative;
   overflow: hidden;
-  border-radius: 1.75rem;
+  border-radius: 1rem;
   border: 1px solid var(--color-border);
   background: var(--color-panel);
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(12px);
   transition: all 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .chart-card {
+    border-radius: 1.75rem;
+    padding: 1.5rem;
+  }
 }
 
 /* Leaflet Dark Mode Inversion */
@@ -254,4 +265,4 @@ html:not(.light) .leaflet-control-attribution {
 
 .slide-in-from-bottom-4 {
   animation-name: enter-fade, enter-slide-bottom;
-}
+}body { overflow-x: hidden; }

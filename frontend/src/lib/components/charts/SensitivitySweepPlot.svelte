@@ -1,10 +1,11 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Sensitivity Sweep — VAE vs Z-Score Baseline crossover
    * Reproduces docs/figures/sensitivity_sweep.png
    * Static benchmark data from Python analysis.
    */
-  import { Plot, Line, Dot, RuleY } from 'svelteplot';
+  import { Line, Dot, RuleY } from 'svelteplot';
   import { SERIES_TEMP_BATT, SERIES_BASELINE, SERIES_ZSCORE } from '$lib/chart-theme';
 
   const thermal = {
@@ -21,8 +22,8 @@
   <!-- Thermal Runaway -->
   <div>
     <p class="mb-2 text-center text-xs font-semibold text-ink-2">Thermal Runaway Detection</p>
-    <Plot height={280}
-      x={{ label: 'Thermal Runaway Δ (°C)', nice: true }}
+    <ResponsivePlot height={280}
+      x={{ label: 'Thermal Runaway Δ (°C)', labelAnchor: 'center', nice: true }}
       y={{ label: false, domain: [0.4, 1.05], grid: true }}
       marginTop={16} marginRight={12} marginBottom={44} marginLeft={50}>
       <RuleY data={[0.5]} stroke={SERIES_BASELINE} strokeDasharray="4 3" strokeOpacity={0.3} />
@@ -30,14 +31,14 @@
       <Dot data={thermal.vae} x="x" y="y" fill={SERIES_TEMP_BATT} r={4} />
       <Line data={thermal.zs} x="x" y="y" stroke={SERIES_ZSCORE} strokeWidth={2} strokeDasharray="8 4" />
       <Dot data={thermal.zs} x="x" y="y" fill={SERIES_ZSCORE} r={4} symbol="square" />
-    </Plot>
+    </ResponsivePlot>
   </div>
 
   <!-- Panel Failure -->
   <div>
     <p class="mb-2 text-center text-xs font-semibold text-ink-2">Panel Failure Detection</p>
-    <Plot height={280}
-      x={{ label: 'Forced Current During Sunlight (A)', nice: true }}
+    <ResponsivePlot height={280}
+      x={{ label: 'Forced Current During Sunlight (A)', labelAnchor: 'center', nice: true }}
       y={{ label: false, domain: [0.4, 1.05], grid: true }}
       marginTop={16} marginRight={12} marginBottom={44} marginLeft={50}>
       <RuleY data={[0.5]} stroke={SERIES_BASELINE} strokeDasharray="4 3" strokeOpacity={0.3} />
@@ -45,7 +46,7 @@
       <Dot data={panel.vae} x="x" y="y" fill={SERIES_TEMP_BATT} r={4} />
       <Line data={panel.zs} x="x" y="y" stroke={SERIES_ZSCORE} strokeWidth={2} strokeDasharray="8 4" />
       <Dot data={panel.zs} x="x" y="y" fill={SERIES_ZSCORE} r={4} symbol="square" />
-    </Plot>
+    </ResponsivePlot>
   </div>
 </div>
 

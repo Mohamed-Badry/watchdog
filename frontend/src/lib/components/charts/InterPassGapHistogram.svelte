@@ -1,9 +1,10 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Inter-Pass Time Gap Distribution
    * Shows the massive blackout periods between line-of-sight passes.
    */
-  import { Plot, RectY, RuleX } from 'svelteplot';
+  import { RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
   import { SERIES_BASELINE } from '$lib/chart-theme';
 
@@ -48,8 +49,8 @@
 
 <div class="w-full">
   {#if gaps().length > 0}
-    <Plot height={320}
-      x={{ label: 'Hours Between Passes', nice: true }}
+    <ResponsivePlot height={320}
+      x={{ label: 'Hours Between Passes', labelAnchor: 'center', nice: true }}
       y={{ label: 'Count', grid: true }}
       marginTop={12} marginRight={12} marginBottom={40} marginLeft={44}>
 
@@ -61,7 +62,7 @@
       <RuleX data={[median()]}
              stroke={SERIES_BASELINE} strokeWidth={2}
              strokeDasharray="6 3" strokeOpacity={0.7} />
-    </Plot>
+    </ResponsivePlot>
     <div class="mt-2 flex items-center justify-center gap-4 text-xs text-ink-3">
       <span class="flex items-center gap-1.5">
         <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: {SERIES_BASELINE}; opacity: 0.7"></span>

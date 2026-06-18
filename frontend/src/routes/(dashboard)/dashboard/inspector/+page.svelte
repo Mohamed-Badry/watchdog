@@ -60,7 +60,7 @@
   <title>Inspector — Watchdog</title>
 </svelte:head>
 
-<section class="flex flex-col h-full min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+<section class="flex flex-col lg:h-full lg:min-h-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <div class="flex-none space-y-1">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Deep Dive</p>
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Telemetry Inspector</h1>
@@ -73,9 +73,9 @@
   {:else}
     <!-- Controls -->
     <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
-      <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+      <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <label for="inspector-sat-select" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
-        <select id="inspector-sat-select" bind:value={noradId} class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand">
+        <select id="inspector-sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
           <option value="all">All Satellites</option>
           {#each satellites as sat}
             <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
@@ -83,9 +83,9 @@
         </select>
       </div>
 
-      <div class="flex flex-col gap-1.5 w-40">
+      <div class="flex flex-col gap-1.5 w-full sm:w-40">
         <label for="inspector-limit" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Fetch Limit</label>
-        <select id="inspector-limit" bind:value={dataLimit} class="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition hover:border-brand">
+        <select id="inspector-limit" bind:value={dataLimit} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
           <option value={50}>50 frames</option>
           <option value={100}>100 frames</option>
           <option value={500}>500 frames</option>
@@ -95,23 +95,22 @@
       <button 
         onclick={fetchTelemetry}
         disabled={loading}
-        class="flex items-center justify-center rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:opacity-50"
+        class="flex items-center justify-center w-full sm:w-auto rounded-xl sm:rounded-lg bg-brand px-5 py-3.5 sm:py-2 text-base sm:text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:opacity-50 mt-2 sm:mt-0"
       >
         {loading ? 'Fetching...' : 'Fetch Data'}
       </button>
     </div>
 
     <!-- Main Grid Layout -->
-    <div class="flex-1 min-h-0 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
+    <div class="lg:flex-1 lg:min-h-0 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
       
       <!-- LEFT COLUMN: Packet List -->
-      <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <div class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
         <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Recent Packets</h2>
           <span class="text-xs font-mono text-ink-3">{telemetryFrames.length}</span>
         </div>
-        
-        <div class="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+        <div class="lg:flex-1 lg:min-h-0 overflow-y-auto max-h-[400px] lg:max-h-none p-3 space-y-2">
           {#if loading && telemetryFrames.length === 0}
             <div class="flex h-32 items-center justify-center">
               <div class="h-6 w-6 animate-spin rounded-full border-2 border-surface border-t-brand"></div>
@@ -144,18 +143,18 @@
       </div>
 
       <!-- RIGHT COLUMN: Inspector Details -->
-      <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <div class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
         <div class="bg-surface/35 p-4 border-b border-border shrink-0">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Frame Details</h2>
         </div>
         
-        <div class="flex-1 min-h-0 p-5 flex flex-col">
+        <div class="lg:flex-1 lg:min-h-0 p-5 flex flex-col">
           {#if !selectedFrame}
             <div class="flex h-full items-center justify-center text-ink-3 text-sm">
               Select a packet from the list to inspect.
             </div>
           {:else}
-            <div class="flex flex-col h-full min-h-0 gap-5">
+            <div class="flex flex-col lg:h-full lg:min-h-0 gap-5">
               
               <!-- Raw Hex Section (Top, Fixed Height) -->
               <section class="flex-none">
@@ -169,7 +168,7 @@
               </section>
 
               <!-- Bottom Split (Scrollable Columns) -->
-              <div class="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-2 gap-6 mt-2">
+              <div class="xl:flex-1 xl:min-h-0 grid grid-cols-1 xl:grid-cols-2 gap-6 mt-2">
                 
                 <!-- Kaitai Quality Section -->
                 <section class="flex flex-col min-h-0">
@@ -177,7 +176,7 @@
                     <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
                     Raw Kaitai Decoded Struct
                   </h3>
-                  <div class="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-sm">
+                  <div class="lg:flex-1 lg:min-h-0 overflow-y-auto overflow-x-auto rounded-xl border border-border bg-surface p-5 shadow-sm">
                     {#if selectedFrame.kaitai_decoded}
                       <table class="w-full text-left text-sm">
                         <tbody class="divide-y divide-border/50">
@@ -205,14 +204,14 @@
                     <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
                     Normalized Golden Features
                   </h3>
-                  <div class="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border bg-surface p-4 shadow-sm">
+                  <div class="lg:flex-1 lg:min-h-0 overflow-y-auto rounded-xl border border-border bg-surface p-4 shadow-sm">
                     {#if selectedFrame.features}
-                      <div class="grid grid-cols-2 gap-y-3 gap-x-3">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-3">
                         {#each Object.entries(selectedFrame.features) as [key, value], i}
                           <div class="flex flex-col rounded-lg border border-border/50 bg-panel/50 px-3 py-2 transition-colors hover:border-brand/30">
                             <div class="flex items-center justify-between gap-2">
                               <span class="text-[9px] font-semibold uppercase tracking-wider text-ink-3 truncate">{key}</span>
-                              <Tooltip text={getFeatureDescription(key)} align={i % 2 !== 0 ? 'right' : 'left'} />
+                              <Tooltip text={getFeatureDescription(key)} align="right" />
                             </div>
                             <span class="font-mono text-sm font-medium text-ink mt-0.5">
                               {value !== null ? Number(value).toFixed(4) : "null"}

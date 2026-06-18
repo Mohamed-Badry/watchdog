@@ -57,7 +57,7 @@
   <title>Live Watcher — Watchdog</title>
 </svelte:head>
 
-<section class="flex h-full min-h-0 flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+<section class="flex lg:h-full lg:min-h-0 flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
   <!-- 1. HEADER: Title & Global Controls -->
   <header class="flex flex-none flex-wrap items-center justify-between gap-4">
     <div class="space-y-1">
@@ -65,14 +65,14 @@
       <h1 class="text-3xl font-semibold tracking-tight text-ink">Live Watcher</h1>
     </div>
 
-    <div class="flex items-center gap-4">
+    <div class="flex flex-wrap items-center gap-4">
       <!-- Satellite Filter -->
       <div class="flex items-center gap-2">
         <label for="live-sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Sat Filter</label>
         <select
           id="live-sat-select"
           bind:value={noradId}
-          class="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand"
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand"
         >
           <option value="all">All</option>
           {#each satellites as sat}
@@ -87,7 +87,7 @@
         <select
           id="live-feed-size"
           bind:value={limit}
-          class="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-ink outline-none transition hover:border-brand focus:border-brand"
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand"
         >
           <option value={10}>10</option>
           <option value={25}>25</option>
@@ -120,12 +120,12 @@
     </div>
   {:else}
     <!-- TELEMETRY FEED (Scrollable Area) -->
-    <div class="flex min-h-0 flex-1 flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+    <div class="flex lg:min-h-0 lg:flex-1 flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
       <div class="shrink-0 border-b border-border bg-surface/35 p-3">
         <h2 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Telemetry Feed</h2>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-4 min-h-0">
+      <div class="lg:flex-1 lg:min-h-0 overflow-y-auto max-h-[400px] lg:max-h-none p-4">
         {#if loading && frames.length === 0}
           <div class="flex h-full items-center justify-center py-12">
             <div class="h-8 w-8 animate-spin rounded-full border-2 border-surface border-t-brand"></div>
@@ -139,27 +139,27 @@
             {#each frames as frame (frame.timestamp + String(frame.norad_id))}
               <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
               <article 
-                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/30 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-highlight bg-highlight/5 shadow-md shadow-highlight/10' : 'border-border bg-surface/50'}"
+                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-highlight bg-highlight/10 shadow-lg shadow-highlight/10' : 'border-border bg-surface/40'}"
                 onclick={() => selectedTimestamp = selectedTimestamp === frame.timestamp ? null : frame.timestamp}
               >
                 <!-- Status Indicator Bar -->
-                <div class="absolute inset-y-0 left-0 w-1 {frame.model?.is_anomaly ? 'bg-critical shadow-[0_0_8px_rgba(244,63,94,0.8)]' : 'bg-emerald-500/50'}"></div>
+                <div class="absolute inset-y-0 left-0 w-1 transition-all duration-300 {frame.model?.is_anomaly ? 'bg-critical shadow-[0_0_12px_rgba(244,63,94,1)]' : 'bg-emerald-500/40 group-hover:bg-emerald-500/80'}"></div>
 
                 <!-- Card Header: NORAD, Quality, Timestamp, Score -->
                 <div class="flex items-start justify-between gap-3 pl-2">
                   <div class="space-y-1.5">
                     <div class="flex items-center gap-2">
-                      <span class="rounded border border-border bg-panel px-2 py-1 font-mono text-xs font-bold text-ink-3">NORAD {frame.norad_id}</span>
-                      <span class="text-xs font-medium {frame.quality?.frame_is_complete ? 'text-emerald-500' : 'text-warning'}">
+                      <span class="rounded border border-border bg-panel px-2 py-1 font-mono text-xs font-bold text-ink-3 shadow-sm">NORAD {frame.norad_id}</span>
+                      <span class="text-[11px] font-bold tracking-wide uppercase {frame.quality?.frame_is_complete ? 'text-emerald-500/80' : 'text-warning/90'}">
                         {frame.quality?.frame_is_complete ? "Complete" : "Partial"}
                       </span>
                     </div>
-                    <p class="font-medium text-base text-ink">{new Date(frame.timestamp).toLocaleTimeString()}</p>
+                    <p class="font-medium text-sm text-ink-2 group-hover:text-ink transition-colors">{new Date(frame.timestamp).toLocaleTimeString()}</p>
                   </div>
 
                   <div class="text-right">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-ink-3">Anomaly Score</p>
-                    <p class="text-2xl font-bold tracking-tight {frame.model?.is_anomaly ? 'text-critical' : 'text-ink'}">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-ink-3/70 mb-0.5">Anomaly Score</p>
+                    <p class="text-2xl font-black tracking-tighter {frame.model?.is_anomaly ? 'text-critical drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'text-ink'}">
                       {frame.model?.anomaly_score !== null ? frame.model.anomaly_score.toFixed(2) : "-"}
                     </p>
                   </div>
@@ -168,11 +168,11 @@
                 <!-- Feature Grid (Top 4) -->
                 {#if frame.features}
                   {@const fKeys = Object.keys(frame.features).slice(0, 4)}
-                  <div class="mt-2 grid grid-cols-4 gap-3 border-t border-border/50 pl-2 pt-3">
+                  <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-border/40 pl-2 pt-3">
                     {#each fKeys as key}
                       <div class="flex flex-col min-w-0">
-                        <span class="truncate text-xs font-semibold uppercase tracking-wider text-ink-3" title={key}>{key.replace(/_/g, " ")}</span>
-                        <span class="font-mono text-base text-ink">
+                        <span class="truncate text-[9px] font-bold uppercase tracking-widest text-ink-3/60" title={key}>{key.replace(/_/g, " ")}</span>
+                        <span class="font-mono text-sm font-medium text-ink/80 group-hover:text-ink transition-colors">
                           {frame.features[key] !== null ? Number(frame.features[key]).toFixed(2) : "-"}
                         </span>
                       </div>

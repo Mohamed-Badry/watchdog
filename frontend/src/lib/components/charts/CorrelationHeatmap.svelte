@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResponsivePlot from './ResponsivePlot.svelte';
   /**
    * Feature Correlation Matrix — Annotated heatmap
    * Reproduces docs/figures/correlation_heatmap.png
@@ -6,7 +7,7 @@
    * 5×5 matrix showing Pearson correlation between golden features.
    * Uses Cell mark for the grid, Text for annotations.
    */
-  import { Plot, Cell, Text } from 'svelteplot';
+  import { Cell, Text } from 'svelteplot';
 
   type FrameFeatures = Record<string, number | null>;
 
@@ -64,8 +65,9 @@
 </script>
 
 <div class="h-full w-full">
-  <Plot
+  <ResponsivePlot
     height={380}
+    square={true}
     x={{ type: 'band', label: false, domain: FEATURES.map(f => LABELS[f]) }}
     y={{ type: 'band', label: false, domain: [...FEATURES].reverse().map(f => LABELS[f]) }}
     color={{ type: 'linear', domain: [-1, 1], scheme: 'magma', label: 'Correlation' }}
@@ -84,5 +86,5 @@
           fill={d => d.r > 0.3 ? '#18181b' : 'white'}
           fontSize={12} fontWeight="600"
           textAnchor="middle" dy={4} />
-  </Plot>
+  </ResponsivePlot>
 </div>

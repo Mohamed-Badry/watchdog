@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Plot, Dot, Link } from 'svelteplot';
+  import ResponsivePlot from './ResponsivePlot.svelte';
+  import { Dot, Link } from 'svelteplot';
 
   let { 
     actual = {}, 
@@ -23,24 +24,24 @@
   const EXPECTED_COLOR = 'var(--color-highlight)';
 
   let sortedFeatures = $derived(
-    (activeFeatures || Object.keys(expected)).sort((a, b) => Math.abs(scaledActual[b] - scaledExpected[b]) - Math.abs(scaledActual[a] - scaledExpected[a]))
+    (activeFeatures || Object.keys(expected)).sort((a: string, b: string) => Math.abs(scaledActual[b] - scaledExpected[b]) - Math.abs(scaledActual[a] - scaledExpected[a]))
   );
 
-  let dataActual = $derived(sortedFeatures.map(f => ({ 
+  let dataActual = $derived(sortedFeatures.map((f: string) => ({ 
     feature: f, 
     value: Number(scaledActual[f]), 
     raw: Number(actual[f]),
     type: ACTUAL_LBL 
   })));
 
-  let dataExpected = $derived(sortedFeatures.map(f => ({ 
+  let dataExpected = $derived(sortedFeatures.map((f: string) => ({ 
     feature: f, 
     value: Number(scaledExpected[f]), 
     raw: Number(expected[f]),
     type: EXPECTED_LBL 
   })));
 
-  let dataLinks = $derived(sortedFeatures.map(f => ({
+  let dataLinks = $derived(sortedFeatures.map((f: string) => ({
     feature: f,
     val1: Number(scaledExpected[f]),
     val2: Number(scaledActual[f])
@@ -49,10 +50,10 @@
 
 <div class="w-full">
   {#if Object.keys(scaledExpected).length > 0}
-    <Plot {height}
-      x={{ label: 'Standardized Deviation (Z-Score)', grid: true, nice: true }}
-      y={{ label: false, domain: sortedFeatures }}
-      marginTop={12} marginRight={20} marginBottom={40} marginLeft={90}>
+    <ResponsivePlot {height}
+      x={{ label: 'Standardized Deviation (Z-Score)', labelAnchor: 'center', grid: true, nice: true }}
+      y={{ label: false, domain: sortedFeatures, tickFormat: (d) => d.replace(/_/g, ' ').toUpperCase() }}
+      marginTop={12} marginRight={20} marginBottom={40} marginLeft={110}>
       
       <!-- Connect Expected to Actual -->
       <Link data={dataLinks} x1="val1" x2="val2" y1="feature" y2="feature" stroke="var(--color-ink-3)" strokeWidth={2} strokeOpacity={0.5} />
@@ -64,7 +65,7 @@
       <!-- Actual Dots (Plotted last so they sit on top if they overlap) -->
       <Dot data={dataActual} x="value" y="feature" fill={ACTUAL_COLOR} r={5}
            title={(d: any) => `${d.feature}\nActual (Raw): ${d.raw.toFixed(3)}\nZ-Score: ${d.value.toFixed(3)}`} />
-    </Plot>
+    </ResponsivePlot>
     
     <div class="mt-1 flex items-center justify-center gap-6 text-[0.65rem] uppercase tracking-wider font-semibold text-ink-3">
       <span class="flex items-center gap-1.5">

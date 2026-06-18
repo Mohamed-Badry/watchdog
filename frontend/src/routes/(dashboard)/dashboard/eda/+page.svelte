@@ -133,7 +133,7 @@
   <title>EDA Report — Watchdog</title>
 </svelte:head>
 
-<div class="mx-auto w-full pb-24">
+<div class="mx-auto w-full max-w-7xl pb-24">
   <header class="space-y-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Analysis Report</p>
     <h1 class="text-4xl font-bold tracking-tight text-ink sm:text-5xl">Exploratory Data Analysis</h1>
@@ -154,7 +154,7 @@
     <div class="mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4">
       <div class="flex items-center gap-3">
         <label for="sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Target Profile</label>
-        <select id="sat-select" bind:value={noradId} class="rounded-lg border border-border bg-panel px-3 py-1.5 text-sm text-ink outline-none transition hover:border-brand">
+        <select id="sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
           <option value="all">All Satellites (Global View)</option>
           {#each satellites as sat}
             <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
@@ -162,16 +162,16 @@
         </select>
       </div>
       
-      <div class="flex items-center gap-3 ml-4 border-l border-border pl-4">
+      <div class="flex items-center gap-3 ml-0 sm:ml-4 border-l-0 sm:border-l border-border pl-0 sm:pl-4">
         <label for="data-limit" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Dataset Size</label>
-        <select id="data-limit" bind:value={dataLimit} class="rounded-lg border border-border bg-panel px-3 py-1.5 text-sm text-ink outline-none transition hover:border-brand">
+        <select id="data-limit" bind:value={dataLimit} class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
           <option value={1000}>1,000 frames</option>
           <option value={5000}>5,000 frames</option>
           <option value={10000}>10,000 frames (Full Macro)</option>
         </select>
       </div>
 
-      <div class="ml-4 border-l border-border pl-4">
+      <div class="ml-0 sm:ml-4 border-l-0 sm:border-l border-border pl-0 sm:pl-4">
         <button 
           onclick={fetchTelemetry}
           disabled={loading}
@@ -267,7 +267,7 @@
                 <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                 Solar Panel Temp vs. Battery Current
               </h3>
-              <div class="h-[500px]">
+              <div>
                 <EclipseScatterPlot frames={eclipseFrames} />
               </div>
               <p class="mt-4 mb-0 text-xs leading-relaxed text-ink-3 border-t border-border/50 pt-4">
@@ -277,8 +277,7 @@
           </div>
         </section>
 
-        <!-- SECTION 3: Feature Correlation -->
-        <section class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
+        <section class="grid gap-12 xl:grid-cols-2 items-start">
           <div class="prose max-w-none xl:sticky xl:top-24">
             <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">3. Multivariate Feature Correlation</h2>
             <p>
