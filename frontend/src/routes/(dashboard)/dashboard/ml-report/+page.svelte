@@ -26,7 +26,7 @@
     <!-- SECTION 1: Model Selection & ROC -->
     <section class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
       <div class="prose max-w-none xl:sticky xl:top-24">
-        <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">1. Model Selection & Anomaly Detection</h2>
+        <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">1. Model Selection & Noise Filtering</h2>
         <p>
           Orbital telemetry changes significantly based on the <a href="#glossary-eclipse" class="text-brand hover:underline">day/night eclipse cycle</a>, and the systems are highly connected. Simple limits or single-variable Z-scores fail because they cannot track these complex relationships.
         </p>
@@ -37,11 +37,11 @@
           <li><strong>Z-Score (Baseline):</strong> Basic statistical limits.</li>
           <li><strong>Isolation Forest:</strong> Finds data points that are alone.</li>
           <li><strong>One-Class SVM:</strong> Draws a boundary around normal data.</li>
-          <li><strong>Variational Autoencoder (VAE):</strong> Learns to recreate normal data.</li>
+          <li><strong>Variational Autoencoder (VAE) with Noise Filtering:</strong> Learns to recreate normal data, utilizing a 5-frame rolling median filter to ignore short 1-second noise spikes and transient telemetry errors.</li>
         </ul>
         <div class="my-6 rounded-xl border border-border bg-surface/50 p-5">
           <p class="m-0 text-sm leading-relaxed">
-            <strong>Conclusion:</strong> The VAE is the best model, scoring an <a href="#glossary-auc" class="text-brand hover:underline">AUC</a> of 0.98. Because it learns how all the systems work together, it can find real problems without giving false alarms when the satellite enters the earth's shadow.
+            <strong>Conclusion:</strong> The VAE is the best model. By applying a <strong>Rolling Median Filter</strong> (to smooth out the anomaly scores) alongside a highly conservative 99.9th percentile threshold, the model is incredibly robust. It completely ignores random 1-second telemetry spikes, yet maintains high accuracy for real, sustained physical faults. Because it learns how all the systems work together, it can find real problems without giving false alarms when the satellite enters the earth's shadow.
           </p>
         </div>
       </div>

@@ -77,6 +77,7 @@ class OnlineWatchdog:
             self.metadata.feature_names.index(f)
             for f in (self.metadata.diagnosis_feature_names or self.metadata.feature_names)
         ]
+        self._score_history: deque[float] = deque(maxlen=5)
 
     @classmethod
     def from_artifacts(
@@ -177,7 +178,15 @@ class OnlineWatchdog:
                 ).total_seconds()
                 if elapsed > self._pass_gap_seconds:
                     self._recent_frames.clear()
-            score = self._score_frame(frame)
+            raw_score = self._score_frame(frame)
+            self._score_history.append(raw_score)
+            
+            # Use median score for robust thresholding
+            if len(self._score_history) == self._score_history.maxlen:
+                score = float(np.median(self._score_history))
+            else:
+                score = raw_score
+                
             is_anomaly = score > self.metadata.threshold
             self.state = STATE_ALERTING if is_anomaly else STATE_RECEIVING
             self._recent_frames.append(frame)

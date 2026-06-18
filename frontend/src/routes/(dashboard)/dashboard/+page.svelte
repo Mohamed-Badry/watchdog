@@ -11,6 +11,8 @@
   let summary = $state<DashboardSummary | null>(data.summary);
   let error = $state<string | undefined>(data.error);
 
+  // Determines the visual severity color based on reconstruction score
+  // Matches the legend defined in the Recent Anomalies section
   function getSeverityColor(score: number | undefined | null) {
     if (!score) return 'var(--color-info)'; // Default
     if (score >= 0.7) return 'var(--color-critical)'; // Rose Red
@@ -205,9 +207,29 @@
 
         <!-- Recent Anomalies -->
         <div class="flex flex-col flex-1 min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden">
-          <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
-            <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Recent Anomalies</h2>
-            <span class="text-xs font-mono text-ink-3">{summary.recent_anomalies.length} recorded</span>
+          <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+              <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3 whitespace-nowrap">Recent Anomalies</h2>
+              <div class="flex flex-wrap items-center gap-4 bg-surface/50 px-3.5 py-1.5 rounded-xl sm:rounded-full border border-border/50 shadow-inner">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full opacity-90" style="background-color: var(--color-critical); box-shadow: 0 0 8px var(--color-critical);"></span>
+                  <span class="text-[10px] uppercase tracking-wider text-ink-3 font-bold">Critical (≥0.7)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full opacity-90" style="background-color: var(--color-warning); box-shadow: 0 0 8px var(--color-warning);"></span>
+                  <span class="text-[10px] uppercase tracking-wider text-ink-3 font-bold">Warning (≥0.45)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full opacity-90" style="background-color: var(--color-brand); box-shadow: 0 0 8px var(--color-brand);"></span>
+                  <span class="text-[10px] uppercase tracking-wider text-ink-3 font-bold">Elevated (≥0.3)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full opacity-90" style="background-color: var(--color-info); box-shadow: 0 0 8px var(--color-info);"></span>
+                  <span class="text-[10px] uppercase tracking-wider text-ink-3 font-bold">Normal</span>
+                </div>
+              </div>
+            </div>
+            <span class="text-xs font-mono text-ink-3 xl:text-right whitespace-nowrap">{summary.recent_anomalies.length} recorded</span>
           </div>
           <div class="flex-1 min-h-0 overflow-y-auto p-5">
             {#if summary.recent_anomalies.length === 0}

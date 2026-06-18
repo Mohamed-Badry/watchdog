@@ -44,10 +44,11 @@ entity TelemetryInference {
     frame: telemetry/ProcessedTelemetry
     model: AnomalyModelArtifact
     
-    anomaly_score: Float
+    raw_anomaly_score: Float
+    operating_score: Float  -- Derived from a 5-frame rolling median filter of raw_anomaly_score
     
     -- Stage 1: Detection
-    is_anomaly: anomaly_score > model.threshold
+    is_anomaly: operating_score > model.threshold
     
     -- Stage 2: Diagnosis (evaluated when is_anomaly is true)
     top_contributing_feature: String? when is_anomaly = true
@@ -72,7 +73,7 @@ rule TrainAnomalyModel {
     ensures: AnomalyModelArtifact.created(
         satellite: satellite,
         status: active
-        -- threshold is derived from scoring the validation set
+        -- threshold is calibrated via a rolling median filter on the validation set
     )
 }
 
@@ -88,7 +89,7 @@ rule RunAnomalyInference {
     ensures: TelemetryInference.created(
         frame: frame,
         model: model
-        -- anomaly_score is calculated via model reconstruction error
+        -- raw_anomaly_score is calculated via model reconstruction error
     )
 }
 
@@ -97,8 +98,8 @@ rule GenerateBenchmarkFaults {
     
     -- Conceptually:
     -- 1. Take chronological test set frames
-    -- 2. Inject synthetic faults (e.g., panel_failure, thermal_runaway)
-    -- 3. Run inference against the model
+    -- 2. Inject contiguous blocks of synthetic faults (e.g., sustained panel_failure, thermal_runaway)
+    -- 3. Run inference against the model applying the rolling median filter
     -- 4. Calculate classification and diagnosis accuracy
     
     ensures: BenchmarkReport.created(

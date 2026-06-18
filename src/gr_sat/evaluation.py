@@ -21,7 +21,8 @@ from gr_sat.satellite_profiles import (
 def inject_faults(
     df_test: pd.DataFrame,
     profile,
-    n_per_fault: int = 100,
+    n_fault_events: int = 5,
+    frames_per_event: int = 30,
     rng_seed: int = 42,
 ):
     rng = np.random.RandomState(rng_seed)
@@ -32,28 +33,44 @@ def inject_faults(
     # 1. Panel Failure (Short Circuit in Sunlight)
     sunlight_mask = df_faulted["temp_panel_z"] > 15
     sun_idx = np.where(sunlight_mask & (labels == 0))[0]
-    if len(sun_idx) > 0:
-        panel_fail_idx = rng.choice(
-            sun_idx, size=min(n_per_fault, len(sun_idx)), replace=False
+    
+    valid_starts = []
+    for idx in sun_idx:
+        if idx + frames_per_event < len(df_faulted):
+            if np.all(sunlight_mask.iloc[idx:idx+frames_per_event]):
+                valid_starts.append(idx)
+                
+    if valid_starts:
+        chosen_starts = rng.choice(
+            valid_starts, size=min(n_fault_events, len(valid_starts)), replace=False
         )
-        # A subtle drop in current during sunlight, undetectable by basic thresholding
-        df_faulted.iloc[
-            panel_fail_idx, df_faulted.columns.get_loc("batt_current")
-        ] = -0.2
-        labels[panel_fail_idx] = 1
-        fault_types[panel_fail_idx] = "panel_failure"
+        for start in chosen_starts:
+            idx_range = range(start, start + frames_per_event)
+            # A subtle drop in current during sunlight
+            df_faulted.iloc[
+                list(idx_range), df_faulted.columns.get_loc("batt_current")
+            ] = -0.2
+            labels[list(idx_range)] = 1
+            fault_types[list(idx_range)] = "panel_failure"
 
     # 2. Thermal Runaway (Massive Spike Above Orbit Baselines)
     normal_idx = np.where(labels == 0)[0]
-    if len(normal_idx) > 0:
-        thermal_idx = rng.choice(
-            normal_idx, size=min(n_per_fault, len(normal_idx)), replace=False
+    valid_starts_therm = []
+    for idx in normal_idx:
+        if idx + frames_per_event < len(df_faulted):
+            if np.all(labels[idx:idx+frames_per_event] == 0):
+                valid_starts_therm.append(idx)
+                
+    if valid_starts_therm:
+        chosen_starts_therm = rng.choice(
+            valid_starts_therm, size=min(n_fault_events, len(valid_starts_therm)), replace=False
         )
-        # A relatively small thermal jump within natural variance, but breaking correlation
-        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_a")] += 7.0
-        df_faulted.iloc[thermal_idx, df_faulted.columns.get_loc("temp_batt_b")] += 7.0
-        labels[thermal_idx] = 1
-        fault_types[thermal_idx] = "thermal_runaway"
+        for start in chosen_starts_therm:
+            idx_range = range(start, start + frames_per_event)
+            df_faulted.iloc[list(idx_range), df_faulted.columns.get_loc("temp_batt_a")] += 7.0
+            df_faulted.iloc[list(idx_range), df_faulted.columns.get_loc("temp_batt_b")] += 7.0
+            labels[list(idx_range)] = 1
+            fault_types[list(idx_range)] = "thermal_runaway"
 
     return (
         annotate_pass_and_cadence_metadata(
@@ -122,7 +139,7 @@ def evaluate(norad_id: str, models_dir: str = "models", processed_dir: str = "da
     split = split_chronological(df_ready)
     df_test = split.test.copy()
 
-    df_faulted, y_true, fault_types = inject_faults(df_test, profile, n_per_fault=150)
+    df_faulted, y_true, fault_types = inject_faults(df_test, profile, n_fault_events=5, frames_per_event=30)
     X_faulted_scaled = scaler.transform(df_faulted[metadata.feature_names].values)
 
     # VAE Inference
@@ -142,6 +159,9 @@ def evaluate(norad_id: str, models_dir: str = "models", processed_dir: str = "da
             kld_weight=metadata.kld_weight,
             diagnosis_mask=diagnosis_mask,
         ).numpy()
+        
+    # Apply Median(5) filter to anomaly scores for debounce realism
+    anomaly_scores = pd.Series(anomaly_scores).rolling(5).median().bfill().values
 
     # ------------------
     # Stage 1: Detector (MAX Loss Score)

@@ -164,7 +164,12 @@ def train_for_satellite(
     # Train PyTorch VAE natively
     vae = train_vae(X_train_scaled, feature_names, diagnosis_mask=diagnosis_mask, epochs=epochs)
     validation_scores = score_scaled_frames(vae, X_validation_scaled, diagnosis_mask=diagnosis_mask)
-    threshold = threshold_from_scores(validation_scores, THRESHOLD_PERCENTILE)
+    
+    # Apply a Median(5) filter to the validation scores to debounce sensor spikes
+    val_series = pd.Series(validation_scores)
+    median_val_scores = val_series.rolling(5).median().bfill().values
+    
+    threshold = threshold_from_scores(median_val_scores, THRESHOLD_PERCENTILE)
 
     torch.save(vae.state_dict(), artifact_paths.weights)
     logger.success(f"Saved PyTorch VAE → {artifact_paths.weights}")
