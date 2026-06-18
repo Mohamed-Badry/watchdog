@@ -12,17 +12,43 @@ logging.basicConfig(
 logger = logging.getLogger("Simulator")
 
 
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        logger.info("Simulator connected to MQTT broker")
+        client.connected_flag = True
+    else:
+        logger.error(f"Simulator failed to connect: {rc}")
+        client.connected_flag = False
+
+def on_disconnect(client, userdata, rc):
+    logger.warning("Simulator disconnected from MQTT broker")
+    client.connected_flag = False
+
 def main():
     broker_url = os.getenv("MQTT_BROKER_URL", "localhost")
     broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
+    username = os.getenv("MQTT_USERNAME")
+    password = os.getenv("MQTT_PASSWORD")
+    use_tls = os.getenv("MQTT_USE_TLS", "false").lower() == "true"
 
     client = mqtt.Client()
+    client.connected_flag = False
+    client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
+    
+    if username and password:
+        client.username_pw_set(username, password)
+    
+    if use_tls:
+        client.tls_set()
+
     try:
         client.connect(broker_url, broker_port, 60)
-        logger.info(f"Simulator connected to MQTT broker at {broker_url}:{broker_port}")
+        client.loop_start()
     except Exception as e:
-        logger.error(f"Simulator failed to connect: {e}")
-        return
+        logger.error(f"Simulator initial connection failed: {e}")
+        # We don't return, we let the loop try to publish and use the fallback buffer
+
 
     # Simulate reading from data/raw/
     raw_dir = "/app/data/raw" if os.path.exists("/app/data/raw") else "../../data/raw"
@@ -65,9 +91,36 @@ def main():
             "snr": round(random.uniform(5.0, 25.0), 1),
         }
 
-        client.publish(f"telemetry/live/{norad_id}", json.dumps(payload))
-        logger.info(f"Published to telemetry/live/{norad_id}")
+        payload_str = json.dumps(payload)
+        
+        if getattr(client, "connected_flag", False):
+            info = client.publish(f"telemetry/live/{norad_id}", payload_str, qos=1)
+            if info.rc == mqtt.MQTT_ERR_SUCCESS:
+                logger.info(f"Published to telemetry/live/{norad_id}")
+            else:
+                logger.error(f"Publish failed (rc={info.rc}), using offline fallback")
+                _write_fallback(payload)
+        else:
+            logger.warning("MQTT disconnected. Writing to offline fallback buffer.")
+            _write_fallback(payload)
+            
         time.sleep(5)
+
+def _write_fallback(payload):
+    import csv
+    fallback_path = "/app/data/raw/fallback_buffer.csv" if os.path.exists("/app/data/raw") else "../../data/raw/fallback_buffer.csv"
+    os.makedirs(os.path.dirname(fallback_path), exist_ok=True)
+    
+    file_exists = os.path.isfile(fallback_path)
+    try:
+        with open(fallback_path, 'a', newline='') as csvfile:
+            fieldnames = ['timestamp', 'norad_id', 'station_id', 'snr', 'raw_frame']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(payload)
+    except Exception as e:
+        logger.error(f"Failed to write to fallback buffer: {e}")
 
 
 if __name__ == "__main__":

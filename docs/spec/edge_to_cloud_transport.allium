@@ -1,0 +1,97 @@
+-- allium: 3
+-- edge_to_cloud_transport.allium
+
+-- Scope: Hybrid Edge-to-Cloud Transport & Resilience
+-- Includes:
+--   - Edge Station (Ground Station) telemetry publishing
+--   - Offline fallback buffering during network partitions
+--   - Buffer flushing mechanism upon reconnection
+--   - Cloud VPS receiving interface
+
+use "./telemetry_pipeline.allium" as telemetry
+
+entity EdgeStation {
+    station_id: String
+    is_connected: Boolean
+    is_authenticated: Boolean
+}
+
+entity OfflineBufferedFrame {
+    station: EdgeStation
+    frame: telemetry/RawTelemetry
+    flushed: Boolean
+}
+
+entity Transmission {
+    station: EdgeStation
+    frame: telemetry/RawTelemetry
+    is_delivered: Boolean
+}
+
+rule TransmitLiveTelemetry {
+    when: frame: telemetry/RawTelemetry.created
+    requires: frame.satellite != null  -- basic validation
+    
+    let station = EdgeStation where station_id = frame.observation_id  -- Assuming observation_id maps to station
+    
+    -- If connected, transmission succeeds
+    if station.is_connected and station.is_authenticated:
+        ensures: Transmission.created(
+            station: station,
+            frame: frame,
+            is_delivered: true
+        )
+        ensures: CloudReceivedTelemetry(frame)
+    else:
+        -- If disconnected or unauthenticated, transmission fails and buffers locally
+        ensures: Transmission.created(
+            station: station,
+            frame: frame,
+            is_delivered: false
+        )
+        ensures: OfflineBufferedFrame.created(
+            station: station,
+            frame: frame,
+            flushed: false
+        )
+}
+
+rule FlushOfflineBuffer {
+    when: ConnectionRestored(station)
+    requires: station.is_connected = true and station.is_authenticated = true
+    
+    for buf in OfflineBufferedFrame where buf.station = station and buf.flushed = false:
+        ensures: buf.flushed = true
+        ensures: Transmission.created(
+            station: station,
+            frame: buf.frame,
+            is_delivered: true
+        )
+        ensures: CloudReceivedTelemetry(buf.frame)
+}
+
+surface MQTTBrokerInterface {
+    facing edge: EdgeStation
+
+    provides:
+        PublishTelemetry(edge, frame: telemetry/RawTelemetry)
+            when edge.is_authenticated = true
+        
+        ConnectionRestored(edge)
+
+    @guarantee SecureTransport
+        -- Connections require explicit EdgeStation credentials.
+        -- Transport is secured via TLS, preventing plaintext eavesdropping.
+}
+
+surface CloudVPSBackend {
+    facing station: EdgeStation
+    
+    provides:
+        CloudReceivedTelemetry(frame: telemetry/RawTelemetry)
+            when station.is_authenticated = true
+        
+    @guarantee ProcessingTrigger
+        -- Emitting CloudReceivedTelemetry instantly triggers the
+        -- downstream ProcessFrame pipeline.
+}

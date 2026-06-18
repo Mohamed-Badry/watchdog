@@ -121,8 +121,18 @@ def on_message(client, userdata, msg):
 def start_mqtt_client():
     broker_url = os.getenv("MQTT_BROKER_URL", "localhost")
     broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
+    username = os.getenv("MQTT_USERNAME")
+    password = os.getenv("MQTT_PASSWORD")
+    use_tls = os.getenv("MQTT_USE_TLS", "false").lower() == "true"
 
     client = mqtt.Client()
+    
+    if username and password:
+        client.username_pw_set(username, password)
+    
+    if use_tls:
+        client.tls_set()
+        
     client.on_connect = on_connect
     client.on_message = on_message
 
