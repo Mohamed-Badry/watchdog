@@ -39,6 +39,9 @@
     *   Created TimescaleDB init schema with two hypertables: `raw_frames` + `telemetry_frames`.
     *   Centralized Docker secrets via `${VAR:-default}` pattern in compose, sourced from `.env`.
     *   **Approved comprehensive dashboard plan** with API contracts for all sub-pages.
+    *   Finalized **V3 Hybrid Edge-to-Cloud Architecture** diagram (Typst) with robust fallback mechanisms.
+    *   Hardened MQTT transport with TLS encryption, explicit authentication, and seamless Offline CSV Fallback logic in the Edge Simulator.
+    *   Formalized transport resilience and telemetry pipelines using **Allium** domain specification language (`docs/spec/`).
 *   **Current Sprint (Phase 1 — Foundation):**
     *   Restructure frontend routes into `(landing)` and `(dashboard)` route groups.
     *   Build `DashboardLayout` with sidebar + footer (no antenna bg, no Overview/Team tabs).

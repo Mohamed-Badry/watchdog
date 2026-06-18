@@ -84,11 +84,16 @@ These are target metrics for the planned online runtime, not a statement of curr
 * **Source:** Local Antenna -> SDR -> Demodulator (Edge Laptop) -> Cloud MQTT Broker (`telemetry/live/{norad_id}`).
 * **Deployment Split:**
     1. **Edge (Ground Station):** A local laptop handles physical RF capture, demodulation, hex decoding, and buffering. A lightweight Edge Agent publishes JSON telemetry over encrypted MQTT to the cloud.
-    2. **Cloud (VPS):** A 4GB RAM VPS runs the heavy backend.
-    3. **Broker (Mosquitto):** Receives telemetry from the Edge Agent via authenticated MQTT.
-    4. **AI Backend (FastAPI):** Subscribes to the broker, normalizes to SI units, and runs the pre-trained PyTorch VAE model on normalized feature vectors.
-    5. **Persistence:** Scores and payload data are persisted to TimescaleDB.
-    6. **Dashboard (SvelteKit):** Provides real-time component health tracking to public web users via WebSockets.
+    2. **Resilience (Offline Buffer):** If the ground station loses Wi-Fi or the MQTT connection drops, the Edge Agent intercepts the data and seamlessly buffers it to a local CSV (`data/raw/fallback_buffer.csv`) to prevent permanent data loss during a critical pass.
+    3. **Cloud (VPS):** A 4GB RAM VPS runs the heavy backend.
+    4. **Broker (Mosquitto):** Receives telemetry from the Edge Agent via authenticated (username/password) and TLS-secured MQTT.
+    5. **AI Backend (FastAPI):** Subscribes to the broker, normalizes to SI units, and runs the pre-trained PyTorch VAE model on normalized feature vectors.
+    6. **Persistence:** Scores and payload data are persisted to TimescaleDB.
+    7. **Dashboard (SvelteKit):** Provides real-time component health tracking to public web users via WebSockets.
+    8. **SatNOGS Sync:** An automated worker synchronizes the latest telemetry from the global SatNOGS database to augment our local station's data.
+
+### C. Domain Modeling (Allium)
+To guarantee consistency across these distinct environments, we formally capture the data shapes and resilience mechanisms (like the offline buffer and inference execution) using the **Allium specification language** in `docs/spec/`. This acts as the rigorous, implementation-agnostic contract that our Python backend and Edge Simulator must obey.
 
 ---
 

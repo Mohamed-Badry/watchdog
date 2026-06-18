@@ -12,13 +12,51 @@ logging.basicConfig(
 logger = logging.getLogger("Simulator")
 
 
+import csv
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("Simulator connected to MQTT broker")
         client.connected_flag = True
+        _flush_fallback(client)
     else:
         logger.error(f"Simulator failed to connect: {rc}")
         client.connected_flag = False
+
+def _flush_fallback(client):
+    fallback_path = "/app/data/raw/fallback_buffer.csv" if os.path.exists("/app/data/raw") else "../../data/raw/fallback_buffer.csv"
+    if not os.path.exists(fallback_path):
+        return
+        
+    logger.info("Flushing offline fallback buffer...")
+    to_retry = []
+    try:
+        with open(fallback_path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                to_retry.append(row)
+    except Exception as e:
+        logger.error(f"Failed to read fallback buffer: {e}")
+        return
+        
+    if not to_retry:
+        return
+
+    success_count = 0
+    for payload in to_retry:
+        # Convert numeric types back if necessary (since csv reads as strings)
+        payload["norad_id"] = int(payload["norad_id"])
+        payload["snr"] = float(payload["snr"])
+        
+        info = client.publish(f"telemetry/live/{payload['norad_id']}", json.dumps(payload), qos=1)
+        if info.rc == mqtt.MQTT_ERR_SUCCESS:
+            success_count += 1
+            
+    if success_count == len(to_retry):
+        logger.info(f"Successfully flushed {success_count} offline frames. Clearing buffer.")
+        os.remove(fallback_path)
+    else:
+        logger.warning(f"Only flushed {success_count}/{len(to_retry)} frames. Buffer preserved.")
 
 def on_disconnect(client, userdata, rc):
     logger.warning("Simulator disconnected from MQTT broker")

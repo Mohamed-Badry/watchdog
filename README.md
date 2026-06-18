@@ -21,6 +21,9 @@ Implemented today:
 *   FastAPI dashboard REST endpoints for service status, satellite/model summaries, recent telemetry, recent anomalies, and throughput buckets
 *   Docker Compose development stack with pinned service and Python runtime versions
 *   Bun + SvelteKit + Tailwind frontend scaffold with a committed Bun lockfile
+*   **V3 Hybrid Edge-to-Cloud Architecture** finalized with diagramming and strict component mapping
+*   **Hardened Edge Simulator:** TLS-encrypted MQTT transmission with seamless offline CSV fallback buffering in the event of ground-station network partitions
+*   **Allium Domain Specifications:** Formally verified system contracts (`docs/spec/`) defining the telemetry pipelines and edge resilience mechanisms
 
 Planned, but not yet implemented in this repository:
 

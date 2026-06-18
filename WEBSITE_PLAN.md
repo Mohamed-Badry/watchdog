@@ -194,10 +194,11 @@ Implemented backend API contracts:
 Current data source: local `data/processed/{norad_id}.csv` plus `models/{norad_id}_metadata.json`, scaler, and VAE artifacts. The same response shapes are intended to be backed by TimescaleDB once live persistence is implemented.
 
 ### Phase 2 — Live Pipeline
-- Implement MQTT subscriber → decode → score → persist
-- Implement `WS /api/ws/telemetry`
-- Build PipelineVisualizer (animated decode flow)
-- Wire simulator → broker → backend → frontend end-to-end
+- [x] Implement MQTT subscriber → decode → score → persist
+- [x] Hardened Edge Simulator (TLS, Auth, Offline CSV Fallback)
+- [x] Wire simulator → broker → backend → frontend end-to-end
+- [ ] Implement `WS /api/ws/telemetry`
+- [ ] Build PipelineVisualizer (animated decode flow)
 
 ### Phase 3 — Operations
 - Port pass prediction logic into backend service
