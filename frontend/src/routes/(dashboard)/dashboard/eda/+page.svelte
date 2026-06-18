@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { apiFetch } from '$lib/api';
+  import { fly, fade } from 'svelte/transition';
   import type { TelemetryFrame } from '$lib/types/api';
 
   import EclipseScatterPlot from '$lib/components/charts/EclipseScatterPlot.svelte';
@@ -151,7 +152,7 @@
     </div>
   {:else}
     <!-- Controls (Minimal, inline) -->
-    <div class="mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4">
+    <div in:fly={{ y: -10, duration: 400, delay: 100 }} class="mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4 transition-all duration-300 hover:shadow-sm">
       <div class="flex items-center gap-3">
         <label for="sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Target Profile</label>
         <select id="sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
@@ -175,7 +176,7 @@
         <button 
           onclick={fetchTelemetry}
           disabled={loading}
-          class="flex items-center justify-center rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand/90 disabled:opacity-50"
+          class="flex items-center justify-center rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-brand/20 transition hover:bg-brand/90 disabled:opacity-50"
         >
           {loading ? 'Fetching...' : 'Fetch Data'}
         </button>
@@ -199,13 +200,13 @@
       <div class="space-y-32">
         
         <!-- SECTION 1: Pipeline Audit & Distributions -->
-        <section class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
+        <section in:fly={{ y: 20, duration: 500, delay: 200 }} class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
           <div class="prose max-w-none xl:sticky xl:top-24">
             <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">1. Data Engineering & Sanity Checks</h2>
             <p>
               Before looking for anomalies, we must make sure the data pipeline works correctly. The backend connects to the <a href="#glossary-mqtt" class="text-brand hover:underline">MQTT broker</a>, stores the data, and converts units to standard formats. We remove impossible data points early (like a battery showing 8V) because they mean there was a communication error, not a real hardware problem.
             </p>
-            <div class="my-6 rounded-xl border border-border bg-surface/50 p-5">
+            <div class="my-6 rounded-xl border border-border bg-surface/50 p-5 hover:border-brand/30 transition-colors">
               <h4 class="mt-0 mb-2 text-sm font-semibold uppercase tracking-wider text-ink-3">Unit Conversion</h4>
               <ul class="m-0 space-y-2 text-sm">
                 <li class="m-0"><code class="bg-panel px-1 py-0.5 rounded text-xs border border-border">batt_voltage</code>: mV to V (divided by 1000.0)</li>
@@ -218,7 +219,7 @@
             </p>
           </div>
           <div class="flex flex-col gap-6">
-            <div class="rounded-2xl border border-border bg-panel p-6 shadow-sm">
+            <div class="rounded-2xl border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
               <h3 class="mt-0 mb-6 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
                 <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                 Feature Distributions
@@ -229,7 +230,7 @@
         </section>
 
         <!-- SECTION 2: Macro Trends & Eclipse Cycle -->
-        <section class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
+        <section in:fly={{ y: 20, duration: 500, delay: 300 }} class="grid gap-12 xl:grid-cols-[1fr_2fr] items-start">
           <div class="prose max-w-none xl:sticky xl:top-24">
             <h2 class="text-2xl font-bold tracking-tight text-ink border-b border-border pb-4">2. Deep-Dive Exploratory Data Analysis</h2>
             

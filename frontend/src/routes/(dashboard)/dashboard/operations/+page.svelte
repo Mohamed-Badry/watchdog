@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { apiFetch } from '$lib/api';
+  import { fly, fade } from 'svelte/transition';
   import type { StationLocation, PassPrediction, TrackPoint } from '$lib/types/api';
 
   import PassTimelinePlot from '$lib/components/charts/PassTimelinePlot.svelte';
@@ -216,7 +217,7 @@
     </div>
   {:else}
     <!-- HORIZONTAL CONTROL BAR -->
-    <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
+    <div in:fly={{ y: -20, duration: 400, delay: 100 }} class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur transition-shadow hover:shadow-lg duration-300">
       <label class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Preset Station</span>
         <select
@@ -288,7 +289,7 @@
     <div class="lg:flex-1 lg:min-h-0 grid gap-5 lg:grid-cols-[400px_minmax(0,1fr)] xl:grid-cols-[450px_minmax(0,1fr)]">
       
       <!-- LEFT COLUMN: Map & Coordinates -->
-      <section class="flex flex-col min-h-[300px] rounded-[1.5rem] border border-border bg-panel p-5 shadow-panel backdrop-blur overflow-hidden">
+      <section in:fly={{ x: -20, duration: 400, delay: 200 }} class="flex flex-col min-h-[300px] rounded-[1.5rem] border border-border bg-panel p-5 shadow-panel backdrop-blur overflow-hidden hover:shadow-lg transition-shadow duration-300">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Station Map</h2>
           <span class="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-medium text-ink-3">
@@ -343,7 +344,7 @@
       </section>
 
       <!-- RIGHT COLUMN: Pass Results (Timeline & List) -->
-      <section class="flex flex-col lg:flex-1 min-h-[200px] overflow-hidden rounded-[1.5rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <section in:fly={{ y: 20, duration: 400, delay: 300 }} class="flex flex-col lg:flex-1 min-h-[200px] overflow-hidden rounded-[1.5rem] border border-border bg-panel shadow-panel backdrop-blur hover:shadow-lg transition-shadow duration-300">
         {#if loading}
           <div class="flex flex-1 items-center justify-center">
             <div class="h-8 w-8 animate-spin rounded-full border-4 border-surface border-t-brand"></div>
@@ -401,7 +402,8 @@
                 {#each passes as pass, index}
                   <button
                     type="button"
-                    class="rounded-xl border p-4 text-left transition {index === selectedPassIndex ? 'border-brand bg-brand/10 text-ink' : 'border-border bg-surface/45 text-ink-2 hover:border-brand/50 hover:bg-surface'}"
+                    in:fly={{ x: -20, duration: 400, delay: Math.min(index * 50, 600) }}
+                    class="rounded-xl border p-4 text-left transition-all duration-300 {index === selectedPassIndex ? 'border-brand bg-brand/10 text-ink scale-[1.02] shadow-[0_0_15px_rgba(139,92,246,0.2)]' : 'border-border bg-surface/45 text-ink-2 hover:border-brand/50 hover:bg-surface hover:-translate-y-1 hover:shadow-lg'}"
                     onclick={() => (selectedPassIndex = index)}
                   >
                     <div class="flex items-start justify-between gap-2">

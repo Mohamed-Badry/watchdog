@@ -59,10 +59,10 @@
             {@const Icon = link.icon}
             <a
               href={link.href}
-              class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
+              class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 {$page.url.pathname === link.href ? 'bg-brand/10 text-brand shadow-inner shadow-brand/5' : 'text-ink-2 hover:bg-surface/60 hover:text-ink hover:translate-x-1 hover:shadow-sm'}"
               onclick={handleNavClick}
             >
-              <Icon class="size-4 opacity-80" />
+              <Icon class="size-4 opacity-80 transition-transform duration-300 {$page.url.pathname === link.href ? 'scale-110' : 'group-hover:scale-110'}" />
               {link.label}
             </a>
           {/each}
@@ -76,10 +76,10 @@
             {@const Icon = link.icon}
             <a
               href={link.href}
-              class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors {$page.url.pathname === link.href ? 'bg-brand/10 text-brand' : 'text-ink-2 hover:bg-surface hover:text-ink'}"
+              class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 {$page.url.pathname === link.href ? 'bg-brand/10 text-brand shadow-inner shadow-brand/5' : 'text-ink-2 hover:bg-surface/60 hover:text-ink hover:translate-x-1 hover:shadow-sm'}"
               onclick={handleNavClick}
             >
-              <Icon class="size-4 opacity-80" />
+              <Icon class="size-4 opacity-80 transition-transform duration-300 {$page.url.pathname === link.href ? 'scale-110' : 'group-hover:scale-110'}" />
               {link.label}
             </a>
           {/each}

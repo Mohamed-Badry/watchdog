@@ -79,33 +79,33 @@
 
     <div use:gsapAction={{ animation: staggerFeatures }} class="grid gap-8 md:grid-cols-3">
       <!-- Feature 1 -->
-      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
-        <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-lg hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]">
+        <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand transition-transform group-hover:scale-110">
           <Activity class="size-6" />
         </div>
-        <h3 class="mb-3 text-xl font-semibold text-ink">Live Telemetry</h3>
+        <h3 class="mb-3 text-xl font-semibold text-ink group-hover:text-brand transition-colors">Live Telemetry</h3>
         <p class="text-sm leading-relaxed text-ink-2">
           Real-time decoding and monitoring. Connect directly to your local MQTT broker and watch frames arrive and parse into actionable metrics instantly.
         </p>
       </div>
 
       <!-- Feature 2 -->
-      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
-        <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-lg hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]">
+        <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand transition-transform group-hover:scale-110">
           <LineChart class="size-6" />
         </div>
-        <h3 class="mb-3 text-xl font-semibold text-ink">Machine Learning Insights</h3>
+        <h3 class="mb-3 text-xl font-semibold text-ink group-hover:text-brand transition-colors">Machine Learning Insights</h3>
         <p class="text-sm leading-relaxed text-ink-2">
           VAE anomaly detection and feature correlation. Visualize the reconstruction loss timeline and explore deep correlations across subsystems.
         </p>
       </div>
 
       <!-- Feature 3 -->
-      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
-        <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+      <div class="group rounded-3xl border border-border bg-panel p-6 sm:p-8 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-lg hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]">
+        <div class="mb-6 flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand transition-transform group-hover:scale-110">
           <Radio class="size-6" />
         </div>
-        <h3 class="mb-3 text-xl font-semibold text-ink">Pass Operations</h3>
+        <h3 class="mb-3 text-xl font-semibold text-ink group-hover:text-brand transition-colors">Pass Operations</h3>
         <p class="text-sm leading-relaxed text-ink-2">
           Predictive tracking and skyplot visualizations. Plan your recording windows and track satellite dynamics against your exact ground station location.
         </p>

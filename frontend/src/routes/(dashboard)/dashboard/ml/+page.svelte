@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { page } from '$app/stores';
   import { apiFetch } from '$lib/api';
+  import { fly, fade } from 'svelte/transition';
   import type { AnomalyRecord } from '$lib/types/api';
   import Tooltip from '$lib/components/ui/Tooltip.svelte';
   import { getFeatureDescription } from '$lib/data/dictionary';
@@ -78,7 +79,7 @@
     </div>
   {:else}
     <!-- Controls -->
-    <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
+    <div in:fly={{ y: -20, duration: 400, delay: 100 }} class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-sm backdrop-blur hover:shadow-md transition-shadow duration-300">
       <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <label for="ml-sat-select" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
         <select id="ml-sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
@@ -111,7 +112,7 @@
     <div class="lg:flex-1 lg:min-h-0 grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[350px_minmax(0,1fr)]">
       
       <!-- LEFT COLUMN: Anomaly Triage Queue -->
-      <div class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <div in:fly={{ x: -20, duration: 400, delay: 200 }} class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur hover:shadow-lg transition-shadow duration-300">
         <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Anomaly Triage Queue</h2>
           <span class="text-xs font-mono text-ink-3">{anomalies.length}</span>
@@ -126,11 +127,12 @@
               No anomalies found.
             </div>
           {:else}
-            {#each anomalies as anomaly}
+            {#each anomalies as anomaly, i}
               {@const frameId = anomaly.timestamp + anomaly.norad_id}
               <button
+                in:fly={{ x: -10, duration: 300, delay: Math.min(300 + i * 30, 800) }}
                 type="button"
-                class="w-full text-left rounded-lg border p-3 transition-all {selectedAnomalyId === frameId ? 'border-critical bg-critical/5 shadow-sm shadow-critical/10' : 'border-border bg-surface/50 hover:border-critical/40'}"
+                class="w-full text-left rounded-lg border p-3 transition-all duration-300 {selectedAnomalyId === frameId ? 'border-critical bg-critical/10 shadow-[0_0_15px_rgba(244,63,94,0.15)] ring-1 ring-critical/50 scale-[1.02]' : 'border-border bg-surface/50 hover:border-critical/40 hover:bg-surface hover:scale-[1.01]'}"
                 onclick={() => selectedAnomalyId = frameId}
               >
                 <div class="flex items-center justify-between mb-1.5">
@@ -151,7 +153,7 @@
       </div>
 
       <!-- RIGHT COLUMN: Inference Inspector -->
-      <div class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+      <div in:fly={{ y: 20, duration: 400, delay: 300 }} class="flex flex-col lg:flex-1 lg:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur hover:shadow-lg transition-shadow duration-300">
         <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex items-center justify-between">
           <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Root Cause Attribution</h2>
           {#if selectedAnomaly}

@@ -8,6 +8,7 @@
   import MacroVoltageTrendPlot from '$lib/components/charts/MacroVoltageTrendPlot.svelte';
   import OrbitalDriftPlot from '$lib/components/charts/OrbitalDriftPlot.svelte';
   import { SERIES_CURRENT as BLUE, SERIES_AMBER as AMBER } from '$lib/chart-theme';
+  import { fly, fade } from 'svelte/transition';
 
   let { data }: { data: PageData } = $props();
 
@@ -17,7 +18,7 @@
   let activeTab = $state<'throughput' | 'quality' | 'health'>('throughput');
 </script>
 
-<section class="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+<section in:fly={{ y: 20, duration: 500, delay: 100 }} class="flex flex-col gap-6">
   <div class="space-y-1">
     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Deep Dive</p>
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Analytics</h1>
@@ -58,9 +59,9 @@
     <div class="w-full">
       
       {#if activeTab === 'throughput'}
-        <div class="flex flex-col gap-6">
+        <div in:fade={{ duration: 200 }} class="flex flex-col gap-6">
           <!-- Top Row: Full width Area Chart -->
-          <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
+          <div in:fly={{ y: 20, duration: 400, delay: 100 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <h3 class="mt-0 mb-4 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
               <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
               30-Day Frame Volume
@@ -72,7 +73,7 @@
 
           <!-- Bottom Row: Split Grid -->
           <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
+            <div in:fly={{ y: 20, duration: 400, delay: 200 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
               <h3 class="mt-0 mb-1 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
                 <span class="inline-block h-3 w-1 rounded-sm" style="background: {BLUE}"></span>
                 Pass Duration vs Frames
@@ -83,7 +84,7 @@
               </div>
             </div>
 
-            <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
+            <div in:fly={{ y: 20, duration: 400, delay: 300 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
               <h3 class="mt-0 mb-1 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
                 <span class="inline-block h-3 w-1 rounded-sm" style="background: {AMBER}"></span>
                 Link Quality Degradation
@@ -97,11 +98,11 @@
         </div>
 
       {:else if activeTab === 'quality'}
-        <div class="flex flex-col gap-6">
+        <div in:fade={{ duration: 200 }} class="flex flex-col gap-6">
           
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <!-- Info Card -->
-            <div class="xl:col-span-1 rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm flex flex-col justify-center">
+            <div in:fly={{ x: -20, duration: 400, delay: 100 }} class="xl:col-span-1 rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm flex flex-col justify-center hover:shadow-lg transition-shadow duration-300">
               <h3 class="mt-0 mb-4 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
                 <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                 Parser Integrity
@@ -115,21 +116,21 @@
 
             <!-- Stats -->
             <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div class="rounded-[1.25rem] border border-emerald-500/20 bg-emerald-500/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-emerald-500/40">
+              <div in:fly={{ y: 20, duration: 400, delay: 200 }} class="rounded-[1.25rem] border border-emerald-500/20 bg-emerald-500/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-emerald-500/40 hover:-translate-y-1">
                 <div class="absolute -inset-2 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-2">Complete Frames</p>
-                <p class="text-3xl sm:text-5xl font-bold tracking-tight text-emerald-500 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">{analytics.quality.complete_frames.toLocaleString()}</p>
+                <p class="text-3xl sm:text-5xl font-bold tracking-tight text-emerald-500 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform duration-500">{analytics.quality.complete_frames.toLocaleString()}</p>
               </div>
-              <div class="rounded-[1.25rem] border border-warning/20 bg-warning/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-warning/40">
+              <div in:fly={{ y: 20, duration: 400, delay: 300 }} class="rounded-[1.25rem] border border-warning/20 bg-warning/5 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group transition-all hover:border-warning/40 hover:-translate-y-1">
                 <div class="absolute -inset-2 bg-gradient-to-tr from-warning/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-warning mb-2">Partial Frames</p>
-                <p class="text-3xl sm:text-5xl font-bold tracking-tight text-warning drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]">{analytics.quality.partial_frames.toLocaleString()}</p>
+                <p class="text-3xl sm:text-5xl font-bold tracking-tight text-warning drop-shadow-[0_0_12px_rgba(245,158,11,0.3)] group-hover:scale-110 transition-transform duration-500">{analytics.quality.partial_frames.toLocaleString()}</p>
               </div>
             </div>
           </div>
 
           <!-- Chart Card -->
-          <div class="rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
+          <div in:fly={{ y: 20, duration: 400, delay: 400 }} class="rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <h3 class="mt-0 mb-6 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
               <span class="inline-block h-3 w-1 rounded-sm bg-warning"></span>
               Top Missing Fields
@@ -150,8 +151,8 @@
         </div>
 
       {:else if activeTab === 'health'}
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
+        <div in:fade={{ duration: 200 }} class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div in:fly={{ y: 20, duration: 400, delay: 100 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <h3 class="mt-0 mb-2 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
               <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
               Macro Battery Voltage Trends (180 Days)
@@ -164,7 +165,7 @@
             </div>
           </div>
 
-          <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm">
+          <div in:fly={{ y: 20, duration: 400, delay: 200 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel p-6 shadow-sm hover:shadow-lg transition-shadow duration-300">
             <h3 class="mt-0 mb-2 flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-ink-3">
               <span class="inline-block h-3 w-1 rounded-sm" style="background: {AMBER}"></span>
               Thermodynamic Orbital Drift (180 Days)

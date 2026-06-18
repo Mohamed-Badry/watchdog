@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { onMount, onDestroy } from 'svelte';
   import { getApiUrl } from '$lib/api';
+  import { fly, fade } from 'svelte/transition';
   import type { DashboardSummary } from '$lib/types/api';
   import SparklinePlot from '$lib/components/charts/SparklinePlot.svelte';
   import { Satellite, Radio, AlertTriangle, Globe } from 'lucide-svelte';
@@ -96,17 +97,17 @@
   </div>
 {:else if summary}
   <section class="flex flex-col xl:h-full xl:min-h-0 gap-5">
-    <div class="flex-none space-y-1">
+    <div in:fade={{ duration: 400 }} class="flex-none space-y-1">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">System Overview</p>
       <h1 class="text-3xl font-semibold tracking-tight text-ink">Dashboard Home</h1>
     </div>
 
     <!-- Totals -->
     <div class="flex-none grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-      {#each statCards as stat}
+      {#each statCards as stat, i}
         {@const Icon = stat.icon}
         {@const value = summary.totals[stat.key]}
-        <article class="group flex items-center justify-between rounded-[1.25rem] border border-border bg-panel p-5 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-md">
+        <article in:fly={{ y: 20, duration: 400, delay: i * 75 }} class="group flex items-center justify-between rounded-[1.25rem] border border-border bg-panel p-5 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]">
           <div class="flex flex-col">
             <p class="text-xs font-semibold uppercase tracking-wider text-ink-3">{stat.label}</p>
             <p class="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-brand">{typeof value === 'number' ? value.toLocaleString() : value}</p>
@@ -124,19 +125,19 @@
       <!-- Left Col (Component Health & Active Profiles) -->
       <div class="flex flex-col gap-6 xl:min-h-0">
         <!-- Service Status -->
-        <div class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden">
+        <div in:fly={{ y: 20, duration: 400, delay: 300 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
             <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Component Health</h2>
           </div>
           <div class="flex flex-col gap-3 p-4 shrink-0">
-            {#each summary.service_status as component}
-              <div class="group flex items-start justify-between rounded-xl border border-border/50 bg-surface/30 p-4 transition-all hover:border-brand/30 hover:bg-surface/60">
+            {#each summary.service_status as component, i}
+              <div in:fly={{ x: -10, duration: 300, delay: 400 + i * 50 }} class="group flex items-start justify-between rounded-xl border border-border/50 bg-surface/30 p-4 transition-all hover:border-brand/30 hover:bg-brand/5 hover:shadow-sm">
                 <div class="flex flex-col gap-1.5">
                   <span class="text-sm font-semibold capitalize text-ink transition-colors group-hover:text-brand">{component.name.replace('_', ' ')}</span>
-                  <p class="text-[11px] font-medium leading-relaxed text-ink-3">{component.detail}</p>
+                  <p class="text-[11px] font-medium leading-relaxed text-ink-3 group-hover:text-ink-2 transition-colors">{component.detail}</p>
                 </div>
-                <div class="flex shrink-0 items-center gap-2 rounded-full border border-border/50 bg-panel px-2.5 py-1">
-                  <span class="h-2 w-2 rounded-full {component.status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-brand shadow-[0_0_8px_rgba(177,33,66,0.4)]'}"></span>
+                <div class="flex shrink-0 items-center gap-2 rounded-full border border-border/50 bg-panel px-2.5 py-1 shadow-sm">
+                  <span class="h-2 w-2 rounded-full {component.status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_12px_rgba(16,185,129,0.6)]' : 'bg-brand shadow-[0_0_8px_rgba(177,33,66,0.4)]'} transition-shadow"></span>
                   <span class="text-[10px] font-semibold uppercase tracking-wider {component.status === 'online' ? 'text-emerald-500' : 'text-brand'}">{component.status}</span>
                 </div>
               </div>
@@ -145,7 +146,7 @@
         </div>
 
         <!-- Active Profiles Table -->
-        <div class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur">
+        <div in:fly={{ y: 20, duration: 400, delay: 400 }} class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur hover:shadow-lg transition-shadow duration-300">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
             <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Active Profiles</h2>
           </div>
@@ -189,7 +190,7 @@
       <div class="flex flex-col gap-6 xl:min-h-0">
         <!-- Throughput Sparkline -->
         {#if summary.throughput_buckets && summary.throughput_buckets.length > 0}
-          <div class="flex-none chart-card border border-border rounded-[1.25rem] bg-panel p-4 shadow-sm backdrop-blur">
+          <div in:fly={{ y: 20, duration: 400, delay: 500 }} class="flex-none chart-card border border-border rounded-[1.25rem] bg-panel p-4 shadow-sm backdrop-blur hover:shadow-lg transition-shadow duration-300">
             <div class="flex items-center justify-between mb-2">
               <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Throughput (24h)</h2>
               <div class="text-right">
@@ -206,7 +207,7 @@
         {/if}
 
         <!-- Recent Anomalies -->
-        <div class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden">
+        <div in:fly={{ y: 20, duration: 400, delay: 600 }} class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div class="flex flex-col sm:flex-row sm:items-center gap-4">
               <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3 whitespace-nowrap">Recent Anomalies</h2>
@@ -238,9 +239,9 @@
               </div>
             {:else}
               <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
-                {#each summary.recent_anomalies as anomaly}
+                {#each summary.recent_anomalies as anomaly, i}
                   {@const severityHex = getSeverityColor(anomaly.score)}
-                  <a href="/dashboard/ml?timestamp={encodeURIComponent(anomaly.timestamp)}&norad_id={anomaly.norad_id}" class="group relative overflow-hidden rounded-xl border bg-surface/20 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md" style="border-color: {severityHex};">
+                  <a in:fly={{ y: 20, duration: 400, delay: 600 + (i * 50) }} href="/dashboard/ml?timestamp={encodeURIComponent(anomaly.timestamp)}&norad_id={anomaly.norad_id}" class="group relative overflow-hidden rounded-xl border bg-surface/20 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg" style="border-color: {severityHex}; shadow-color: {severityHex};">
                     <div class="absolute inset-0 opacity-5" style="background-color: {severityHex};"></div>
                     <div class="relative flex items-center justify-between mb-4">
                       <span class="rounded-md px-2 py-0.5 text-[10px] font-bold tracking-widest border" style="color: {severityHex}; border-color: {severityHex}; background-color: color-mix(in srgb, {severityHex} 15%, transparent);">NORAD {anomaly.norad_id}</span>

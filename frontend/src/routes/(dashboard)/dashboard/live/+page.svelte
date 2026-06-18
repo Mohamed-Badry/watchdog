@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from "./$types";
   import { untrack } from "svelte";
+  import { fly } from "svelte/transition";
   import { apiFetch } from "$lib/api";
   import type { TelemetryFrame } from "$lib/types/api";
 
@@ -136,10 +137,11 @@
           </div>
         {:else}
           <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            {#each frames as frame (frame.timestamp + String(frame.norad_id))}
+            {#each frames as frame, i (frame.timestamp + String(frame.norad_id))}
               <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
               <article 
-                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-brand bg-brand/15 ring-2 ring-brand/50 shadow-[0_0_20px_rgba(139,92,246,0.2)]' : 'border-border bg-surface/40'}"
+                in:fly={{ y: -10, opacity: 0, duration: 400, delay: Math.min(i * 50, 400) }}
+                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-brand bg-brand/15 ring-2 ring-brand/50 shadow-[0_0_20px_rgba(139,92,246,0.2)]' : 'border-border bg-surface/40 hover:shadow-sm'}"
                 onclick={() => selectedTimestamp = selectedTimestamp === frame.timestamp ? null : frame.timestamp}
               >
                 <!-- Status Indicator Bar -->
