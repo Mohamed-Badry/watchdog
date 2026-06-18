@@ -79,15 +79,16 @@ These are target metrics for the planned online runtime, not a statement of curr
 1.  **Latency:** Target < 10ms inference per frame.
 2.  **Footprint:** Target < 5MB model file size.
 
-### B. "The Watchdog" (Live Deployment Pipeline)
-* **Goal:** Detect anomalies during a 10-minute satellite pass in real-time.
-* **Source:** Local Antenna -> SDR -> MQTT Broker (`telemetry/live/{norad_id}`).
-* **Current Implemented Runtime:**
-    1. **Ingest:** Telemetry payloads arrive via Eclipse Mosquitto.
-    2. **Backend (FastAPI):** Subscribes, decodes packets via `satnogs-decoders`, normalizes to SI units.
-    3. **Inference:** Runs the pre-trained PyTorch VAE model on normalized feature vectors.
-    4. **Persistence & Alerts:** Scores and payload data are persisted to TimescaleDB, while live updates are pushed to the frontend via WebSockets.
-    5. **Dashboard (SvelteKit):** Provides real-time component health tracking, telemetry visualization, and notebook-style ML insights.
+### B. "The Watchdog" (Hybrid Edge-to-Cloud Deployment Pipeline)
+* **Goal:** Detect anomalies during a 10-minute satellite pass in real-time, serving public insights.
+* **Source:** Local Antenna -> SDR -> Demodulator (Edge Laptop) -> Cloud MQTT Broker (`telemetry/live/{norad_id}`).
+* **Deployment Split:**
+    1. **Edge (Ground Station):** A local laptop handles physical RF capture, demodulation, hex decoding, and buffering. A lightweight Edge Agent publishes JSON telemetry over encrypted MQTT to the cloud.
+    2. **Cloud (VPS):** A 4GB RAM VPS runs the heavy backend.
+    3. **Broker (Mosquitto):** Receives telemetry from the Edge Agent via authenticated MQTT.
+    4. **AI Backend (FastAPI):** Subscribes to the broker, normalizes to SI units, and runs the pre-trained PyTorch VAE model on normalized feature vectors.
+    5. **Persistence:** Scores and payload data are persisted to TimescaleDB.
+    6. **Dashboard (SvelteKit):** Provides real-time component health tracking to public web users via WebSockets.
 
 ---
 

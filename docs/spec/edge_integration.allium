@@ -1,0 +1,37 @@
+-- allium: 3
+-- edge_integration.allium
+
+-- Scope: Defines the boundary contract between physical Edge stations and the Cloud AI Backend.
+-- Excludes: Infrastructure details (VPS size, TLS certificates, IP addresses).
+
+use "./telemetry_pipeline.allium" as telemetry
+
+-- The Edge Agent acts on behalf of a physical ground station
+actor EdgeStation {
+    -- In practice, this identity is verified via MQTT username/password
+    identified_by: String
+}
+
+-- The payload format expected by the cloud
+contract TelemetryStream {
+    -- The Edge Station must serialize its decoded telemetry frames into JSON
+    serialize: (frame: telemetry/RawTelemetry) -> String
+    
+    @invariant OrderedDelivery
+        -- Frames for a given satellite pass must arrive with strictly increasing timestamps.
+}
+
+-- The ingress point exposed by the Cloud VPS (via MQTT)
+surface CloudIngress {
+    facing station: EdgeStation
+
+    contracts:
+        demands TelemetryStream
+
+    provides:
+        PublishTelemetry(frame: telemetry/RawTelemetry)
+
+    @guarantee FaultTolerantBuffering
+        -- If the connection is lost during a satellite pass, the EdgeStation
+        -- is guaranteed the right to batch-publish older frames upon reconnection.
+}
