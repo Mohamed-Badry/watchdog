@@ -240,7 +240,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {#each summary.recent_anomalies as anomaly}
                   {@const severityHex = getSeverityColor(anomaly.score)}
-                  <a href="/dashboard/ml" class="group relative overflow-hidden rounded-xl border bg-surface/20 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md" style="border-color: {severityHex};">
+                  <a href="/dashboard/ml?timestamp={encodeURIComponent(anomaly.timestamp)}&norad_id={anomaly.norad_id}" class="group relative overflow-hidden rounded-xl border bg-surface/20 p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md" style="border-color: {severityHex};">
                     <div class="absolute inset-0 opacity-5" style="background-color: {severityHex};"></div>
                     <div class="relative flex items-center justify-between mb-4">
                       <span class="rounded-md px-2 py-0.5 text-[10px] font-bold tracking-widest border" style="color: {severityHex}; border-color: {severityHex}; background-color: color-mix(in srgb, {severityHex} 15%, transparent);">NORAD {anomaly.norad_id}</span>

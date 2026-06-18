@@ -139,7 +139,7 @@
             {#each frames as frame (frame.timestamp + String(frame.norad_id))}
               <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
               <article 
-                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-highlight bg-highlight/10 shadow-lg shadow-highlight/10' : 'border-border bg-surface/40'}"
+                class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-brand bg-brand/15 ring-2 ring-brand/50 shadow-[0_0_20px_rgba(139,92,246,0.2)]' : 'border-border bg-surface/40'}"
                 onclick={() => selectedTimestamp = selectedTimestamp === frame.timestamp ? null : frame.timestamp}
               >
                 <!-- Status Indicator Bar -->

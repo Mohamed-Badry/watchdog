@@ -51,8 +51,7 @@ html.light {
 html {
   color: var(--color-ink);
   background: var(--color-paper);
-  --color-highlight: var(--color-highlight);
-  /* Bright blue for dark mode */
+  --color-highlight: #a855f7;
 }
 
 html.light {

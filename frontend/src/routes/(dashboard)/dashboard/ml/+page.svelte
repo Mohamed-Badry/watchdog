@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { page } from '$app/stores';
   import { apiFetch } from '$lib/api';
   import type { AnomalyRecord } from '$lib/types/api';
   import Tooltip from '$lib/components/ui/Tooltip.svelte';
@@ -32,7 +33,17 @@
       const json = await apiFetch<{ anomalies: AnomalyRecord[] }>(path);
       anomalies = json.anomalies || [];
       if (anomalies.length > 0) {
-        selectedAnomalyId = anomalies[0].timestamp + anomalies[0].norad_id;
+        const queryTs = $page.url.searchParams.get('timestamp');
+        const queryNorad = $page.url.searchParams.get('norad_id');
+        let matched = null;
+        if (queryTs) {
+          matched = anomalies.find(a => a.timestamp === queryTs && (!queryNorad || String(a.norad_id) === queryNorad));
+        }
+        if (matched) {
+          selectedAnomalyId = matched.timestamp + matched.norad_id;
+        } else {
+          selectedAnomalyId = anomalies[0].timestamp + anomalies[0].norad_id;
+        }
       } else {
         selectedAnomalyId = null;
       }

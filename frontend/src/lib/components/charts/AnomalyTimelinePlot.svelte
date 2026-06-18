@@ -67,9 +67,9 @@
 
     <!-- Selected dot highlight layer -->
     {#if selectedTimestamp}
-      <RuleX data={[new Date(selectedTimestamp)]} stroke="#000001" strokeWidth={1.5} strokeOpacity={0.8} strokeDasharray="4 4" />
+      <RuleX data={[new Date(selectedTimestamp)]} stroke="#000001" strokeWidth={2} strokeOpacity={0.6} strokeDasharray="4 4" />
       <Dot data={selectedData} x="date" y="anomaly_score"
-           r={7} fill="var(--color-highlight)" stroke="#000001" strokeWidth={2} />
+           r={6} fill="var(--color-panel)" stroke="#000001" strokeWidth={3} />
     {/if}
   </ResponsivePlot>
 </div>
