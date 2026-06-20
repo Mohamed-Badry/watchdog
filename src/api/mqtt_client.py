@@ -1,6 +1,6 @@
 import os
 import json
-import logging
+from loguru import logger
 from datetime import datetime
 import paho.mqtt.client as mqtt
 from sqlmodel import Session
@@ -19,7 +19,7 @@ from gr_sat.telemetry import process_frame_result
 import threading
 import queue
 
-logger = logging.getLogger("mqtt_client")
+
 
 score_queue = queue.Queue()
 

@@ -1,15 +1,13 @@
 import os
 import json
 import time
-import logging
+from loguru import logger
 import random
 from datetime import datetime, timezone
 import paho.mqtt.client as mqtt
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("Simulator")
+
+
 
 
 import csv

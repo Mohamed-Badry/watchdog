@@ -1,8 +1,7 @@
-from fastapi import Security, HTTPException, status
-from fastapi.security import APIKeyHeader
+from fastapi import HTTPException, status, Header
 from sqlmodel import Session, select
 import os
-import logging
+from loguru import logger
 
 try:
     from .database import get_engine
@@ -11,10 +10,7 @@ except ImportError:
     from database import get_engine
     from db_models import ApiKey
 
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
-logger = logging.getLogger("auth")
-
-def verify_api_key(api_key: str = Security(api_key_header)):
+def verify_api_key(api_key: str | None = Header(default=None, alias="X-API-Key")):
     require_auth = os.getenv("REQUIRE_AUTH", "false").lower() == "true"
     
     if not require_auth:

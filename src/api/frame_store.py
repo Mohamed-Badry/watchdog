@@ -6,7 +6,7 @@ or HTTP knowledge — pure data retrieval.
 
 from __future__ import annotations
 
-import logging
+from loguru import logger
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,7 +17,7 @@ from gr_sat.telemetry import DecoderRegistry
 if TYPE_CHECKING:
     from .scoring import ScoringService
 
-logger = logging.getLogger(__name__)
+
 
 
 class FrameStore:

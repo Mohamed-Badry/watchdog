@@ -4,6 +4,7 @@ import asyncio
 import os
 from typing import Literal
 
+from loguru import logger
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, Depends, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,7 +28,7 @@ try:
 except ImportError:
     from auth import verify_api_key, seed_master_key
 
-logger = logging.getLogger("api")
+
 limiter = Limiter(key_func=get_remote_address)
 
 

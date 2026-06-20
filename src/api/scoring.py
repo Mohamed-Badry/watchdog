@@ -6,7 +6,7 @@ interface so that the rest of the API layer stays ML-free.
 
 from __future__ import annotations
 
-import logging
+from loguru import logger
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -28,7 +28,7 @@ try:
 except ImportError:
     from serialization import bool_value, json_value
 
-logger = logging.getLogger(__name__)
+
 
 
 # ── Data transfer object ─────────────────────────────────────────────
