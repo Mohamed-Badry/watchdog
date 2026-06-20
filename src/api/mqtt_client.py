@@ -16,8 +16,52 @@ except ImportError:
 
 import pandas as pd
 from gr_sat.telemetry import process_frame_result
+import threading
+import queue
 
 logger = logging.getLogger("mqtt_client")
+
+score_queue = queue.Queue()
+
+def scoring_worker(repository):
+    logger.info("Started background scoring worker thread.")
+    while True:
+        task = score_queue.get()
+        if task is None:
+            break
+            
+        telem_id, norad_id, features = task
+        try:
+            model_status = repository.model_status(norad_id)
+            if model_status.status == "ready":
+                df = pd.DataFrame([features])
+                df["timestamp"] = datetime.now()
+                df["is_anomaly"] = False
+                df["anomaly_score"] = float("nan")
+                
+                df = repository._score_frames(norad_id, df, model_status)
+                
+                if not df.empty and not pd.isna(df.iloc[0]["anomaly_score"]):
+                    anomaly_score = float(df.iloc[0]["anomaly_score"])
+                    is_anomaly = bool(df.iloc[0]["is_anomaly"])
+                    
+                    engine = get_engine()
+                    if engine:
+                        with Session(engine) as session:
+                            telem = session.get(TelemetryRow, (telem_id, datetime.now())) # Wait, TelemetryRow has compound primary key? Let me check db_models.py
+                            # Wait, the primary key is (id, timestamp)? Let me fix the select query to be safe.
+                            from sqlmodel import select
+                            stmt = select(TelemetryRow).where(TelemetryRow.id == telem_id)
+                            telem = session.exec(stmt).first()
+                            if telem:
+                                telem.anomaly_score = anomaly_score
+                                telem.is_anomaly = is_anomaly
+                                session.commit()
+                                logger.info(f"Asynchronously scored frame {telem_id} for NORAD {norad_id}: score={anomaly_score:.3f}")
+        except Exception as e:
+            logger.error(f"Error scoring frame asynchronously: {e}", exc_info=True)
+        finally:
+            score_queue.task_done()
 
 
 def on_connect(client, userdata, flags, rc):
@@ -78,38 +122,25 @@ def on_message(client, userdata, msg):
                 )
                 session.add(raw_record)
 
-                # Score anomaly if possible
-                is_anomaly = False
-                anomaly_score = None
-
-                if res.frame:
-                    repo = DashboardDataRepository()
-                    model_status = repo.model_status(norad_id)
-                    if model_status.status == "ready":
-                        # Let's mock a single row dataframe to use the repo's internal scoring for now
-                        df = pd.DataFrame([features])
-                        df["timestamp"] = timestamp
-                        df["is_anomaly"] = False
-                        df["anomaly_score"] = float("nan")
-                        df = repo._score_frames(norad_id, df, model_status)
-                        if not df.empty and not pd.isna(df.iloc[0]["anomaly_score"]):
-                            anomaly_score = float(df.iloc[0]["anomaly_score"])
-                            is_anomaly = bool(df.iloc[0]["is_anomaly"])
-
                 telem_record = TelemetryRow(
                     timestamp=timestamp,
                     norad_id=norad_id,
                     raw_frame_id=raw_record.id,
                     features=features,
-                    anomaly_score=anomaly_score,
-                    is_anomaly=is_anomaly,
+                    anomaly_score=None,
+                    is_anomaly=False,
                     missing_fields=missing,
                 )
                 session.add(telem_record)
                 
                 # Single atomic commit
                 session.commit()
+                session.refresh(telem_record)
                 logger.info(f"Persisted frame for NORAD {norad_id}")
+                
+                if res.frame and hasattr(client, "_repository"):
+                    score_queue.put((telem_record.id, int(norad_id), features))
+                    
             except Exception as e:
                 session.rollback()
                 logger.error(f"Transaction failed, rolled back: {e}", exc_info=True)
@@ -118,7 +149,7 @@ def on_message(client, userdata, msg):
         logger.error(f"Error processing MQTT message: {e}", exc_info=True)
 
 
-def start_mqtt_client():
+def start_mqtt_client(repository=None):
     broker_url = os.getenv("MQTT_BROKER_URL", "localhost")
     broker_port = int(os.getenv("MQTT_BROKER_PORT", 1883))
     username = os.getenv("MQTT_USERNAME")
@@ -126,6 +157,10 @@ def start_mqtt_client():
     use_tls = os.getenv("MQTT_USE_TLS", "false").lower() == "true"
 
     client = mqtt.Client()
+    
+    if repository:
+        client._repository = repository
+        threading.Thread(target=scoring_worker, args=(repository,), daemon=True).start()
     
     if username and password:
         client.username_pw_set(username, password)

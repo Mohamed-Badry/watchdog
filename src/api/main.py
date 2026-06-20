@@ -43,6 +43,9 @@ async def lifespan(app: FastAPI):
     client = start_mqtt_client(repository=app.state.repository)
     yield
     if client:
+        import api.mqtt_client as mqtt_module
+        if hasattr(mqtt_module, "score_queue"):
+            mqtt_module.score_queue.put(None)  # shutdown worker
         client.loop_stop()
 
 
@@ -62,6 +65,8 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
         lifespan=lifespan,
         dependencies=[Depends(verify_api_key)],
     )
+    
+    app.state.repository = data
     
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
