@@ -18,7 +18,7 @@ from gr_sat.model_artifacts import (
     split_chronological,
     threshold_from_scores,
 )
-from gr_sat.models import TelemetryVAE
+from gr_sat.vae import TelemetryVAE
 
 
 class ModelArtifactTests(unittest.TestCase):

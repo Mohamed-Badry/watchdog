@@ -21,7 +21,7 @@ from gr_sat.model_artifacts import (
     load_model_metadata,
     model_artifact_paths,
 )
-from gr_sat.models import compute_anomaly_scores
+from gr_sat.vae import compute_anomaly_scores
 
 try:
     from .serialization import bool_value, json_value

@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from gr_sat.models import TelemetryVAE, compute_anomaly_scores
+from gr_sat.vae import TelemetryVAE, compute_anomaly_scores
 
 
 class TelemetryVAETests(unittest.TestCase):

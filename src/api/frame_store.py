@@ -143,20 +143,20 @@ class FrameStore:
         try:
             try:
                 from .database import get_engine
-                from .models import TelemetryFrame, RawFrame
+                from .db_models import TelemetryRow, RawFrame
             except ImportError:
                 from database import get_engine  # type: ignore[no-redef]
-                from models import TelemetryFrame, RawFrame  # type: ignore[no-redef]
+                from db_models import TelemetryRow, RawFrame  # type: ignore[no-redef]
             from sqlmodel import Session, select
 
             engine = get_engine()
             if engine:
                 with Session(engine) as session:
                     statement = (
-                        select(TelemetryFrame, RawFrame)
-                        .join(RawFrame, TelemetryFrame.raw_frame_id == RawFrame.id)
-                        .where(TelemetryFrame.norad_id == sat_id)
-                        .order_by(TelemetryFrame.timestamp.asc())
+                        select(TelemetryRow, RawFrame)
+                        .join(RawFrame, TelemetryRow.raw_frame_id == RawFrame.id)
+                        .where(TelemetryRow.norad_id == sat_id)
+                        .order_by(TelemetryRow.timestamp.asc())
                     )
                     results = session.exec(statement).all()
 

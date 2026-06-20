@@ -11,7 +11,7 @@ import torch
 
 from gr_sat.ml_config import ALL_FEATURES
 from gr_sat.model_artifacts import ModelArtifactMetadata, model_artifact_paths, save_model_metadata
-from gr_sat.models import TelemetryVAE
+from gr_sat.vae import TelemetryVAE
 from gr_sat.telemetry import FrameProcessingResult, TelemetryFrame
 from gr_sat.watchdog import (
     OnlineWatchdog,

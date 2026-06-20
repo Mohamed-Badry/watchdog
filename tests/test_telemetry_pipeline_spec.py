@@ -1,8 +1,6 @@
 import unittest
 from datetime import datetime, timezone
-import pandas as pd
 
-from gr_sat.decoders.uwe4 import UWE4Decoder
 from gr_sat.telemetry import process_frame_result, TelemetryFrame
 
 # Kaitai Struct dummy payload for UWE4 for testing decode success

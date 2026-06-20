@@ -40,7 +40,7 @@ import torch
 from sklearn.metrics import roc_auc_score, roc_curve
 
 from gr_sat.model_artifacts import load_model_artifacts, split_chronological
-from gr_sat.models import compute_anomaly_scores
+from gr_sat.vae import compute_anomaly_scores
 from gr_sat.satellite_profiles import (
     build_baseline_mask,
     feature_completeness_mask,

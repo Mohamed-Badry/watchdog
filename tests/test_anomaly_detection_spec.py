@@ -11,7 +11,6 @@ sys.path.append(str(Path(__file__).parent.parent / "scripts"))
 import train_model
 import generate_faults
 
-from gr_sat.model_artifacts import load_model_metadata
 
 
 class AnomalyDetectionSpecTests(unittest.TestCase):

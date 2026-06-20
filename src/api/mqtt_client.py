@@ -7,11 +7,11 @@ from sqlmodel import Session
 
 try:
     from .database import get_engine
-    from .models import RawFrame, TelemetryFrame
+    from .db_models import RawFrame, TelemetryRow
     from .dashboard_data import DashboardDataRepository
 except ImportError:
     from database import get_engine
-    from models import RawFrame, TelemetryFrame
+    from db_models import RawFrame, TelemetryRow
     from dashboard_data import DashboardDataRepository
 
 import pandas as pd
@@ -96,7 +96,7 @@ def on_message(client, userdata, msg):
                             anomaly_score = float(df.iloc[0]["anomaly_score"])
                             is_anomaly = bool(df.iloc[0]["is_anomaly"])
 
-                telem_record = TelemetryFrame(
+                telem_record = TelemetryRow(
                     timestamp=timestamp,
                     norad_id=norad_id,
                     raw_frame_id=raw_record.id,

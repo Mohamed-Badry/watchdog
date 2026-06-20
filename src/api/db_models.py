@@ -17,7 +17,7 @@ class RawFrame(SQLModel, table=True):
     snr: Optional[float] = None
 
 
-class TelemetryFrame(SQLModel, table=True):
+class TelemetryRow(SQLModel, table=True):
     __tablename__ = "telemetry_frames"
     id: Optional[int] = Field(
         default=None, sa_column=Column(Integer, Identity(always=True), primary_key=True)

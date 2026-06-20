@@ -15,7 +15,7 @@ import pandas as pd
 import torch
 
 from gr_sat.model_artifacts import ModelArtifactMetadata, load_model_artifacts
-from gr_sat.models import compute_anomaly_scores
+from gr_sat.vae import compute_anomaly_scores
 from gr_sat.satellite_profiles import DEFAULT_PROFILE, get_satellite_profile
 from gr_sat.telemetry import TelemetryFrame, process_frame_result
 

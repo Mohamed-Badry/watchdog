@@ -1,8 +1,6 @@
 import unittest
 import httpx
-from unittest.mock import patch
 from api.main import create_app
-from api.dashboard_data import DashboardDataRepository
 
 class OperationsApiTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):

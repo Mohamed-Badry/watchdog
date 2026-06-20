@@ -22,7 +22,7 @@ from gr_sat.ml_config import (
     TRAIN_SPLIT,
     VALIDATION_SPLIT,
 )
-from gr_sat.models import TelemetryVAE
+from gr_sat.vae import TelemetryVAE
 from gr_sat.satellite_profiles import DEFAULT_PROFILE
 
 ARTIFACT_VERSION = 2

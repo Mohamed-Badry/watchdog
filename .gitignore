@@ -43,3 +43,4 @@ mosquitto/data/
 mosquitto/log/
 
 .antigravitycli/
+**/gp.php

@@ -24,7 +24,7 @@ from gr_sat.model_artifacts import (
     split_chronological,
     threshold_from_scores,
 )
-from gr_sat.models import TelemetryVAE, compute_anomaly_scores, vae_loss
+from gr_sat.vae import TelemetryVAE, compute_anomaly_scores, vae_loss
 from gr_sat.satellite_profiles import (
     build_baseline_mask,
     feature_completeness_mask,
