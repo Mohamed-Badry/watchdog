@@ -55,6 +55,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-watchdog}:${POSTGRES_PASSWORD:-watchdog_pass}@db:5432/${POSTGRES_DB:-watchdog_db}
       MQTT_BROKER_URL: broker
       MQTT_BROKER_PORT: "1883"
+      MQTT_USERNAME: ${MQTT_USERNAME:-watchdog}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-secretpassword}
     volumes:
       - ./src/api:/app/src/api
       - ./src/gr_sat:/app/src/gr_sat
@@ -115,6 +117,8 @@ services:
     environment:
       MQTT_BROKER_URL: broker
       MQTT_BROKER_PORT: "1883"
+      MQTT_USERNAME: ${MQTT_USERNAME:-watchdog}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-secretpassword}
     depends_on:
       - broker
     restart: unless-stopped
