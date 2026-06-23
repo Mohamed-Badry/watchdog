@@ -98,6 +98,12 @@ class ScoringService:
 
     # ── Public API ───────────────────────────────────────────────────
 
+    def clear_cache(self) -> None:
+        """Clear model artifacts from memory so they can be reloaded from disk."""
+        self._status_cache.clear()
+        self._loaded_models.clear()
+        logger.info("ScoringService cache cleared.")
+
     def model_status(self, norad_id: int) -> ModelStatus:
         """Check whether a model is available and ready for inference."""
         sat_id = int(norad_id)

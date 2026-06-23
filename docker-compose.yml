@@ -143,6 +143,23 @@ services:
         - action: rebuild
           path: src/simulator/Dockerfile
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: src/scheduler/Dockerfile
+    container_name: watchdog_scheduler
+    volumes:
+      - ./src:/app/src
+      - ./scripts:/app/scripts
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      API_URL: http://api:8000
+      API_KEY: dev_master_key
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   timescaledb_data:
   mosquitto_data:

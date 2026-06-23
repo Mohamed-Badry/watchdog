@@ -1,0 +1,89 @@
+import os
+import time
+import requests
+import schedule
+from loguru import logger
+import subprocess
+from pathlib import Path
+
+# We run from /app/src/scheduler, but we need to call scripts from /app
+PROJECT_ROOT = Path("/app")
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+
+API_URL = os.getenv("API_URL", "http://backend:8000")
+API_KEY = os.getenv("API_KEY", "dev_master_key")
+
+def run_fetch_data():
+    logger.info("Starting daily fetch_training_data job...")
+    try:
+        subprocess.run(
+            ["python", str(SCRIPTS_DIR / "fetch_training_data.py")],
+            check=True,
+            cwd=str(PROJECT_ROOT)
+        )
+        logger.info("Successfully fetched new data.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Data fetching failed: {e}")
+
+def run_train_models():
+    logger.info("Starting daily train_model job for all active satellites...")
+    
+    # We could query the API for active satellites, but the training script 
+    # could just handle all configured satellites if we pass a flag. 
+    # Let's read the golden_candidates.csv or fetch from API.
+    try:
+        response = requests.get(f"{API_URL}/api/satellites", headers={"X-API-Key": API_KEY}, timeout=10)
+        response.raise_for_status()
+        satellites = response.json().get("satellites", [])
+    except Exception as e:
+        logger.error(f"Failed to fetch satellite list from API: {e}")
+        return
+
+    success_count = 0
+    for sat in satellites:
+        norad_id = sat["norad_id"]
+        logger.info(f"Retraining model for {norad_id}...")
+        try:
+            subprocess.run(
+                ["python", str(SCRIPTS_DIR / "train_model.py"), "--norad", str(norad_id)],
+                check=True,
+                cwd=str(PROJECT_ROOT)
+            )
+            success_count += 1
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Training failed for {norad_id}: {e}")
+
+    logger.info(f"Successfully retrained {success_count}/{len(satellites)} models.")
+    
+    # Now reload the API cache
+    reload_api_models()
+
+def reload_api_models():
+    logger.info("Notifying API to reload model cache...")
+    try:
+        response = requests.post(
+            f"{API_URL}/api/admin/reload_models", 
+            headers={"X-API-Key": API_KEY},
+            timeout=10
+        )
+        response.raise_for_status()
+        logger.info("API model cache reloaded successfully.")
+    except Exception as e:
+        logger.error(f"Failed to reload API model cache: {e}")
+
+def main():
+    logger.info("Starting Scheduler Service...")
+    
+    # Schedule the jobs
+    # 02:00 UTC for fetching, 02:15 UTC for training
+    schedule.every().day.at("02:00").do(run_fetch_data)
+    schedule.every().day.at("02:15").do(run_train_models)
+    
+    logger.info("Jobs scheduled. Entering sleep loop.")
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+if __name__ == "__main__":
+    main()

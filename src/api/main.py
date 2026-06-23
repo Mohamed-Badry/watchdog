@@ -210,6 +210,11 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @app.post("/api/admin/reload_models")
+    def reload_models() -> dict:
+        data.reload_models()
+        return {"status": "success", "message": "Model cache cleared. New models will be loaded on next inference."}
+
     return app
 
 

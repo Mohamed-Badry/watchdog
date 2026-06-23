@@ -92,6 +92,10 @@ class DashboardDataRepository:
 
     # ── Status & summaries ───────────────────────────────────────────
 
+    def reload_models(self) -> None:
+        """Clear in-memory ML models so fresh ones are loaded from disk."""
+        self._scoring.clear_cache()
+
     def status_payload(self) -> dict[str, Any]:
         satellites = self.satellite_summaries()
         components = status_components(
