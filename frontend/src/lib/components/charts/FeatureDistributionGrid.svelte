@@ -12,6 +12,7 @@
   import { RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
   import { FEATURE_COLORS, SERIES_VOLTAGE, SERIES_CURRENT, SERIES_TEMP_PANEL, SERIES_TEAL } from '$lib/chart-theme';
+  import { mean, standardDeviation } from '$lib/data/statistics';
 
   type FrameFeatures = Record<string, number | null>;
 
@@ -27,9 +28,8 @@
 
   function computeStats(values: number[]) {
     if (values.length === 0) return { mean: 0, std: 0 };
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
-    return { mean, std: Math.sqrt(variance) };
+    const m = mean(values);
+    return { mean: m, std: standardDeviation(values, m) };
   }
 
   let panels = $derived(

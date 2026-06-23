@@ -9,6 +9,7 @@
    */
   import { Line, AreaY } from 'svelteplot';
   import { COMPACT_MARGIN, SERIES_VOLTAGE, SERIES_TEMP_BATT, SERIES_TEMP_PANEL } from '$lib/chart-theme';
+  import { mean, standardDeviation } from '$lib/data/statistics';
 
   type Frame = {
     timestamp: string;
@@ -42,11 +43,8 @@
 
       if (volts.length === 0) continue;
 
-      const mean = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
-      const std = (arr: number[], avg: number) =>
-        Math.sqrt(arr.reduce((a, b) => a + (b - avg) ** 2, 0) / arr.length);
       const vMean = mean(volts);
-      const vStd = std(volts, vMean);
+      const vStd = standardDeviation(volts, vMean);
 
       result.push({
         date: new Date(day),

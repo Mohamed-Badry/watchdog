@@ -22,55 +22,8 @@
   let loading = $state(false);
   let telemetryFrames = $state<TelemetryFrame[]>([]);
 
-  type FeatureMap = Record<string, unknown>;
-  type NormalizedFeatures = Record<string, number | null> & {
-    batt_voltage: number | null;
-    batt_current: number | null;
-    batt_a_voltage: number | null;
-    batt_b_voltage: number | null;
-    temp_batt_a: number | null;
-    temp_batt_b: number | null;
-    temp_panel_z: number | null;
-  };
-
-  function toFiniteNumber(value: unknown): number | null {
-    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-    if (typeof value === 'string' && value.trim() !== '') {
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : null;
-    }
-    return null;
-  }
-
-  function featureNumber(features: FeatureMap, keys: string[]): number | null {
-    for (const key of keys) {
-      const value = toFiniteNumber(features[key]);
-      if (value !== null) return value;
-    }
-    return null;
-  }
-
-  function batteryVoltage(features: FeatureMap): number | null {
-    const combined = toFiniteNumber(features.batt_voltage);
-    if (combined !== null) return combined;
-
-    const batteryA = toFiniteNumber(features.batt_a_voltage);
-    const batteryB = toFiniteNumber(features.batt_b_voltage);
-    if (batteryA !== null && batteryB !== null) return (batteryA + batteryB) / 2;
-    return batteryA ?? batteryB;
-  }
-
-  function normalizeFeatures(features: FeatureMap): NormalizedFeatures {
-    return {
-      batt_voltage: batteryVoltage(features),
-      batt_current: featureNumber(features, ['batt_current']),
-      batt_a_voltage: featureNumber(features, ['batt_a_voltage']),
-      batt_b_voltage: featureNumber(features, ['batt_b_voltage']),
-      temp_batt_a: featureNumber(features, ['temp_batt_a']),
-      temp_batt_b: featureNumber(features, ['temp_batt_b']),
-      temp_panel_z: featureNumber(features, ['temp_panel_z']),
-    };
-  }
+  import { normalizeFeatures } from '$lib/data/transforms';
+  import type { FeatureMap, NormalizedFeatures } from '$lib/data/transforms';
 
   async function fetchTelemetry() {
     loading = true;
@@ -115,12 +68,15 @@
   let macroFrames = $derived(
     telemetryFrames
       .filter((f) => !!f.timestamp && !!f.features && typeof f.features === 'object')
-      .map((f) => ({
-        timestamp: f.timestamp,
-        batt_voltage: batteryVoltage(f.features as FeatureMap),
-        temp_batt_a: featureNumber(f.features as FeatureMap, ['temp_batt_a']),
-        temp_panel_z: featureNumber(f.features as FeatureMap, ['temp_panel_z']),
-      }))
+      .map((f) => {
+        const norm = normalizeFeatures(f.features as FeatureMap);
+        return {
+          timestamp: f.timestamp,
+          batt_voltage: norm.batt_voltage,
+          temp_batt_a: norm.temp_batt_a,
+          temp_panel_z: norm.temp_panel_z,
+        };
+      })
   );
 
   let timestamps = $derived(

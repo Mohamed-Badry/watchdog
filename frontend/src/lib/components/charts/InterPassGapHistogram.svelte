@@ -7,6 +7,7 @@
   import { RectY, RuleX } from 'svelteplot';
   import { binX } from 'svelteplot/transforms';
   import { SERIES_BASELINE } from '$lib/chart-theme';
+  import { median } from '$lib/data/statistics';
 
   let { timestamps = [] } = $props<{ timestamps: string[] }>();
 
@@ -31,12 +32,8 @@
     return gapList;
   });
 
-  let median = $derived(() => {
-    const data = gaps();
-    if (data.length === 0) return 0;
-    const sorted = [...data].map(d => d.gap).sort((a, b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  let medianValue = $derived(() => {
+    return median(gaps().map(d => d.gap));
   });
 
   // Binning transform for the histogram
@@ -59,14 +56,14 @@
              stroke="var(--color-panel)" strokeWidth={1} />
 
       <!-- Median reference line -->
-      <RuleX data={[median()]}
+      <RuleX data={[medianValue()]}
              stroke={SERIES_BASELINE} strokeWidth={2}
              strokeDasharray="6 3" strokeOpacity={0.7} />
     </ResponsivePlot>
     <div class="mt-2 flex items-center justify-center gap-4 text-xs text-ink-3">
       <span class="flex items-center gap-1.5">
         <span class="inline-block h-px w-4 border-t-2 border-dashed" style="border-color: {SERIES_BASELINE}; opacity: 0.7"></span>
-        Median: {median().toFixed(1)} hrs
+        Median: {medianValue().toFixed(1)} hrs
       </span>
       <span>{gaps().length.toLocaleString()} inter-pass gaps</span>
     </div>
