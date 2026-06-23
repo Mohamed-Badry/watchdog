@@ -22,9 +22,9 @@ scrap_data/
 models/
 
 # ── Docs build outputs ──
-docs/figures/
-docs/*.html
-docs/*.pdf
+# docs/figures/
+# docs/**/*.html
+# docs/**/*.pdf
 
 # ── Jupyter ──
 .ipynb_checkpoints/
