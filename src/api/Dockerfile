@@ -35,15 +35,17 @@ RUN useradd -m -s /bin/bash watchdog
 WORKDIR /app
 
 COPY pyproject.toml README.md /app/
+COPY alembic.ini /app/
+COPY db/migrations /app/db/migrations
 COPY src/gr_sat /app/src/gr_sat
 COPY src/api /app/src/api
 
 RUN chown -R watchdog:watchdog /app
 USER watchdog
 
-WORKDIR /app/src/api
+WORKDIR /app
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/api/status || exit 1
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

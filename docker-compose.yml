@@ -49,6 +49,7 @@ services:
       context: .
       dockerfile: src/api/Dockerfile
     container_name: watchdog_backend
+    command: sh -c "cd /app && alembic upgrade head && uvicorn src.api.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     environment:
@@ -62,6 +63,8 @@ services:
       - ./src/gr_sat:/app/src/gr_sat
       - ./models:/app/models:ro
       - ./data:/app/data:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+      - ./db/migrations:/app/db/migrations
     depends_on:
       db:
         condition: service_healthy
@@ -113,7 +116,7 @@ services:
     volumes:
       - ./src/simulator:/app/src/simulator
       - ./src/gr_sat:/app/src/gr_sat
-      - ./data/raw:/app/data/raw:ro
+      - ./data/raw:/app/data/raw
     environment:
       MQTT_BROKER_URL: broker
       MQTT_BROKER_PORT: "1883"
