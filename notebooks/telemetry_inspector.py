@@ -25,8 +25,8 @@ import sys
 sys.path.append(str(Path("..").resolve() / "src"))
 sys.path.append(str(Path(".").resolve() / "src"))
 
-from gr_sat.telemetry import process_frame
-from gr_sat.decoders.go32 import GO32_Struct
+from gr_sat.core.telemetry import process_frame
+from gr_sat.core.decoders.go32 import GO32_Struct
 
 # Config
 RAW_DIR = Path("../data/raw")

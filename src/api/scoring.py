@@ -15,13 +15,13 @@ import numpy as np
 import pandas as pd
 import torch
 
-from gr_sat.model_artifacts import (
+from gr_sat.ml.model_artifacts import (
     ModelArtifactMetadata,
     load_model_artifacts,
     load_model_metadata,
     model_artifact_paths,
 )
-from gr_sat.vae import compute_anomaly_scores
+from gr_sat.ml.vae import compute_anomaly_scores
 
 try:
     from .serialization import bool_value, json_value

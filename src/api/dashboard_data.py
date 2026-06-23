@@ -20,9 +20,10 @@ from typing import Any, Literal
 
 import pandas as pd
 
-from gr_sat.telemetry import DecoderRegistry
+from gr_sat.ml.ml_config import DATA_DIR, MODEL_DIR, PROJECT_ROOT
+from gr_sat.core.telemetry import DecoderRegistry
 
-import gr_sat.decoders  # noqa: F401 — registers available decoders
+import gr_sat.core.decoders  # noqa: F401 — registers available decoders
 
 try:
     from .frame_store import FrameStore
@@ -67,7 +68,7 @@ class DashboardDataRepository:
 
     def __init__(
         self,
-        root: Path | str = Path("."),
+        root: Path | str = PROJECT_ROOT,
         processed_dir: Path | str | None = None,
         models_dir: Path | str | None = None,
     ):

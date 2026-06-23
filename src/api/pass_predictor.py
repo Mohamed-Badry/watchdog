@@ -81,8 +81,10 @@ def predict_passes(
     from skyfield.api import Loader
     import os
     
+    from gr_sat.ml.ml_config import DATA_DIR
+    
     # Use a dedicated cache directory instead of polluting the current working directory
-    cache_dir = Path("data/tle")
+    cache_dir = DATA_DIR / "tle"
     cache_dir.mkdir(parents=True, exist_ok=True)
     custom_loader = Loader(str(cache_dir))
     

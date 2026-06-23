@@ -27,13 +27,13 @@ from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 
 # Import the core — triggers decoder registration via decoders/__init__.py
-from gr_sat.processing import (
+from gr_sat.core.processing import (
     annotate_pass_and_cadence_metadata,
     deduplicate_processed_frames,
 )
-from gr_sat.satellite_profiles import feature_completeness_mask, get_satellite_profile
-from gr_sat.telemetry import DecoderRegistry
-import gr_sat.decoders  # noqa: F401
+from gr_sat.core.satellite_profiles import feature_completeness_mask, get_satellite_profile
+from gr_sat.core.telemetry import DecoderRegistry
+import gr_sat.core.decoders  # noqa: F401
 
 # --- Paths (matching README data directory structure) ---
 RAW_DIR = Path("data/raw")

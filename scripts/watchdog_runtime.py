@@ -12,7 +12,7 @@ import argparse
 from datetime import datetime
 import json
 
-from gr_sat.watchdog import OnlineWatchdog
+from gr_sat.ml.watchdog import OnlineWatchdog
 
 
 def _parse_timestamp(raw_timestamp: str) -> datetime:

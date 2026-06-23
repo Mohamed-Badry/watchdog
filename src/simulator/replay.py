@@ -11,6 +11,7 @@ import paho.mqtt.client as mqtt
 
 
 import csv
+from gr_sat.ml.ml_config import DATA_DIR
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -22,7 +23,7 @@ def on_connect(client, userdata, flags, rc):
         client.connected_flag = False
 
 def _flush_fallback(client):
-    fallback_path = "/app/data/raw/fallback_buffer.csv" if os.path.exists("/app/data/raw") else "../../data/raw/fallback_buffer.csv"
+    fallback_path = DATA_DIR / "raw" / "fallback_buffer.csv"
     if not os.path.exists(fallback_path):
         return
         
@@ -87,7 +88,7 @@ def main():
 
 
     # Simulate reading from data/raw/
-    raw_dir = "/app/data/raw" if os.path.exists("/app/data/raw") else "../../data/raw"
+    raw_dir = DATA_DIR / "raw"
     if not os.path.exists(raw_dir):
         logger.warning(f"Raw data dir {raw_dir} not found. Mocking random data.")
         mock_mode = True
@@ -144,7 +145,7 @@ def main():
 
 def _write_fallback(payload):
     import csv
-    fallback_path = "/app/data/raw/fallback_buffer.csv" if os.path.exists("/app/data/raw") else "../../data/raw/fallback_buffer.csv"
+    fallback_path = DATA_DIR / "raw" / "fallback_buffer.csv"
     os.makedirs(os.path.dirname(fallback_path), exist_ok=True)
     
     file_exists = os.path.isfile(fallback_path)

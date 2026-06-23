@@ -16,6 +16,8 @@ from slowapi.errors import RateLimitExceeded
 
 from contextlib import asynccontextmanager
 
+from gr_sat.ml.ml_config import GS_LATITUDE, GS_LONGITUDE, GS_ELEVATION, GS_NAME
+
 try:
     from .dashboard_data import DashboardDataRepository
     from .mqtt_client import start_mqtt_client
@@ -174,10 +176,10 @@ def create_app(repository: DashboardDataRepository | None = None) -> FastAPI:
     @limiter.limit("20/minute")
     async def operations_passes(
         request: Request,
-        lat: float = Query(..., ge=-90.0, le=90.0),
-        lon: float = Query(..., ge=-180.0, le=180.0),
-        elevation_m: float = Query(default=0.0, ge=-500.0, le=10000.0),
-        station_label: str | None = Query(default=None, max_length=80),
+        lat: float = Query(default=GS_LATITUDE, ge=-90.0, le=90.0),
+        lon: float = Query(default=GS_LONGITUDE, ge=-180.0, le=180.0),
+        elevation_m: float = Query(default=GS_ELEVATION, ge=-500.0, le=10000.0),
+        station_label: str | None = Query(default=GS_NAME, max_length=80),
         lookahead_hours: int = Query(default=24, ge=1, le=168),
         min_elevation: float = Query(default=10.0, ge=0.0, le=90.0),
         norad_id: int | None = None,
