@@ -16,6 +16,7 @@ services:
     ports:
       - "1883:1883"
     environment:
+      # WARNING: Fallbacks (watchdog/secretpassword) are for local dev ONLY.
       - MQTT_USERNAME=${MQTT_USERNAME:-watchdog}
       - MQTT_PASSWORD=${MQTT_PASSWORD:-secretpassword}
     entrypoint: ["/mosquitto/entrypoint.sh"]
@@ -31,6 +32,7 @@ services:
     ports:
       - "5432:5432"
     environment:
+      # WARNING: Fallbacks are for local dev ONLY. Set in .env for production.
       POSTGRES_USER: ${POSTGRES_USER:-watchdog}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-watchdog_pass}
       POSTGRES_DB: ${POSTGRES_DB:-watchdog_db}
@@ -56,6 +58,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-watchdog}:${POSTGRES_PASSWORD:-watchdog_pass}@db:5432/${POSTGRES_DB:-watchdog_db}
       MQTT_BROKER_URL: broker
       MQTT_BROKER_PORT: "1883"
+      # WARNING: Fallbacks are for local dev ONLY.
       MQTT_USERNAME: ${MQTT_USERNAME:-watchdog}
       MQTT_PASSWORD: ${MQTT_PASSWORD:-secretpassword}
     volumes:
@@ -120,6 +123,7 @@ services:
     environment:
       MQTT_BROKER_URL: broker
       MQTT_BROKER_PORT: "1883"
+      # WARNING: Fallbacks are for local dev ONLY.
       MQTT_USERNAME: ${MQTT_USERNAME:-watchdog}
       MQTT_PASSWORD: ${MQTT_PASSWORD:-secretpassword}
     depends_on:
