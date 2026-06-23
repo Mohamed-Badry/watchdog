@@ -125,8 +125,8 @@
         
         #v(25pt)
         #rect(fill: rgb("e0e7ff"), stroke: 1.5pt + rgb("4f46e5"), radius: 6pt, width: 100%, inset: 12pt)[
-          #text(size: 10pt, weight: "bold", fill: rgb("3730a3"))[Nightly Cron Training] \
-          #text(size: 9pt, fill: rgb("3730a3"))[Fetches SatNOGS data to update model]
+          #text(size: 10pt, weight: "bold", fill: rgb("3730a3"))[watchdog_scheduler (Cron)] \
+          #text(size: 9pt, fill: rgb("3730a3"))[Daily fetch & retrain + Webhook cache invalidation]
         ]
       ]
     )
