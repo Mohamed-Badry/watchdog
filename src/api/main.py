@@ -16,7 +16,7 @@ from slowapi.errors import RateLimitExceeded
 
 from contextlib import asynccontextmanager
 
-from gr_sat.ml.ml_config import GS_LATITUDE, GS_LONGITUDE, GS_ELEVATION, GS_NAME
+from gr_sat.core.config import GS_LATITUDE, GS_LONGITUDE, GS_ELEVATION, GS_NAME
 
 try:
     from .dashboard_data import DashboardDataRepository

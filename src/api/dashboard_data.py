@@ -139,7 +139,7 @@ class DashboardDataRepository:
             },
             "active_satellites": satellites,
             "recent_anomalies": self.recent_anomalies(limit=5)["anomalies"],
-            "throughput": self.throughput(limit=14, bucket="day")["buckets"],
+            "throughput_buckets": self.throughput(limit=14, bucket="day")["buckets"],
         }
 
     def satellite_summaries(self) -> list[dict[str, Any]]:

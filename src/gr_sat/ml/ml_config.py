@@ -5,17 +5,16 @@ Shared model/training constants for Project Watchdog.
 import os
 from pathlib import Path
 
-# Project layout
-PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", Path(__file__).resolve().parents[2]))
-MODEL_DIR = Path(os.getenv("MODEL_DIR", PROJECT_ROOT / "models"))
-DATA_DIR = Path(os.getenv("DATA_DIR", PROJECT_ROOT / "data"))
-DOCS_DIR = Path(os.getenv("DOCS_DIR", PROJECT_ROOT / "docs"))
-
-# Ground Station config
-GS_LATITUDE = float(os.getenv("GS_LATITUDE", "29.0661"))
-GS_LONGITUDE = float(os.getenv("GS_LONGITUDE", "31.0994"))
-GS_ELEVATION = float(os.getenv("GS_ELEVATION", "32.0"))
-GS_NAME = os.getenv("GS_NAME", "Beni Suef, Egypt")
+from gr_sat.core.config import (
+    PROJECT_ROOT,
+    MODEL_DIR,
+    DATA_DIR,
+    DOCS_DIR,
+    GS_LATITUDE,
+    GS_LONGITUDE,
+    GS_ELEVATION,
+    GS_NAME,
+)
 
 
 HIDDEN_DIM = 12

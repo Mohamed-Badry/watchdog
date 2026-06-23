@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 
 
 import csv
-from gr_sat.ml.ml_config import DATA_DIR
+from gr_sat.core.config import DATA_DIR
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
