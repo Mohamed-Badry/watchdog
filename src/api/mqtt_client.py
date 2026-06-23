@@ -15,7 +15,7 @@ except ImportError:
     from dashboard_data import DashboardDataRepository
 
 import pandas as pd
-from gr_sat.telemetry import process_frame_result
+from gr_sat.core.telemetry import process_frame_result
 import threading
 import queue
 

@@ -9,10 +9,11 @@ from rich.table import Table
 from sklearn.metrics import roc_auc_score, roc_curve
 
 import torch
-from gr_sat.model_artifacts import load_model_artifacts, split_chronological
-from gr_sat.vae import compute_anomaly_scores
-from gr_sat.processing import annotate_pass_and_cadence_metadata
-from gr_sat.satellite_profiles import (
+from gr_sat.ml.model_artifacts import load_model_artifacts, split_chronological
+from gr_sat.ml.vae import compute_anomaly_scores
+from gr_sat.ml.ml_config import THRESHOLD_PERCENTILE, MODEL_DIR, DATA_DIR, DOCS_DIR
+from gr_sat.core.processing import annotate_pass_and_cadence_metadata
+from gr_sat.core.satellite_profiles import (
     build_baseline_mask,
     feature_completeness_mask,
     get_satellite_profile,
@@ -112,7 +113,7 @@ def calculate_diagnosis_accuracy(recon_errors, flagged_idx, fault_types, feature
     return accuracy
 
 
-def evaluate(norad_id: str, models_dir: str = "models", processed_dir: str = "data/processed", docs_dir: str = "docs"):
+def evaluate(norad_id: str, models_dir: Path | str = MODEL_DIR, processed_dir: Path | str = DATA_DIR / "processed", docs_dir: Path | str = DOCS_DIR):
     models_path = Path(models_dir)
     processed_path = Path(processed_dir)
     docs_path = Path(docs_dir)

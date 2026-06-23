@@ -9,7 +9,7 @@ Usage:
 """
 
 import argparse
-from gr_sat.evaluation import evaluate
+from gr_sat.ml.evaluation import evaluate
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

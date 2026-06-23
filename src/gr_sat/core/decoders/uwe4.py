@@ -28,7 +28,7 @@ import math
 import satnogsdecoders.decoder as dec
 from satnogsdecoders.decoder.uwe4 import Uwe4
 
-from gr_sat.telemetry import (
+from gr_sat.core.telemetry import (
     BaseDecoder,
     DecoderRegistry,
     ProcessingFailure,

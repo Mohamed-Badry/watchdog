@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime, timezone
 
-from gr_sat.decoders.uwe4 import UWE4Decoder
-from gr_sat.telemetry import process_frame_result
+from gr_sat.core.decoders.uwe4 import UWE4Decoder
+from gr_sat.core.telemetry import process_frame_result
 
 
 class TelemetryDiagnosticsTests(unittest.TestCase):

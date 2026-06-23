@@ -14,10 +14,11 @@ import numpy as np
 import pandas as pd
 import torch
 
-from gr_sat.model_artifacts import ModelArtifactMetadata, load_model_artifacts
-from gr_sat.vae import compute_anomaly_scores
-from gr_sat.satellite_profiles import DEFAULT_PROFILE, get_satellite_profile
-from gr_sat.telemetry import TelemetryFrame, process_frame_result
+from gr_sat.ml.ml_config import MODEL_DIR
+from gr_sat.ml.model_artifacts import ModelArtifactMetadata, load_model_artifacts
+from gr_sat.ml.vae import compute_anomaly_scores
+from gr_sat.core.satellite_profiles import DEFAULT_PROFILE, get_satellite_profile
+from gr_sat.core.telemetry import TelemetryFrame, process_frame_result
 
 STATE_IDLE = "idle"
 STATE_RECEIVING = "receiving"
@@ -83,7 +84,7 @@ class OnlineWatchdog:
     def from_artifacts(
         cls,
         norad_id: str,
-        models_dir: Path = Path("models"),
+        models_dir: Path = MODEL_DIR,
         gap_timeout_seconds: float = 180.0,
         alert_sink: Callable[[WatchdogAlert], None] | None = None,
     ) -> "OnlineWatchdog":

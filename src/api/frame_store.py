@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from gr_sat.telemetry import DecoderRegistry
+from gr_sat.core.telemetry import DecoderRegistry
 
 if TYPE_CHECKING:
     from .scoring import ScoringService

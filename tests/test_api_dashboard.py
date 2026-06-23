@@ -7,7 +7,7 @@ import pandas as pd
 
 from api.dashboard_data import DashboardDataRepository
 from api.main import create_app
-from gr_sat.model_artifacts import ModelArtifactMetadata, model_artifact_paths, save_model_metadata
+from gr_sat.ml.model_artifacts import ModelArtifactMetadata, model_artifact_paths, save_model_metadata
 
 
 class DashboardApiTests(unittest.IsolatedAsyncioTestCase):

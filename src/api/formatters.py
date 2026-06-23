@@ -10,8 +10,8 @@ from typing import Any
 
 import pandas as pd
 
-from gr_sat.satellite_profiles import get_satellite_profile
-from gr_sat.telemetry import DecoderRegistry
+from gr_sat.core.satellite_profiles import get_satellite_profile
+from gr_sat.core.telemetry import DecoderRegistry
 
 try:
     from .serialization import (

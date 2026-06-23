@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from gr_sat.ml_config import DEFAULT_KLD_WEIGHT
+from gr_sat.ml.ml_config import DEFAULT_KLD_WEIGHT
 
 
 class TelemetryVAE(nn.Module):

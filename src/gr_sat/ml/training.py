@@ -10,22 +10,24 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from gr_sat.ml_config import (
+from gr_sat.ml.ml_config import (
+    DATA_DIR,
     DEFAULT_INFERENCE_MODE,
     DEFAULT_KLD_WEIGHT,
     HIDDEN_DIM,
     LATENT_DIM,
+    MODEL_DIR,
     THRESHOLD_PERCENTILE,
 )
-from gr_sat.model_artifacts import (
+from gr_sat.ml.model_artifacts import (
     ModelArtifactMetadata,
     model_artifact_paths,
     save_model_metadata,
     split_chronological,
     threshold_from_scores,
 )
-from gr_sat.vae import TelemetryVAE, compute_anomaly_scores, vae_loss
-from gr_sat.satellite_profiles import (
+from gr_sat.ml.vae import TelemetryVAE, compute_anomaly_scores, vae_loss
+from gr_sat.core.satellite_profiles import (
     build_baseline_mask,
     feature_completeness_mask,
     get_satellite_profile,
@@ -101,8 +103,8 @@ def train_vae(X_train_scaled, feature_names: list[str], diagnosis_mask=None, epo
 def train_for_satellite(
     norad_id: str, 
     epochs: int = 100, 
-    models_dir: str = "models", 
-    processed_dir: str = "data/processed"
+    models_dir: Path | str = MODEL_DIR, 
+    processed_dir: Path | str = DATA_DIR / "processed"
 ):
     models_path = Path(models_dir)
     models_path.mkdir(parents=True, exist_ok=True)

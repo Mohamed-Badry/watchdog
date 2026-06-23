@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from gr_sat.processing import annotate_pass_and_cadence_metadata, deduplicate_processed_frames
+from gr_sat.core.processing import annotate_pass_and_cadence_metadata, deduplicate_processed_frames
 
 
 class DeduplicateProcessedFramesTests(unittest.TestCase):

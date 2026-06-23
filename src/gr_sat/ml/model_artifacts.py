@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from gr_sat.ml_config import (
+from gr_sat.ml.ml_config import (
     DEFAULT_INFERENCE_MODE,
     DEFAULT_KLD_WEIGHT,
     HIDDEN_DIM,
@@ -22,8 +22,8 @@ from gr_sat.ml_config import (
     TRAIN_SPLIT,
     VALIDATION_SPLIT,
 )
-from gr_sat.vae import TelemetryVAE
-from gr_sat.satellite_profiles import DEFAULT_PROFILE
+from gr_sat.ml.vae import TelemetryVAE
+from gr_sat.core.satellite_profiles import DEFAULT_PROFILE
 
 ARTIFACT_VERSION = 2
 

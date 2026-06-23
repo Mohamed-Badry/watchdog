@@ -9,11 +9,12 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 import torch
 
-from gr_sat.ml_config import ALL_FEATURES
-from gr_sat.model_artifacts import ModelArtifactMetadata, model_artifact_paths, save_model_metadata
-from gr_sat.vae import TelemetryVAE
-from gr_sat.telemetry import FrameProcessingResult, TelemetryFrame
-from gr_sat.watchdog import (
+from gr_sat.core.satellite_profiles import DEFAULT_PROFILE
+ALL_FEATURES = list(DEFAULT_PROFILE.feature_contract.feature_names)
+from gr_sat.ml.model_artifacts import ModelArtifactMetadata, model_artifact_paths, save_model_metadata
+from gr_sat.ml.vae import TelemetryVAE
+from gr_sat.core.telemetry import FrameProcessingResult, TelemetryFrame
+from gr_sat.ml.watchdog import (
     OnlineWatchdog,
     STATE_ALERTING,
     STATE_DEGRADED,
@@ -95,7 +96,7 @@ class OnlineWatchdogTests(unittest.TestCase):
 
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
         with patch(
-            "gr_sat.watchdog.process_frame_result",
+            "gr_sat.ml.watchdog.process_frame_result",
             return_value=FrameProcessingResult(frame=_build_frame(packet_time, 0.0)),
         ):
             result = watchdog.process_packet(b"\x00", packet_time)
@@ -113,7 +114,7 @@ class OnlineWatchdogTests(unittest.TestCase):
         watchdog.alert_sink = alerts.append
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
         with patch(
-            "gr_sat.watchdog.process_frame_result",
+            "gr_sat.ml.watchdog.process_frame_result",
             return_value=FrameProcessingResult(frame=_build_frame(packet_time, 2.0)),
         ):
             result = watchdog.process_packet(b"\x00", packet_time)
@@ -128,7 +129,7 @@ class OnlineWatchdogTests(unittest.TestCase):
 
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
         with patch(
-            "gr_sat.watchdog.process_frame_result",
+            "gr_sat.ml.watchdog.process_frame_result",
             return_value=FrameProcessingResult(frame=_build_frame(packet_time, 0.0)),
         ):
             watchdog.process_packet(b"\x00", packet_time)
@@ -143,7 +144,7 @@ class OnlineWatchdogTests(unittest.TestCase):
         packet_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
         broken_frame = _build_frame(packet_time, 0.0, temp_panel_z=None)
         with patch(
-            "gr_sat.watchdog.process_frame_result",
+            "gr_sat.ml.watchdog.process_frame_result",
             return_value=FrameProcessingResult(frame=broken_frame),
         ):
             result = watchdog.process_packet(b"\x00", packet_time)

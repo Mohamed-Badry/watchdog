@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from gr_sat.satellite_profiles import (
+from gr_sat.core.satellite_profiles import (
     build_baseline_mask,
     feature_completeness_mask,
     get_satellite_profile,

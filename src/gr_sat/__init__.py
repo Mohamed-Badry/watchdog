@@ -12,7 +12,7 @@ Key components:
   - decoders/: Satellite-specific decoder implementations.
 """
 
-from .telemetry import (
+from .core.telemetry import (
     TelemetryFrame,
     DecoderRegistry,
     process_frame,

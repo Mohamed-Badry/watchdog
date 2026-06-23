@@ -8,8 +8,9 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
 
-from gr_sat.ml_config import ALL_FEATURES
-from gr_sat.model_artifacts import (
+from gr_sat.core.satellite_profiles import DEFAULT_PROFILE
+ALL_FEATURES = list(DEFAULT_PROFILE.feature_contract.feature_names)
+from gr_sat.ml.model_artifacts import (
     ModelArtifactMetadata,
     load_model_artifacts,
     load_model_metadata,
@@ -18,7 +19,7 @@ from gr_sat.model_artifacts import (
     split_chronological,
     threshold_from_scores,
 )
-from gr_sat.vae import TelemetryVAE
+from gr_sat.ml.vae import TelemetryVAE
 
 
 class ModelArtifactTests(unittest.TestCase):

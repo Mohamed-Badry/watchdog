@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timezone
 
-from gr_sat.telemetry import process_frame_result, TelemetryFrame
+from gr_sat.core.telemetry import process_frame_result, TelemetryFrame
 
 # Kaitai Struct dummy payload for UWE4 for testing decode success
 # UWE4 payload needs to be long enough and structured to pass the Kaitai parser.
@@ -15,7 +15,7 @@ class TelemetryPipelineSpecTests(unittest.TestCase):
     Fills the gap in testing the successful ProcessFrame rule.
     """
 
-    @patch("gr_sat.telemetry.DecoderRegistry.get_decoder")
+    @patch("gr_sat.core.telemetry.DecoderRegistry.get_decoder")
     def test_rule_success_ProcessFrame_produces_ProcessedTelemetry(self, mock_get_decoder):
         """
         Obligation: rule-success.ProcessFrame
@@ -26,7 +26,7 @@ class TelemetryPipelineSpecTests(unittest.TestCase):
         mock_get_decoder.return_value = mock_decoder
         
         # Stage 1: Decode returns some interim fields
-        from gr_sat.telemetry import StageOutcome
+        from gr_sat.core.telemetry import StageOutcome
         mock_decoder.decode_with_diagnostics.return_value = StageOutcome(
             data={"raw_voltage": 4000, "raw_temp": 12}
         )

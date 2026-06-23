@@ -82,7 +82,7 @@ class AnomalyDetectionSpecTests(unittest.TestCase):
         self.assertGreater(metadata.train_rows, 0)
         
         # Artifacts should exist on disk
-        from gr_sat.model_artifacts import model_artifact_paths
+        from gr_sat.ml.model_artifacts import model_artifact_paths
         paths = model_artifact_paths(self.models_dir, "43880")
         self.assertTrue(paths.weights.exists())
         self.assertTrue(paths.scaler.exists())
@@ -148,7 +148,7 @@ class AnomalyDetectionSpecTests(unittest.TestCase):
             processed_dir=str(self.processed_dir)
         )
         
-        from gr_sat.satellite_profiles import feature_completeness_mask
+        from gr_sat.core.satellite_profiles import feature_completeness_mask
         
         # Incomplete frame (e.g. missing batt_voltage)
         df_incomplete = self.df.copy()
