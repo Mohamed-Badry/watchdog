@@ -1,4 +1,4 @@
-#set page(width: auto, height: auto, margin: 1.5cm, fill: rgb("f8fafc"))
+#set page(width: auto, height: auto, margin: 0.5cm, fill: rgb("f8fafc"))
 #set text(size: 11pt, font: ("Inter", "Arial", "sans-serif"))
 
 #let icon(name, w: 1.2cm) = image("icons/" + name + ".svg", width: w)
@@ -36,10 +36,6 @@
   #text(size: 40pt, fill: rgb("ef4444"))[→] \
 ]
 
-#align(center)[
-  #text(size: 24pt, weight: "black", fill: rgb("0f172a"))[Hybrid Edge-to-Cloud Deployment]
-  #v(2.5em)
-]
 
 #grid(
   columns: (9cm, 4cm, 14cm, 4cm, 7cm),

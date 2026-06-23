@@ -227,7 +227,7 @@ Where to point the antenna for the Top targets.
 When to operate the ground station (Next 48 Hours).
 
 #align(center)[
-  #image("../figures/timeline_schedule.png", height: 80%)
+  #image("../figures/timeline_schedule.png", height: 82%)
 ]
 
 
@@ -276,15 +276,13 @@ Two distinct environments sharing a single *Shared Core*.
 == The Edge-to-Cloud Topology
 
 #align(center)[
-  #image("../architecture_diagrams/architecture_v3_hybrid_cloud.png", height: 80%)
+  #image("../architecture_diagrams/architecture_v3_hybrid_cloud.png", height: 82%)
 ]
 
 == The Dockerized Application Stack
 
-Our Cloud VPS is fully containerized with an automated nightly training job.
-
 #align(center)[
-  #image("../architecture_diagrams/docker_components.png", height: 75%)
+  #image("../architecture_diagrams/docker_components_horizontal.png", height: 82%)
 ]
 
 
@@ -341,7 +339,7 @@ Telemetry extraction from UWE-4 (NORAD 43880).
 Perfect mapping from `satnogs-decoders` to our Golden Features (Volts, Amps, °C).
 
 #align(center)[
-  #image("../figures/telemetry_43880.png", height: 80%)
+  #image("../figures/telemetry_43880.png", height: 82%)
 ]
 
 == The Inspector Tool
