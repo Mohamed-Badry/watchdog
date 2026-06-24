@@ -276,7 +276,7 @@ Two distinct environments sharing a single *Shared Core*.
 == Architecture
 
 #align(center)[
-  #image("../architecture_diagrams/architecture_v3_horizontal.png", width: 100%)
+  #image("../architecture_diagrams/architecture_v3.png", width: 100%)
 ]
 
 == ML Pipeline
@@ -288,7 +288,7 @@ Two distinct environments sharing a single *Shared Core*.
 == Docker Setup
 
 #align(center)[
-  #image("../architecture_diagrams/docker_components_horizontal.png", width: 100%)
+  #image("../architecture_diagrams/docker_components.png", width: 100%)
 ]
 
 
