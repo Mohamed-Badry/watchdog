@@ -2,7 +2,7 @@
   import type { PageData } from "./$types";
   import { untrack } from "svelte";
   import { fly } from "svelte/transition";
-  import { apiFetch } from "$lib/api";
+  import { apiFetch, getWsUrl } from "$lib/api";
   import type { TelemetryFrame } from "$lib/types/api";
 
   import AnomalyTimelinePlot from "$lib/components/charts/AnomalyTimelinePlot.svelte";
@@ -38,19 +38,62 @@
 
   // Effect to re-fetch when parameters change
   $effect(() => {
-    // Track parameters
+    // Initial data fetch when filters change
     noradId;
     limit;
     untrack(() => fetchRecent());
   });
 
-  // Effect to handle live polling
+  // Effect to manage WebSocket connection
   $effect(() => {
     if (!isLive) return;
-    const interval = setInterval(() => {
-      untrack(() => fetchRecent());
-    }, 5000);
-    return () => clearInterval(interval);
+
+    const wsUrl = `${getWsUrl()}/api/ws/dashboard`;
+    let ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      // Send initial subscription
+      const payload = {
+        action: "subscribe",
+        norad_id: noradId === "all" ? null : parseInt(noradId)
+      };
+      ws.send(JSON.stringify(payload));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "push_telemetry") {
+          frames = [data.frame, ...frames].slice(0, limit);
+        } else if (data.type === "push_anomaly_alert") {
+          // If we receive an anomaly alert, we find the existing frame and update it
+          // Or if it's a new frame, prepend it
+          const existingIdx = frames.findIndex(f => f.timestamp === data.alert.timestamp && f.norad_id === data.alert.norad_id);
+          if (existingIdx !== -1) {
+            // Update existing frame's model metadata
+            frames[existingIdx] = {
+              ...frames[existingIdx],
+              model: {
+                ...frames[existingIdx].model,
+                anomaly_score: data.alert.score,
+                is_anomaly: true
+              }
+            };
+          } else {
+            // Insert it as a new frame if we don't have the telemetry base
+            frames = [data.alert, ...frames].slice(0, limit);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse websocket message", e);
+      }
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    };
   });
 </script>
 

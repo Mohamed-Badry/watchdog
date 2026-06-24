@@ -16,6 +16,11 @@ export function getApiUrl(): string {
   return 'http://backend:8000';
 }
 
+export function getWsUrl(): string {
+  const url = getApiUrl();
+  return url.replace(/^http/, 'ws');
+}
+
 /**
  * Typed fetch wrapper for the Watchdog REST API.
  * Handles URL resolution, JSON parsing, and error extraction.
