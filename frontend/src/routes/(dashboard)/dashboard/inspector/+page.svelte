@@ -3,6 +3,7 @@
   import { apiFetch } from '$lib/api';
   import type { TelemetryFrame } from '$lib/types/api';
   import Tooltip from '$lib/components/ui/Tooltip.svelte';
+  import Select from '$lib/components/ui/Select.svelte';
   import { getFeatureDescription } from '$lib/data/dictionary';
 
   let { data }: { data: PageData } = $props();
@@ -72,24 +73,27 @@
     </div>
   {:else}
     <!-- Controls -->
-    <div class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
+    <div class="relative z-20 flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur">
       <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <label for="inspector-sat-select" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
-        <select id="inspector-sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
-          <option value="all">All Satellites</option>
-          {#each satellites as sat}
-            <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
-          {/each}
-        </select>
+        <Select
+          id="inspector-sat-select"
+          bind:value={noradId}
+          options={[{ value: 'all', label: 'All Satellites' }, ...satellites.map(s => ({ value: s.norad_id.toString(), label: `${s.name} (${s.norad_id})` }))]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <div class="flex flex-col gap-1.5 w-full sm:w-40">
         <label for="inspector-limit" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Fetch Limit</label>
-        <select id="inspector-limit" bind:value={dataLimit} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
-          <option value={50}>50 frames</option>
-          <option value={100}>100 frames</option>
-          <option value={500}>500 frames</option>
-        </select>
+        <Select
+          id="inspector-limit"
+          bind:value={dataLimit}
+          options={[{ value: 50, label: 'Last 50 Frames' }, { value: 100, label: 'Last 100 Frames' }, { value: 200, label: 'Last 200 Frames' }]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <button 

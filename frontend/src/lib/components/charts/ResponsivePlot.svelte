@@ -10,7 +10,7 @@
     [key: string]: any;
   }>();
   
-  let container: HTMLDivElement;
+  let container: HTMLDivElement | undefined = $state();
   let innerWidth = $state(0);
   let width = $state(0);
   

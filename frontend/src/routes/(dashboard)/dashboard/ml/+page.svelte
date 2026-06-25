@@ -5,6 +5,7 @@
   import { fly, fade } from 'svelte/transition';
   import type { AnomalyRecord } from '$lib/types/api';
   import Tooltip from '$lib/components/ui/Tooltip.svelte';
+  import Select from '$lib/components/ui/Select.svelte';
   import { getFeatureDescription } from '$lib/data/dictionary';
   import AnomalyContributionChart from '$lib/components/charts/AnomalyContributionChart.svelte';
 
@@ -79,24 +80,27 @@
     </div>
   {:else}
     <!-- Controls -->
-    <div in:fly={{ y: -20, duration: 400, delay: 100 }} class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-sm backdrop-blur hover:shadow-md transition-shadow duration-300">
+    <div in:fly={{ y: -20, duration: 400, delay: 100 }} class="relative z-20 flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-sm backdrop-blur hover:shadow-md transition-shadow duration-300">
       <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <label for="ml-sat-select" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite Filter</label>
-        <select id="ml-sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
-          <option value="all">All Satellites</option>
-          {#each satellites as sat}
-            <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
-          {/each}
-        </select>
+        <Select
+          id="ml-sat-select"
+          bind:value={noradId}
+          options={[{ value: 'all', label: 'All Satellites' }, ...satellites.map(s => ({ value: s.norad_id.toString(), label: `${s.name} (${s.norad_id})` }))]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <div class="flex flex-col gap-1.5 w-full sm:w-40">
         <label for="ml-limit" class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Fetch Limit</label>
-        <select id="ml-limit" bind:value={dataLimit} class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
-          <option value={50}>Last 50 Anomalies</option>
-          <option value={100}>Last 100 Anomalies</option>
-          <option value={200}>Last 200 Anomalies</option>
-        </select>
+        <Select
+          id="ml-limit"
+          bind:value={dataLimit}
+          options={[{ value: 50, label: 'Last 50 Anomalies' }, { value: 100, label: 'Last 100 Anomalies' }, { value: 200, label: 'Last 200 Anomalies' }]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <button 

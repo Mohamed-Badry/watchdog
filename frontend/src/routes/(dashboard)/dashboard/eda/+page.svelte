@@ -3,6 +3,7 @@
   import { apiFetch } from '$lib/api';
   import { fly, fade } from 'svelte/transition';
   import type { TelemetryFrame } from '$lib/types/api';
+  import Select from '$lib/components/ui/Select.svelte';
 
   import EclipseScatterPlot from '$lib/components/charts/EclipseScatterPlot.svelte';
   import CorrelationHeatmap from '$lib/components/charts/CorrelationHeatmap.svelte';
@@ -108,24 +109,27 @@
     </div>
   {:else}
     <!-- Controls (Minimal, inline) -->
-    <div in:fly={{ y: -10, duration: 400, delay: 100 }} class="mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4 transition-all duration-300 hover:shadow-sm">
+    <div in:fly={{ y: -10, duration: 400, delay: 100 }} class="relative z-20 mb-16 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface/50 p-4 transition-all duration-300 hover:shadow-sm">
       <div class="flex items-center gap-3">
         <label for="sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Target Profile</label>
-        <select id="sat-select" bind:value={noradId} class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
-          <option value="all">All Satellites (Global View)</option>
-          {#each satellites as sat}
-            <option value={sat.norad_id.toString()}>{sat.name} ({sat.norad_id})</option>
-          {/each}
-        </select>
+        <Select
+          id="sat-select"
+          bind:value={noradId}
+          options={[{ value: 'all', label: 'All Satellites (Global View)' }, ...satellites.map(s => ({ value: s.norad_id.toString(), label: `${s.name} (${s.norad_id})` }))]}
+          class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 min-w-[220px] outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
       
       <div class="flex items-center gap-3 ml-0 sm:ml-4 border-l-0 sm:border-l border-border pl-0 sm:pl-4">
         <label for="data-limit" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Dataset Size</label>
-        <select id="data-limit" bind:value={dataLimit} class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand">
-          <option value={1000}>1,000 frames</option>
-          <option value={5000}>5,000 frames</option>
-          <option value={10000}>10,000 frames (Full Macro)</option>
-        </select>
+        <Select
+          id="data-limit"
+          bind:value={dataLimit}
+          options={[{ value: 1000, label: '1,000 frames' }, { value: 5000, label: '5,000 frames' }, { value: 10000, label: '10,000 frames (Full Macro)' }]}
+          class="rounded-xl sm:rounded-lg border border-border bg-panel px-3 py-3 sm:py-1.5 min-w-[220px] outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <div class="ml-0 sm:ml-4 border-l-0 sm:border-l border-border pl-0 sm:pl-4">

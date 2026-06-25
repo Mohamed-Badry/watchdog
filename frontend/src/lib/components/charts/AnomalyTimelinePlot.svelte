@@ -40,7 +40,7 @@
   );
 
   let plotOptions = $derived({
-    x: { type: 'utc', label: null },
+    x: { type: 'utc' as const, label: null },
     y: { label: null, grid: true, domain: [0, yMax] },
     marginTop: COMPACT_MARGIN.top + 8,
     marginRight: COMPACT_MARGIN.right + 8,

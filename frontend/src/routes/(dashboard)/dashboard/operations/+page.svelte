@@ -3,6 +3,8 @@
   import { apiFetch } from '$lib/api';
   import { fly, fade } from 'svelte/transition';
   import type { StationLocation, PassPrediction, TrackPoint } from '$lib/types/api';
+  import Select from '$lib/components/ui/Select.svelte';
+  import { Search, Loader2, Map as MapIcon, RefreshCw, Satellite, Radio, Crosshair } from 'lucide-svelte';
 
   import PassTimelinePlot from '$lib/components/charts/PassTimelinePlot.svelte';
   import GroundStationMap from '$lib/components/operations/GroundStationMap.svelte';
@@ -217,57 +219,52 @@
     </div>
   {:else}
     <!-- HORIZONTAL CONTROL BAR -->
-    <div in:fly={{ y: -20, duration: 400, delay: 100 }} class="flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur transition-shadow hover:shadow-lg duration-300">
-      <label class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
+    <div in:fly={{ y: -20, duration: 400, delay: 100 }} class="relative z-20 flex-none flex flex-wrap items-end gap-4 rounded-[1.25rem] border border-border bg-panel p-4 shadow-panel backdrop-blur transition-shadow hover:shadow-lg duration-300">
+      <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Preset Station</span>
-        <select
+        <Select
+          id="ops-station-select"
           value={selectedStationId}
-          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
-          onchange={(event) => selectStation((event.currentTarget as HTMLSelectElement).value)}
-        >
-          {#each stationPresets as preset}
-            <option value={preset.id}>{preset.label}</option>
-          {/each}
-          <option value="custom">Custom Map Location</option>
-        </select>
-      </label>
+          options={[...stationPresets.map(p => ({ value: p.id || '', label: p.label })), { value: 'custom', label: 'Custom Map Location' }]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+          onchange={(val) => selectStation(String(val))}
+        />
+        <!-- Listen to bind:value updates manually using a deeply reactive $effect or just bind it -->
+      </div>
 
-      <label class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
+      <div class="flex flex-col gap-1.5 flex-1 min-w-0 sm:min-w-[200px]">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Satellite</span>
-        <select
+        <Select
+          id="ops-sat-select"
           bind:value={selectedNoradId}
-          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
-        >
-          <option value="all">All Satellites</option>
-          {#each satellites as satellite}
-            <option value={String(satellite.norad_id)}>{satellite.name} ({satellite.norad_id})</option>
-          {/each}
-        </select>
-      </label>
+          options={[{ value: 'all', label: 'All Satellites' }, ...satellites.map(s => ({ value: String(s.norad_id), label: `${s.name} (${s.norad_id})` }))]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
+      </div>
 
-      <label class="flex flex-col gap-1.5 w-full sm:w-40">
+      <div class="flex flex-col gap-1.5 w-full sm:w-40">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Lookahead</span>
-        <select
+        <Select
+          id="ops-lookahead"
           bind:value={lookaheadHours}
-          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
-        >
-          {#each lookaheadOptions as option}
-            <option value={option.value}>{option.label}</option>
-          {/each}
-        </select>
-      </label>
+          options={lookaheadOptions}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
+      </div>
 
-      <label class="flex flex-col gap-1.5 w-full sm:w-40">
+      <div class="flex flex-col gap-1.5 w-full sm:w-40">
         <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-3">Min Elevation</span>
-        <select
+        <Select
+          id="ops-min-elev"
           bind:value={minElevation}
-          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand focus:ring-1 focus:ring-brand"
-        >
-          {#each elevationOptions as option}
-            <option value={option.value}>{option.label}</option>
-          {/each}
-        </select>
-      </label>
+          options={elevationOptions}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-2 min-w-full outline-none transition hover:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
+      </div>
 
       <button
         type="button"

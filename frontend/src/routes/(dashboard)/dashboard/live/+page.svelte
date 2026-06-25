@@ -6,6 +6,7 @@
   import type { TelemetryFrame } from "$lib/types/api";
 
   import AnomalyTimelinePlot from "$lib/components/charts/AnomalyTimelinePlot.svelte";
+  import Select from "$lib/components/ui/Select.svelte";
 
   let { data }: { data: PageData } = $props();
 
@@ -121,34 +122,29 @@
       <h1 class="text-3xl font-semibold tracking-tight text-ink">Live Watcher</h1>
     </div>
 
-    <div class="flex flex-wrap items-center gap-4">
+    <div class="relative z-20 flex flex-wrap items-center gap-4">
       <!-- Satellite Filter -->
       <div class="flex items-center gap-2">
         <label for="live-sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Sat Filter</label>
-        <select
+        <Select
           id="live-sat-select"
           bind:value={noradId}
-          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand"
-        >
-          <option value="all">All</option>
-          {#each satellites as sat}
-            <option value={sat.norad_id.toString()}>{sat.norad_id}</option>
-          {/each}
-        </select>
+          options={[{ value: 'all', label: 'All' }, ...satellites.map(s => ({ value: s.norad_id.toString(), label: s.norad_id.toString() }))]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 min-w-[100px] outline-none transition hover:border-brand focus:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <!-- Feed Limit -->
       <div class="flex items-center gap-2">
         <label for="live-feed-size" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Limit</label>
-        <select
+        <Select
           id="live-feed-size"
           bind:value={limit}
-          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 text-base sm:text-sm text-ink outline-none transition hover:border-brand focus:border-brand"
-        >
-          <option value={10}>10</option>
-          <option value={25}>25</option>
-          <option value={50}>50</option>
-        </select>
+          options={[{ value: 10, label: '10' }, { value: 25, label: '25' }, { value: 50, label: '50' }]}
+          class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 min-w-[80px] outline-none transition hover:border-brand focus:border-brand"
+          labelClass="text-base sm:text-sm text-ink font-medium"
+        />
       </div>
 
       <!-- Live Sync Toggle -->

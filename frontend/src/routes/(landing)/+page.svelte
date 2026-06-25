@@ -158,21 +158,21 @@
       </div>
 
       <!-- Hero Visual (Right) -->
-      <div class="hero-visual invisible relative hidden lg:flex items-center justify-center h-full w-full">
+      <div class="hero-visual invisible relative flex items-center justify-center h-[300px] lg:h-full w-full mt-8 lg:mt-0">
         <div class="absolute inset-0 bg-brand/10 blur-[100px] rounded-full aspect-square w-3/4 m-auto"></div>
         <!-- Orbital Rings Animation -->
-        <div class="relative flex items-center justify-center size-80">
+        <div class="relative flex items-center justify-center size-64 lg:size-80 scale-75 sm:scale-100">
           <!-- Center Node -->
-          <div class="absolute z-10 size-14 rounded-full bg-surface border-2 border-brand shadow-[0_0_30px_rgba(139,92,246,0.8)] flex items-center justify-center">
-             <Satellite class="size-6 text-brand animate-pulse" />
+          <div class="absolute z-10 size-12 lg:size-14 rounded-full bg-surface border-2 border-brand shadow-[0_0_30px_rgba(139,92,246,0.8)] flex items-center justify-center">
+             <Satellite class="size-5 lg:size-6 text-brand animate-pulse" />
           </div>
           <!-- Orbit Ring 1 -->
           <div class="absolute size-full rounded-full border border-brand/30 animate-[spin_10s_linear_infinite]">
-             <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-info shadow-[0_0_15px_rgba(56,189,248,0.8)]"></div>
+             <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 size-3 lg:size-4 rounded-full bg-info shadow-[0_0_15px_rgba(56,189,248,0.8)]"></div>
           </div>
           <!-- Orbit Ring 2 -->
-          <div class="absolute size-60 rounded-full border border-info/20 animate-[spin_15s_linear_infinite_reverse]">
-             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 size-3 rounded-full bg-brand shadow-[0_0_10px_rgba(139,92,246,0.8)]"></div>
+          <div class="absolute size-48 lg:size-60 rounded-full border border-info/20 animate-[spin_15s_linear_infinite_reverse]">
+             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 size-2.5 lg:size-3 rounded-full bg-brand shadow-[0_0_10px_rgba(139,92,246,0.8)]"></div>
           </div>
         </div>
       </div>
@@ -185,60 +185,110 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
       
       <!-- LEFT COLUMN: The Scrolling Text Steps -->
-      <div class="flex flex-col w-full z-20 pb-[25vh]">
+      <div class="flex flex-col w-full z-20 pb-0 lg:pb-[25vh]">
         
         <!-- Step 1 -->
-        <div class="story-step h-[150vh] relative pr-0 lg:pr-8">
-          <div class="sticky top-[35%]">
-            <div class="story-content space-y-4">
-              <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-                <Satellite class="size-5" /> Phase 1: Contact
+        <div class="story-step min-h-[90vh] lg:h-[150vh] relative pr-0 lg:pr-8 flex flex-col justify-center lg:block">
+          <div class="relative lg:sticky top-auto lg:top-[35%] w-full">
+            <div class="story-content w-full flex flex-col justify-center">
+              <div class="space-y-4">
+                <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
+                  <Satellite class="size-5" /> Phase 1: Contact
+                </div>
+                <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
+                  Autonomous <br/><span class="text-ink-2 font-medium">Ground Operations</span>
+                </h2>
+                <p class="text-lg text-ink-3 leading-relaxed">
+                  Predictive pass modeling combined with real-time antenna tracking. Watchdog aligns physical servos with high-precision skyplot vectors. Plan your operations precisely with exact orbital intersections.
+                </p>
               </div>
-              <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
-                Autonomous <br/><span class="text-ink-2 font-medium">Ground Operations</span>
-              </h2>
-              <p class="text-lg text-ink-3 leading-relaxed">
-                Predictive pass modeling combined with real-time antenna tracking. Watchdog aligns physical servos with high-precision skyplot vectors. Plan your operations precisely with exact orbital intersections.
-              </p>
+              
+              <!-- Mobile Visual -->
+              <div class="lg:hidden mt-10 w-full aspect-[4/3] rounded-2xl border border-brand/20 bg-panel/50 p-2 shadow-[0_0_40px_rgba(139,92,246,0.1)] pointer-events-none">
+                <GroundStationMap 
+                  location={{ lat: 30.0626, lon: 31.2497, label: "Cairo, Egypt", elevationM: 23 }}
+                  selectedTrack={previewTrack}
+                  previewMode={true}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Step 2 -->
-        <div class="story-step h-[150vh] relative pr-0 lg:pr-8">
-          <div class="sticky top-[35%]">
-            <div class="story-content space-y-4">
-              <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ok">
-                <Zap class="size-5" /> Phase 2: Ingress
+        <div class="story-step min-h-[90vh] lg:h-[150vh] relative pr-0 lg:pr-8 flex flex-col justify-center lg:block">
+          <div class="relative lg:sticky top-auto lg:top-[35%] w-full">
+            <div class="story-content w-full flex flex-col justify-center">
+              <div class="space-y-4">
+                <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ok">
+                  <Zap class="size-5" /> Phase 2: Ingress
+                </div>
+                <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
+                  Duplex Edge <br/><span class="text-ink-2 font-medium">Telemetry</span>
+                </h2>
+                <p class="text-lg text-ink-3 leading-relaxed">
+                  Bypassing database polling overhead, Watchdog establishes direct WebSocket streams to the inference engine. Experience sub-second UI updates as your hardware breathes in real-time.
+                </p>
+                <div class="flex items-center gap-4 mt-2">
+                   <div class="flex items-center gap-2 rounded-full border border-ok/20 bg-ok/10 px-4 py-2 text-sm font-semibold text-ok">
+                     <Activity class="size-4" /> WebSocket Native
+                   </div>
+                </div>
               </div>
-              <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
-                Duplex Edge <br/><span class="text-ink-2 font-medium">Telemetry</span>
-              </h2>
-              <p class="text-lg text-ink-3 leading-relaxed">
-                Bypassing database polling overhead, Watchdog establishes direct WebSocket streams to the inference engine. Experience sub-second UI updates as your hardware breathes in real-time.
-              </p>
-              <div class="flex items-center gap-4 mt-2">
-                 <div class="flex items-center gap-2 rounded-full border border-ok/20 bg-ok/10 px-4 py-2 text-sm font-semibold text-ok">
-                   <Activity class="size-4" /> WebSocket Native
-                 </div>
+
+              <!-- Mobile Visual -->
+              <div class="lg:hidden mt-10 w-full rounded-2xl border border-ok/20 bg-ok/5 p-4 shadow-[0_0_40px_rgba(20,184,166,0.1)]">
+                <div class="flex items-center justify-between mb-4">
+                  <p class="chart-card-title !mb-0 flex items-center gap-2 text-ok">
+                    <BrainCircuit class="size-4" /> Live Anomaly Detection
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                      <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                    </span>
+                    <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest hidden sm:block">Live Sync</span>
+                  </div>
+                </div>
+                <div class="h-64 relative overflow-hidden rounded-lg bg-surface/50 p-2">
+                  <AnomalyTimelinePlot frames={mockFrames} threshold={0.45} selectedTimestamp={null} height={200} />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Step 3 -->
-        <div class="story-step h-[150vh] relative pr-0 lg:pr-8">
-          <div class="sticky top-[35%]">
-            <div class="story-content space-y-4">
-              <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-critical">
-                <BrainCircuit class="size-5" /> Phase 3: Intelligence
+        <div class="story-step min-h-[90vh] lg:h-[150vh] relative pr-0 lg:pr-8 flex flex-col justify-center lg:block">
+          <div class="relative lg:sticky top-auto lg:top-[35%] w-full">
+            <div class="story-content w-full flex flex-col justify-center">
+              <div class="space-y-4">
+                <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-critical">
+                  <BrainCircuit class="size-5" /> Phase 3: Intelligence
+                </div>
+                <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
+                  The Variational <br/><span class="text-ink-2 font-medium">Autoencoder</span>
+                </h2>
+                <p class="text-lg text-ink-3 leading-relaxed">
+                  Trained offline, deployed to the edge. The VAE reconstructs incoming hardware vectors, flagging cascading faults long before traditional static Z-score bounds trip.
+                </p>
               </div>
-              <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
-                The Variational <br/><span class="text-ink-2 font-medium">Autoencoder</span>
-              </h2>
-              <p class="text-lg text-ink-3 leading-relaxed">
-                Trained offline, deployed to the edge. The VAE reconstructs incoming hardware vectors, flagging cascading faults long before traditional static Z-score bounds trip.
-              </p>
+
+              <!-- Mobile Visual -->
+              <div class="lg:hidden mt-10 w-full rounded-2xl border border-brand/20 shadow-[0_0_40px_rgba(139,92,246,0.1)] p-4">
+                <div class="mb-4">
+                  <p class="chart-card-title text-brand mb-1">Vector Reconstruction Error</p>
+                  <p class="text-xs text-ink-3">Live deviation from VAE expectations</p>
+                </div>
+                <div class="bg-surface/50 rounded-lg p-3">
+                  <AnomalyContributionChart 
+                    actual={mockActual} 
+                    expected={mockExpected} 
+                    scaledActual={mockScaledActual} 
+                    scaledExpected={mockScaledExpected} 
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -248,7 +298,7 @@
       <!-- RIGHT COLUMN: The Sticky Visuals -->
       <div class="hidden lg:block relative w-full h-full">
         <!-- Sticky container stays fixed to top of viewport while scrolling the left column -->
-        <div class="sticky top-0 h-screen w-full flex items-center justify-center">
+        <div class="sticky top-0 h-screen w-full flex items-center justify-center perspective-1000">
           <div class="relative w-full max-w-2xl aspect-[4/3]">
             
             <!-- Visual 1: Operations -->

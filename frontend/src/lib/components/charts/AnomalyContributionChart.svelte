@@ -48,7 +48,7 @@
   })));
 
   let plotOptions = $derived({
-    x: { label: 'Standardized Deviation (Z-Score)', labelAnchor: 'center', grid: true, nice: true },
+    x: { label: 'Standardized Deviation (Z-Score)', labelAnchor: 'center' as const, grid: true, nice: true },
     y: { label: null, domain: sortedFeatures, tickFormat: (d: string) => d.replace(/_/g, ' ').toUpperCase() },
     marginTop: 12,
     marginRight: 20,
