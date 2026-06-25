@@ -3,6 +3,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getApiUrl } from '$lib/api';
   import { fly, fade } from 'svelte/transition';
+  import { backOut } from 'svelte/easing';
   import type { DashboardSummary } from '$lib/types/api';
   import SparklinePlot from '$lib/components/charts/SparklinePlot.svelte';
   import { Satellite, Radio, AlertTriangle, Globe } from 'lucide-svelte';
@@ -107,7 +108,7 @@
       {#each statCards as stat, i}
         {@const Icon = stat.icon}
         {@const value = summary.totals[stat.key]}
-        <article in:fly={{ y: 20, duration: 400, delay: i * 75 }} class="group flex items-center justify-between rounded-[1.25rem] border border-border bg-panel p-5 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]">
+        <article in:fly={{ y: 40, duration: 700, delay: i * 100, easing: backOut }} class="group flex items-center justify-between rounded-[1.25rem] border border-border bg-panel p-5 shadow-panel backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-[0_8px_30px_rgba(139,92,246,0.12)]">
           <div class="flex flex-col">
             <p class="text-xs font-semibold uppercase tracking-wider text-ink-3">{stat.label}</p>
             <p class="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-brand">{typeof value === 'number' ? value.toLocaleString() : value}</p>
@@ -125,7 +126,7 @@
       <!-- Left Col (Component Health & Active Profiles) -->
       <div class="flex flex-col gap-6 xl:min-h-0">
         <!-- Service Status -->
-        <div in:fly={{ y: 20, duration: 400, delay: 300 }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden hover:shadow-lg transition-shadow duration-300">
+        <div in:fly={{ y: 40, duration: 700, delay: 300, easing: backOut }} class="flex flex-col rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur flex-none overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
             <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Component Health</h2>
           </div>
@@ -146,7 +147,7 @@
         </div>
 
         <!-- Active Profiles Table -->
-        <div in:fly={{ y: 20, duration: 400, delay: 400 }} class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur hover:shadow-lg transition-shadow duration-300">
+        <div in:fly={{ y: 40, duration: 700, delay: 400, easing: backOut }} class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur hover:shadow-lg transition-shadow duration-300">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0">
             <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Active Profiles</h2>
           </div>
@@ -190,7 +191,7 @@
       <div class="flex flex-col gap-6 xl:min-h-0">
         <!-- Throughput Sparkline -->
         {#if summary.throughput_buckets && summary.throughput_buckets.length > 0}
-          <div in:fly={{ y: 20, duration: 400, delay: 500 }} class="flex-none chart-card border border-border rounded-[1.25rem] bg-panel p-4 shadow-sm backdrop-blur hover:shadow-lg transition-shadow duration-300">
+          <div in:fly={{ y: 40, duration: 700, delay: 500, easing: backOut }} class="flex-none chart-card border border-border rounded-[1.25rem] bg-panel p-4 shadow-sm backdrop-blur hover:shadow-lg transition-shadow duration-300">
             <div class="flex items-center justify-between mb-2">
               <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3">Throughput (24h)</h2>
               <div class="text-right">
@@ -207,7 +208,7 @@
         {/if}
 
         <!-- Recent Anomalies -->
-        <div in:fly={{ y: 20, duration: 400, delay: 600 }} class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden hover:shadow-lg transition-shadow duration-300">
+        <div in:fly={{ y: 40, duration: 700, delay: 600, easing: backOut }} class="flex flex-col xl:flex-1 xl:min-h-0 rounded-[1.25rem] border border-border bg-panel shadow-panel backdrop-blur overflow-hidden hover:shadow-lg transition-shadow duration-300">
           <div class="bg-surface/35 p-4 border-b border-border shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div class="flex flex-col sm:flex-row sm:items-center gap-4">
               <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-ink-3 whitespace-nowrap">Recent Anomalies</h2>
