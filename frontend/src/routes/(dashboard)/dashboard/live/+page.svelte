@@ -28,7 +28,15 @@
     }
     try {
       const data = await apiFetch<{ frames: TelemetryFrame[] }>(path);
-      frames = data.frames || [];
+      // Deduplicate frames to prevent Svelte each_key_duplicate crash
+      const seen = new Set();
+      const uniqueFrames = (data.frames || []).filter(f => {
+        const k = f.timestamp + '_' + f.norad_id;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      frames = uniqueFrames;
     } catch (e) {
       console.error("Failed to fetch recent telemetry", e);
     } finally {
@@ -64,7 +72,11 @@
       try {
         const data = JSON.parse(event.data);
         if (data.type === "push_telemetry") {
-          frames = [data.frame, ...frames].slice(0, limit);
+          // Check for duplicate before prepending
+          const isDuplicate = frames.some(f => f.timestamp === data.frame.timestamp && f.norad_id === data.frame.norad_id);
+          if (!isDuplicate) {
+            frames = [data.frame, ...frames].slice(0, limit);
+          }
         } else if (data.type === "push_anomaly_alert") {
           // If we receive an anomaly alert, we find the existing frame and update it
           // Or if it's a new frame, prepend it
@@ -185,7 +197,15 @@
               <article 
                 in:fly={{ y: -10, opacity: 0, duration: 400, delay: Math.min(i * 50, 400) }}
                 class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-brand bg-brand/15 ring-2 ring-brand/50 shadow-[0_0_20px_rgba(139,92,246,0.2)]' : 'border-border bg-surface/40 hover:shadow-sm'}"
-                onclick={() => selectedTimestamp = selectedTimestamp === frame.timestamp ? null : frame.timestamp}
+                onclick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  if (selectedTimestamp === frame.timestamp) {
+                    selectedTimestamp = null;
+                  } else {
+                    selectedTimestamp = frame.timestamp;
+                  }
+                }}
               >
                 <!-- Status Indicator Bar -->
                 <div class="absolute inset-y-0 left-0 w-1 transition-all duration-300 {frame.model?.is_anomaly ? 'bg-critical shadow-[0_0_12px_rgba(244,63,94,1)]' : 'bg-emerald-500/40 group-hover:bg-emerald-500/80'}"></div>
@@ -205,7 +225,7 @@
                   <div class="text-right">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-ink-3/70 mb-0.5">Anomaly Score</p>
                     <p class="text-2xl font-black tracking-tighter {frame.model?.is_anomaly ? 'text-critical drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'text-ink'}">
-                      {frame.model?.anomaly_score !== null ? frame.model.anomaly_score.toFixed(2) : "-"}
+                      {frame.model?.anomaly_score != null ? frame.model.anomaly_score.toFixed(2) : "-"}
                     </p>
                   </div>
                 </div>
