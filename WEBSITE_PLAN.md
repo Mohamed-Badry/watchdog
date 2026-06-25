@@ -4,7 +4,7 @@ Based on the analysis of the current `gr_sat` repository, this document outlines
 
 ## 1. Current State Analysis
 The `gr_sat` repository has successfully established a robust **offline machine learning pipeline** for satellite telemetry:
-- **Data Pipeline:** Fetching (SatNOGS API) -> Decoding (Kaitai Structs) -> Normalization (Golden Features).
+- **Data Pipeline:** Fetching (SatNOGS API) -> Decoding (Kaitai Structs) -> Normalization (normalized arrays).
 - **Modeling:** Per-satellite Autoencoders/VAEs are trained and evaluated using synthetic-fault benchmarking.
 - **Core Logic:** The Python codebase (`src/gr_sat`) is well-structured with dedicated modules for decoding, processing, profiles, and models.
 - **Minimal Runtime:** A rudimentary, single-threaded online inference loop (`watchdog_runtime.py`) exists but lacks network ingress, persistence, or a UI.
@@ -46,7 +46,7 @@ We will use a hypertable partitioned by `timestamp`.
 - `norad_id` (Integer): Satellite identifier (e.g., 43880).
 - `station_id` (String): Which antenna received it.
 - `raw_frame` (String): The original hex-encoded payload.
-- `features` (JSONB): The decoded "Golden Features" (e.g., `{"batt_voltage": 5.1, "temp_batt_a": 12.0}`). Using JSONB means we don't need to migrate the database schema every time a new satellite profile with different features is added.
+- `features` (JSONB): The decoded normalized feature array (e.g., `{"batt_voltage": 5.1, "temp_batt_a": 12.0}`). Using JSONB means we don't need to migrate the database schema every time a new satellite profile with different features is added.
 - `anomaly_score` (Float): The loss value from the VAE model.
 - `is_anomaly` (Boolean): Whether the score exceeded the pre-calibrated threshold.
 - `missing_fields` (JSONB/Array): List of fields that could not be parsed.
@@ -197,21 +197,21 @@ Current data source: local `data/processed/{norad_id}.csv` plus `models/{norad_i
 - [x] Implement MQTT subscriber → decode → score → persist
 - [x] Hardened Edge Simulator (TLS, Auth, Offline CSV Fallback)
 - [x] Wire simulator → broker → backend → frontend end-to-end
-- [ ] Implement `WS /api/ws/telemetry`
-- [ ] Build PipelineVisualizer (animated decode flow)
+- [x] Implement `WS /api/ws/telemetry`
+- [x] Build PipelineVisualizer (animated decode flow)
 
 ### Phase 3 — Operations
-- Port pass prediction logic into backend service
-- Build skyplot, schedule table, timeline Gantt
+- [x] Port pass prediction logic into backend service
+- [x] Build skyplot, schedule table, timeline Gantt
 
 ### Phase 4 — Insights & ML Lab
-- Implement aggregation queries for EDA
-- Port sensitivity sweep into backend
-- Build all insight + ML frontend components
+- [x] Implement aggregation queries for EDA
+- [x] Port sensitivity sweep into backend
+- [x] Build all insight + ML frontend components
 
 ### Phase 5 — Polish
-- Responsive sidebar, loading skeletons, error boundaries
-- Theme verification, performance audit
+- [x] Responsive sidebar, loading skeletons, error boundaries
+- [x] Theme verification, performance audit
 
 ---
 
@@ -223,50 +223,50 @@ This section outlines the detailed strategy to elevate the visual fidelity of th
 
 #### 1. Shadows & Depth
 Currently, the UI might rely on heavy box-shadows. The goal is to transition to a cleaner, more subtle aesthetic.
-- [ ] **Audit Existing Shadows:** Identify all components using heavy or default Tailwind `box-shadow` values.
-- [ ] **Define Shadow Strategy:** Plan a shift to lighter, more modern utility classes (e.g., `shadow-sm`, border-driven elevation using `border-slate-200/50`, or customized low-opacity drop shadows `shadow-[0_1px_2px_rgba(0,0,0,0.05)]`).
-- [ ] **Apply Subtle Depth:** Replace all hard, dark shadows with the new subtle, layered shadow strategy.
-- [ ] **Incorporate Borders:** Use subtle 1px borders combined with light shadows to create depth without visual noise.
+- [x] **Audit Existing Shadows:** Identify all components using heavy or default Tailwind `box-shadow` values.
+- [x] **Define Shadow Strategy:** Plan a shift to lighter, more modern utility classes (e.g., `shadow-sm`, border-driven elevation using `border-slate-200/50`, or customized low-opacity drop shadows `shadow-[0_1px_2px_rgba(0,0,0,0.05)]`).
+- [x] **Apply Subtle Depth:** Replace all hard, dark shadows with the new subtle, layered shadow strategy.
+- [x] **Incorporate Borders:** Use subtle 1px borders combined with light shadows to create depth without visual noise.
 
 #### 2. Iconography Standardization
 Emojis used as UI elements (especially in sidebars and navigation) can look unprofessional and inconsistent across platforms.
-- [ ] **Audit Emoji Usage:** Identify all instances where emojis are used as icons (e.g., in the sidebar, buttons, status indicators).
-- [ ] **Integrate Icon Library:** Integrate `lucide-svelte` (or `phosphor-svelte`).
-- [ ] **Map Replacements:** Replace emojis with strictly typed icons, leveraging Tailwind utility classes (e.g., `size-5`, `text-slate-500`, `hover:text-primary`) for styling and hover states.
+- [x] **Audit Emoji Usage:** Identify all instances where emojis are used as icons (e.g., in the sidebar, buttons, status indicators).
+- [x] **Integrate Icon Library:** Integrate `lucide-svelte` (or `phosphor-svelte`).
+- [x] **Map Replacements:** Replace emojis with strictly typed icons, leveraging Tailwind utility classes (e.g., `size-5`, `text-slate-500`, `hover:text-primary`) for styling and hover states.
 
 ### B. Landing Page Overhaul
 
 The landing page needs to move away from placeholder "status" metrics and instead showcase the actual value and workflows of the application.
 
-- [ ] **Deprecate Status Metrics:** Remove placeholder metrics and "dummy" status indicators from the hero section.
-- [ ] **Redesign Hero Section:** Focus on a strong value proposition. Use a clean, bold typography and a clear CTA ("Enter Dashboard →").
-- [ ] **Feature Highlights:** Surface actual capabilities drawn directly from the dashboard workflows. Create sections/cards for:
+- [x] **Deprecate Status Metrics:** Remove placeholder metrics and "dummy" status indicators from the hero section.
+- [x] **Redesign Hero Section:** Focus on a strong value proposition. Use a clean, bold typography and a clear CTA ("Enter Dashboard →").
+- [x] **Feature Highlights:** Surface actual capabilities drawn directly from the dashboard workflows. Create sections/cards for:
   - **Live Telemetry:** Real-time decoding and monitoring.
   - **Machine Learning Insights:** VAE anomaly detection and feature correlation.
   - **Pass Operations:** Predictive tracking and skyplot visualizations.
-- [ ] **Layout Modernization:** Ensure generous whitespace to allow content to breathe. Use a standard zig-zag (text left/image right, then image left/text right) layout for feature highlights.
+- [x] **Layout Modernization:** Ensure generous whitespace to allow content to breathe. Use a standard zig-zag (text left/image right, then image left/text right) layout for feature highlights.
 
 ### C. Animation Strategy & Technical Best Practices
 
 We will adopt a clear division of labor between native Svelte capabilities and GSAP to maximize performance and maintainability.
 
 #### 1. Native Svelte Transitions
-- [ ] **Standard Interactions:** Use `svelte/transition` (`fly`, `fade`, `slide`) for standard component mounting/unmounting (e.g., sidebar toggles, dropdowns, modal visibility states).
-- [ ] **Bundle Efficiency:** Prefer native Svelte transitions for simple UI micro-interactions to avoid unnecessary bundle overhead.
+- [x] **Standard Interactions:** Use `svelte/transition` (`fly`, `fade`, `slide`) for standard component mounting/unmounting (e.g., sidebar toggles, dropdowns, modal visibility states).
+- [x] **Bundle Efficiency:** Prefer native Svelte transitions for simple UI micro-interactions to avoid unnecessary bundle overhead.
 
 #### 2. GSAP Integration via Svelte Actions
-- [ ] **Complex Animations:** Plan complex landing page sequences and scroll-triggered animations (e.g., ScrollTrigger) using GSAP.
-- [ ] **Declarative Approach:** Mandate the use of **Svelte Actions** (e.g., `use:gsapAction`) to attach timelines directly to DOM nodes, keeping component markup clean and declarative.
-- [ ] **Lifecycle & Cleanup:** Ensure strict adherence to using `gsap.context()` within the action's lifecycle (destroy/update) to ensure proper garbage collection, prevent memory leaks, and handle ScrollTrigger duplication during Hot Module Replacement (HMR).
+- [x] **Complex Animations:** Plan complex landing page sequences and scroll-triggered animations (e.g., ScrollTrigger) using GSAP.
+- [x] **Declarative Approach:** Mandate the use of **Svelte Actions** (e.g., `use:gsapAction`) to attach timelines directly to DOM nodes, keeping component markup clean and declarative.
+- [x] **Lifecycle & Cleanup:** Ensure strict adherence to using `gsap.context()` within the action's lifecycle (destroy/update) to ensure proper garbage collection, prevent memory leaks, and handle ScrollTrigger duplication during Hot Module Replacement (HMR).
 
 #### 3. Entry Staggers
-- [ ] **List & Grid Staggers:** When a list of items (e.g., recent anomalies, satellite passes, or feature cards) mounts, use GSAP `stagger` to animate their entry (e.g., slight delay between items) sliding up and fading in.
-- [ ] **Dashboard Load:** Animate the initial dashboard load by staggering the entry of individual data cards for a polished feel.
+- [x] **List & Grid Staggers:** When a list of items (e.g., recent anomalies, satellite passes, or feature cards) mounts, use GSAP `stagger` to animate their entry (e.g., slight delay between items) sliding up and fading in.
+- [x] **Dashboard Load:** Animate the initial dashboard load by staggering the entry of individual data cards for a polished feel.
 
 #### 4. Micro-interactions
-- [ ] **Hover States:** Add subtle scale-ups (e.g., `scale: 1.02`) and shadow transitions to interactive cards and buttons using GSAP.
-- [ ] **Active States:** Add "click" feedback (e.g., slight scale-down) to buttons and actionable elements.
-- [ ] **Data Updates:** Briefly flash, pulse, or use GSAP number-tick animations in the dashboard when new live telemetry data arrives to draw attention without being distracting.
+- [x] **Hover States:** Add subtle scale-ups (e.g., `scale: 1.02`) and shadow transitions to interactive cards and buttons using GSAP.
+- [x] **Active States:** Add "click" feedback (e.g., slight scale-down) to buttons and actionable elements.
+- [x] **Data Updates:** Briefly flash, pulse, or use GSAP number-tick animations in the dashboard when new live telemetry data arrives to draw attention without being distracting.
 
 ---
 
@@ -290,18 +290,30 @@ To ensure optimal use of screen real estate and respect the differing user inten
 
 We will deprecate the old `/dashboard/insights` and restructure the routes as follows:
 
-- [ ] **Create `/dashboard/analytics` (Dashboard Paradigm):**
+- [x] **Create `/dashboard/analytics` (Dashboard Paradigm):**
   - Extract the general system stats, histograms, and macro-health visualizations from the old Insights page.
   - Implement a Tabbed UI if necessary (e.g., Tab 1: System Health, Tab 2: Feature Distributions) to ensure all charts fit within the strict single-page view.
   
-- [ ] **Refactor `/dashboard/ml` (Dashboard Paradigm):**
+- [x] **Refactor `/dashboard/ml` (Dashboard Paradigm):**
   - Convert the ML Lab from a scrolling page into a locked single-page dashboard.
   - Add a Top Control Bar for selecting models/satellites.
   - Implement Tabs (e.g., Tab 1: Model Benchmarks, Tab 2: Feature Attribution) to organize the complex ROC curves, sensitivity sweeps, and contribution plots.
   
-- [ ] **Create `/dashboard/eda` (Analysis Report Paradigm):**
+- [x] **Create `/dashboard/eda` (Analysis Report Paradigm):**
   - Create a new, scrolling, article-style page.
   - Port over the physics validation (Eclipse Scatter) and correlation heatmaps.
   - Wrap these visualizations in detailed, hardcoded text blocks that explain the methodology (e.g., explaining how solar panel temperature correlates with eclipse phases to identify anomalies).
 
 This separation guarantees that operators have fast, locked, single-screen tools for live tasks, while engineers have readable, scrolling reports for offline validation.
+
+---
+
+## 11. Late-Stage Technical Additions & Enhancements
+
+During the final implementation phases of the SvelteKit frontend, several critical technical decisions and UX upgrades were introduced that were not originally scoped in the initial website plan:
+
+- **Custom Svelte 5 Select Component:** Completely replaced all native HTML `<select>` elements across the dashboards with a bespoke `Select.svelte` component. This resolved an annoying Chrome DevTools Mobile Emulation coordinate bug and allowed for deep, brand-specific theming that native dropdowns cannot support.
+- **Strict Svelte 5 Runes Adoption:** Fully embraced Svelte 5's new reactivity model, converting all state management to use `$state()`, `$derived()`, and `$effect()` runes exclusively, resulting in cleaner code and highly optimized DOM updates.
+- **Z-Index Stacking Context Overhaul:** Introduced explicit `z-20` relative wrappers around the top control bars across all 5 dashboard views to mathematically guarantee that custom dropdown menus perfectly overlay the complex, bordered panels below them without clipping.
+- **Premium Micro-Interactions:** Enhanced standard hover states with highly tactile CSS transitions. For example, dropdown options now feature text that physically slides to the right (`pl-5`) alongside a glowing brand-colored accent bar that scales in from the left on hover.
+- **Utility Script Isolation:** Segregated all UI testing, Chromium orchestration, and screenshot generation scripts (`screenshot_*.ts`, `run_chrome.sh`) into a dedicated `frontend/scripts/` directory to ensure strict separation of concerns from the backend Python data pipeline scripts at the project root.

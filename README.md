@@ -6,26 +6,78 @@ This repository hosts the **Project Watchdog** codebase, an end-to-end pipeline 
 
 ## 📚 Key Documentation
 
-*   **[Technical Details & Architecture](DETAILS.md)**: Deep dive into the system's design, ML models, and "Golden Features".
+*   **[Technical Details & Architecture](DETAILS.md)**: Deep dive into the system's design, ML models, and normalized telemetry structures.
 *   **[WEBSITE_PLAN.md](WEBSITE_PLAN.md)**: Web interface, Docker orchestration, and UX integration plan.
 *   **[.gemini/GEMINI.md](.gemini/GEMINI.md)**: Active project context and agent instructions.
 
 ## Current Repository Status
 
 **Core Pipeline & Backend:**
-*   Offline SatNOGS fetch -> decode -> normalize -> train -> benchmark workflow.
-*   Shared telemetry/decoder core with UWE-4 decoder support.
-*   Minimal deterministic online watchdog runtime for packet-by-packet inference.
-*   FastAPI dashboard REST endpoints (status, telemetry, anomalies, throughput).
-*   Docker Compose development stack with pinned service versions.
-*   **V3 Hybrid Edge-to-Cloud Architecture** with robust Offline CSV Fallback.
+*   SatNOGS data pipeline: fetch -> decode -> normalize -> train -> benchmark.
+*   Python-based Kaitai Struct decoders (currently supporting UWE-4).
+*   Online streaming runtime for packet-by-packet autoencoder inference.
+*   FastAPI REST backend for telemetry streaming and model metrics.
+*   Containerized MQTT broker and TimescaleDB stack.
 
-**Frontend Dashboard (SvelteKit + TailwindCSS):**
-*   Premium, dark-themed responsive UI with dynamic animations.
-*   Live Watcher feed with real-time anomaly detection glowing states.
-*   Comprehensive ML Report dashboard with Error Contribution and Expected vs. Actual metrics.
-*   Interactive EDA charts (Sensitivity Sweeps, Feature Contributions).
-*   Mobile-friendly sidebar navigation and responsive plot containers.
+**Frontend Dashboard:**
+*   Svelte 5 frontend built with TailwindCSS and Observable Plot.
+*   Websocket-driven live telemetry feed with real-time anomaly highlighting.
+*   ML diagnostic views showing standardized deviation (Z-Score) and reconstruction errors.
+*   Exploratory Data Analysis (EDA) views for payload stats and orbital mechanics.
+*   Satellite pass prediction and operations console.
+
+---
+
+## Web Dashboard & UI
+
+<details>
+<summary><b>View Dashboard (Dark Mode)</b></summary>
+<br>
+<p align="center">
+  <img src="frontend/static/screenshots/home-dark.png" width="49%" alt="Home Dashboard"/>
+  <img src="frontend/static/screenshots/live-dark.png" width="49%" alt="Live Watcher Feed"/>
+</p>
+<p align="center">
+  <img src="frontend/static/screenshots/ops-dark.png" width="49%" alt="Satellite Operations"/>
+  <img src="frontend/static/screenshots/inspector-dark.png" width="49%" alt="Ground-Truth Inspector"/>
+</p>
+<p align="center">
+  <img src="frontend/static/screenshots/analytics-dark.png" width="49%" alt="Analytics Dashboard"/>
+  <img src="frontend/static/screenshots/ml-dark.png" width="49%" alt="ML Inference Report"/>
+</p>
+</details>
+
+<details>
+<summary><b>View Dashboard (Light Mode)</b></summary>
+<br>
+<p align="center">
+  <img src="frontend/static/screenshots/home-light.png" width="49%" alt="Home Dashboard"/>
+  <img src="frontend/static/screenshots/live-light.png" width="49%" alt="Live Watcher Feed"/>
+</p>
+<p align="center">
+  <img src="frontend/static/screenshots/ops-light.png" width="49%" alt="Satellite Operations"/>
+  <img src="frontend/static/screenshots/inspector-light.png" width="49%" alt="Ground-Truth Inspector"/>
+</p>
+<p align="center">
+  <img src="frontend/static/screenshots/analytics-light.png" width="49%" alt="Analytics Dashboard"/>
+  <img src="frontend/static/screenshots/ml-light.png" width="49%" alt="ML Inference Report"/>
+</p>
+</details>
+
+## Architecture
+
+<details>
+<summary><b>View System Architecture (v3)</b></summary>
+<br>
+<img src="docs/architecture_diagrams/architecture_v3.png" width="100%" alt="System Architecture v3"/>
+</details>
+
+<details>
+<summary><b>View ML Pipeline & Docker Components</b></summary>
+<br>
+<img src="docs/architecture_diagrams/ml_pipeline_architecture.png" width="100%" alt="ML Pipeline Architecture"/>
+<img src="docs/architecture_diagrams/docker_components.png" width="100%" alt="Docker Stack"/>
+</details>
 
 ---
 
@@ -82,7 +134,7 @@ pixi shell
 ```
 
 ### Phase 1: Data Pipeline (The Lab)
-Fetch, decode, and normalize telemetry into ML-ready "Golden Features".
+Fetch, decode, and normalize telemetry into structured, ML-ready numerical arrays.
 ```bash
 just fetch                  # Download telemetry (interactive)
 just fetch --norad 43880    # Download specific satellite
@@ -122,7 +174,7 @@ Project Watchdog is strictly organized to separate raw data pipelines, machine l
 │   │   ├── 43880/              # e.g., UWE-4 raw telemetry records
 │   │   └── ...                 # Other satellite NORAD ID directories
 │   ├── interim/                # Stage 1: Kaitai-decoded telemetry CSVs (unaltered fields)
-│   └── processed/              # Stage 2: SI-unit "Golden Features" CSVs mapped for Machine Learning
+│   └── processed/              # Stage 2: SI-unit normalized telemetry CSVs mapped for Machine Learning
 ├── frontend/                   # Bun + SvelteKit Web Dashboard
 │   ├── src/                
 │   │   ├── lib/                # Shared internal components
@@ -150,11 +202,11 @@ Project Watchdog is strictly organized to separate raw data pipelines, machine l
 │   │   ├── models/             # Shared PyTorch/Scikit models (VAE, Autoencoders, Scalers)
 │   │   └── utils/              # Data parsing and time manipulation helpers
 │   └── simulator/              # Edge Simulator Environment
-│       ├── edge_node.py        # Hardened Edge Simulator (TLS MQTT + Offline CSV Buffering)
+│       ├── edge_node.py        # Hardened Edge Simulator (TLS MQTT + Local CSV playback when disconnected)
 │       └── Dockerfile          # Simulator service container definition
 ├── scripts/                    # Executable Pipeline & ML Scripts
 │   ├── fetch_training_data.py  # Pipeline Stage 0: Fetches SatNOGS historical API data
-│   ├── process_data.py         # Pipeline Stage 1+2: Decodes & normalizes telemetry to Golden Features
+│   ├── process_data.py         # Pipeline Stage 1+2: Decodes & normalizes raw telemetry into ML arrays
 │   ├── train_model.py          # Pipeline Stage 3: Trains VAE models on processed satellite data
 │   ├── generate_faults.py      # Pipeline Stage 4: Injects synthetic faults and benchmarks models
 │   └── watchdog_runtime.py     # Minimal deterministic online runtime for stream processing
