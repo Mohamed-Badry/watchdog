@@ -1,7 +1,7 @@
 <script lang="ts">
   import { gsapAction } from "$lib/actions/gsap";
   import gsap from "gsap";
-  import { Activity, Radio, ChevronRight, BrainCircuit, ShieldAlert, Satellite, Zap } from "lucide-svelte";
+  import { Activity, Radio, ChevronRight, BrainCircuit, ShieldAlert, Satellite, Zap, Mouse, ChevronDown, Sparkles } from "lucide-svelte";
   
   import GroundStationMap from "$lib/components/operations/GroundStationMap.svelte";
   import AnomalyTimelinePlot from "$lib/components/charts/AnomalyTimelinePlot.svelte";
@@ -90,7 +90,7 @@
             trigger: step,
             start: "top 85%", // Starts a bit lower to give room
             end: "bottom 15%", // Escapes a bit higher
-            scrub: true
+            scrub: 1.5
           }
         });
 
@@ -135,8 +135,8 @@
 <div class="relative z-10 w-full">
   
   <!-- 1. HERO SECTION -->
-  <section class="mx-auto max-w-7xl px-4 lg:px-8">
-    <div use:gsapAction={{ animation: heroAnim }} class="grid min-h-[80vh] grid-cols-1 lg:grid-cols-2 items-center gap-8 pt-8">
+  <section id="hero" class="mx-auto max-w-7xl px-4 lg:px-8">
+    <div use:gsapAction={{ animation: heroAnim }} class="grid min-h-[65vh] grid-cols-1 lg:grid-cols-2 items-center gap-8 pt-4 pb-12">
       
       <!-- Hero Text (Left) -->
       <div class="space-y-6 text-center lg:text-left z-20">
@@ -151,12 +151,6 @@
           <p class="hero-desc invisible text-lg leading-7 text-ink-2 md:text-xl font-medium max-w-xl mx-auto lg:mx-0">
             Mission control for your ground station. Live pass telemetry, deep ML anomaly tracking, and seamless Edge-to-Cloud architecture.
           </p>
-        </div>
-        <div class="hero-buttons invisible flex flex-wrap items-center justify-center gap-4 lg:justify-start pt-4">
-          <a class="group flex items-center gap-2 rounded-full bg-brand px-8 py-4 text-base font-bold text-white shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all hover:scale-105 hover:bg-brand/90 hover:shadow-[0_0_40px_rgba(139,92,246,0.7)]" href="/dashboard">
-            Launch Mission Control
-            <ChevronRight class="size-5 transition-transform group-hover:translate-x-1" />
-          </a>
         </div>
       </div>
 
@@ -184,7 +178,7 @@
   </section>
 
   <!-- 2. STICKY STORY SECTION -->
-  <section use:gsapAction={{ animation: stickyStoryAnim }} class="mx-auto max-w-7xl px-4 lg:px-8 relative mt-12 mb-12">
+  <section id="story" use:gsapAction={{ animation: stickyStoryAnim }} class="mx-auto max-w-7xl px-4 lg:px-8 relative mt-12 mb-12">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative">
       
       <!-- LEFT COLUMN: The Scrolling Text Steps -->
@@ -313,7 +307,9 @@
 
   <!-- 3. CTA SECTION (Edge to Edge Glass Parallax) -->
   <section class="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-surface/10 mt-20 border-t border-border backdrop-blur-md">
-    
+    <!-- Subtle laser line at the top -->
+    <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand/40 to-transparent"></div>
+
     <!-- Colorful floating stained glass blobs -->
     <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
       <div class="absolute top-1/4 left-1/4 w-[40vw] aspect-square rounded-full bg-brand/15 blur-[120px]"></div>
@@ -323,12 +319,13 @@
 
     <!-- Content centered -->
     <div class="relative z-10 flex flex-col items-center justify-center space-y-8 text-center px-4 w-full max-w-4xl">
-      <div class="size-20 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shadow-[0_0_40px_rgba(139,92,246,0.3)] mb-4">
+      <div class="size-20 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shadow-[0_0_40px_rgba(139,92,246,0.3)] mb-4 relative">
+         <div class="absolute inset-0 rounded-full border border-brand/30 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
          <Radio class="size-10 text-brand animate-pulse" />
       </div>
       
-      <h2 class="text-5xl lg:text-7xl font-black text-ink drop-shadow-md">
-        Ready for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-info">Launch.</span>
+      <h2 class="text-5xl lg:text-7xl font-black text-ink drop-shadow-md flex items-center justify-center gap-4">
+        Ready for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-info">Launch.</span> <Sparkles class="size-10 text-brand hidden sm:block" />
       </h2>
       
       <p class="text-xl text-ink-3 max-w-2xl font-medium leading-relaxed">
@@ -337,13 +334,13 @@
       
       <!-- Feature Mini-List -->
       <div class="flex flex-wrap justify-center gap-4 py-6">
-        <div class="flex items-center gap-2 text-sm font-semibold text-ink-2 bg-panel/80 px-5 py-2.5 rounded-full border border-border backdrop-blur-md shadow-sm">
+        <div class="flex items-center gap-2 text-sm font-semibold text-ink-2 bg-panel/80 px-5 py-2.5 rounded-full border border-border backdrop-blur-md shadow-sm transition-transform hover:-translate-y-1 cursor-default">
            <Zap class="size-4 text-ok" /> Live WebSockets
         </div>
-        <div class="flex items-center gap-2 text-sm font-semibold text-ink-2 bg-panel/80 px-5 py-2.5 rounded-full border border-border backdrop-blur-md shadow-sm">
+        <div class="flex items-center gap-2 text-sm font-semibold text-ink-2 bg-panel/80 px-5 py-2.5 rounded-full border border-border backdrop-blur-md shadow-sm transition-transform hover:-translate-y-1 cursor-default">
            <BrainCircuit class="size-4 text-brand" /> VAE ML Models
         </div>
-        <div class="flex items-center gap-2 text-sm font-semibold text-ink-2 bg-panel/80 px-5 py-2.5 rounded-full border border-border backdrop-blur-md shadow-sm">
+        <div class="flex items-center gap-2 text-sm font-semibold text-ink-2 bg-panel/80 px-5 py-2.5 rounded-full border border-border backdrop-blur-md shadow-sm transition-transform hover:-translate-y-1 cursor-default">
            <ShieldAlert class="size-4 text-critical" /> Auto-Alerts
         </div>
       </div>

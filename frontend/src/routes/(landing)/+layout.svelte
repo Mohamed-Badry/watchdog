@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import AntennaBackground from "$lib/components/AntennaBackground.svelte";
+  import ScrollIndicator from "$lib/components/ScrollIndicator.svelte";
   import { themeState, toggleTheme } from "$lib/theme.svelte";
   import { Sun, Moon } from "lucide-svelte";
 
@@ -35,6 +36,8 @@
   signalFadeScale={antennaSignalFadeScale}
   antennaFadeScale={antennaBaseFadeScale}
 />
+
+<ScrollIndicator />
 
 <div class="min-h-screen">
   <div class="flex min-h-screen w-full flex-col">
