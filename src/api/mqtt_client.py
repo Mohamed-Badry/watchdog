@@ -107,6 +107,9 @@ def on_message(client, userdata, msg):
         if res.frame:
             # Convert TelemetryFrame dataclass to dict
             features = res.frame.to_dict()
+            for k, v in features.items():
+                if isinstance(v, datetime):
+                    features[k] = v.isoformat()
         else:
             if res.failure:
                 missing = [f"{res.failure.stage}: {res.failure.code}"]
@@ -143,10 +146,10 @@ def on_message(client, userdata, msg):
                     
             except Exception as e:
                 session.rollback()
-                logger.error(f"Transaction failed, rolled back: {e}", exc_info=True)
+                logger.error("Transaction failed, rolled back.", exc_info=True)
 
     except Exception as e:
-        logger.error(f"Error processing MQTT message: {e}", exc_info=True)
+        logger.error("Error processing MQTT message.", exc_info=True)
 
 
 def start_mqtt_client(repository=None):

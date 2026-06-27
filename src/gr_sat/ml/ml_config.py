@@ -17,8 +17,8 @@ from gr_sat.core.config import (
 )
 
 
-HIDDEN_DIM = 12
-LATENT_DIM = 3
+HIDDEN_DIM = 24
+LATENT_DIM = 6
 DEFAULT_KLD_WEIGHT = 0.05
 
 TRAIN_SPLIT = 0.8

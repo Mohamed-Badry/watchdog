@@ -162,9 +162,6 @@ def evaluate(norad_id: str, models_dir: Path | str = MODEL_DIR, processed_dir: P
             kld_weight=metadata.kld_weight,
             diagnosis_mask=diagnosis_mask,
         ).numpy()
-        
-    # Apply Median(5) filter to anomaly scores for debounce realism
-    anomaly_scores = pd.Series(anomaly_scores).rolling(5).median().bfill().values
 
     # ------------------
     # Stage 1: Detector (MAX Loss Score)

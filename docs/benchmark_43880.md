@@ -5,13 +5,13 @@ This report is an offline synthetic-fault benchmark using the persisted training
 **Unified Architecture:** PyTorch Variational Autoencoder
 
 ## Metrics
-- **AUROC:** 0.8831
-- **Recall @ 5% FPR:** 76.3%
+- **AUROC:** 0.8728
+- **Recall @ 5% FPR:** 79.6%
 
-- **Operating Threshold:** 0.343365
+- **Operating Threshold:** 1.346662
 
 ## Fault Isolation Performance
 | Fault Type | Detected by Stage 1 | Isolated by VAE |
 |------------|---------------------|-----------------|
-| panel_failure | 52.6% | 0.0% |
-| thermal_runaway | 94.5% | 94.2% |
+| panel_failure | 0.0% | 0.0% |
+| thermal_runaway | 4.1% | 100.0% |

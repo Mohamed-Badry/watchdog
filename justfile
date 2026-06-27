@@ -39,8 +39,8 @@ benchmark +args='':
 
 # End-to-end model loop for one satellite (train -> benchmark)
 # Usage:
-#   just train-benchmark 43880 100
-train-benchmark norad='43880' epochs='100':
+#   just train-benchmark 43880 250
+train-benchmark norad='43880' epochs='250':
     pixi run python scripts/train_model.py --norad {{norad}} --epochs {{epochs}}
     pixi run python scripts/generate_faults.py --norad {{norad}}
 

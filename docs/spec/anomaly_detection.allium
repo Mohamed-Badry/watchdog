@@ -77,7 +77,7 @@ rule TrainAnomalyModel {
     ensures: AnomalyModelArtifact.created(
         satellite: satellite,
         status: active
-        -- threshold is calibrated via a rolling median filter on the validation set
+        -- threshold is the 99.9th percentile of raw validation scores
     )
 }
 

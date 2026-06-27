@@ -132,6 +132,17 @@ class ScoringService:
             )
             scaled = scaler.transform(feature_matrix)
             x_tensor = torch.FloatTensor(scaled)
+
+            # Build the same diagnosis_mask used during training so
+            # the anomaly score is comparable to the persisted threshold.
+            diagnosis_mask = None
+            if metadata.diagnosis_feature_names:
+                diagnosis_mask = [
+                    feature_names.index(f)
+                    for f in metadata.diagnosis_feature_names
+                    if f in feature_names
+                ]
+
             model.eval()
             with torch.no_grad():
                 recon_x, mu, logvar = model(x_tensor)
@@ -141,6 +152,7 @@ class ScoringService:
                     mu,
                     logvar,
                     kld_weight=metadata.kld_weight,
+                    diagnosis_mask=diagnosis_mask,
                 ).numpy()
 
             working.loc[complete_mask, "anomaly_score"] = scores
