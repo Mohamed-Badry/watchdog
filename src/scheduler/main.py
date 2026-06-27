@@ -28,9 +28,7 @@ def run_fetch_data():
 def run_train_models():
     logger.info("Starting daily train_model job for all active satellites...")
     
-    # We could query the API for active satellites, but the training script 
-    # could just handle all configured satellites if we pass a flag. 
-    # Let's read the golden_candidates.csv or fetch from API.
+    # We query the API for active satellites so we can retrain all known ones.
     try:
         response = requests.get(f"{API_URL}/api/satellites", headers={"X-API-Key": API_KEY}, timeout=10)
         response.raise_for_status()

@@ -20,21 +20,10 @@ TLE_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle"
 
 
 def main():
-    if not INPUT_FILE.exists():
-        print(f"Error: {INPUT_FILE} not found. Run analysis first.")
-        return
-
-    print(f"Loading candidates from {INPUT_FILE}...")
-    candidates = pd.read_csv(INPUT_FILE)
-
-    # Ensure norad_cat_id is integer for matching
-    # Some datasets might have float 12345.0
-    candidates["norad_cat_id"] = (
-        pd.to_numeric(candidates["norad_cat_id"], errors="coerce").fillna(0).astype(int)
-    )
-    target_ids = set(candidates["norad_cat_id"].tolist())
-
-    print(f"Targeting {len(target_ids)} satellites from the Golden Cohort.")
+    from gr_sat.core.satellite_profiles import _SATELLITE_PROFILES
+    
+    target_ids = set(_SATELLITE_PROFILES.keys())
+    print(f"Targeting {len(target_ids)} satellites from the core registry.")
 
     print("Fetching TLE data from CelesTrak (this may take a moment)...")
     from skyfield.api import Loader

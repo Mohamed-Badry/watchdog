@@ -5,6 +5,7 @@ from loguru import logger
 import random
 from datetime import datetime, timezone
 import paho.mqtt.client as mqtt
+from gr_sat.core.satellite_profiles import DEFAULT_PROFILE
 
 
 
@@ -88,41 +89,50 @@ def main():
 
 
     # Simulate reading from data/raw/
+    import glob
     raw_dir = DATA_DIR / "raw"
     if not os.path.exists(raw_dir):
         logger.warning(f"Raw data dir {raw_dir} not found. Mocking random data.")
         mock_mode = True
     else:
         mock_mode = False
-        # Read a sample JSONL file
-        files = [f for f in os.listdir(raw_dir) if f.endswith(".jsonl")]
+        # Read all sample JSONL files from all subdirectories
+        pattern = str(raw_dir / "**" / "*.jsonl")
+        files = glob.glob(pattern, recursive=True)
         if files:
-            with open(os.path.join(raw_dir, files[0])) as f:
-                lines = f.readlines()
+            lines = []
+            for fpath in files:
+                with open(fpath) as f:
+                    lines.extend(f.readlines())
+            import random
+            random.shuffle(lines)
         else:
             mock_mode = True
 
     idx = 0
     while True:
         if mock_mode:
-            norad_id = 43880
+            norad_id = DEFAULT_PROFILE.norad_id
             # A valid UWE-4 raw packet header mock
             raw_frame = "8A8A8A8A8A8A608A8A8A8A8A8A6103F0" + "".join(
                 [random.choice("0123456789ABCDEF") for _ in range(64)]
             )
+            original_timestamp = datetime.now(timezone.utc).isoformat()
         else:
             try:
                 record = json.loads(lines[idx % len(lines)])
-                norad_id = record.get("norad_id", 43880)
+                norad_id = record.get("norad_id", DEFAULT_PROFILE.norad_id)
                 raw_frame = record.get("frame", "")
+                original_timestamp = record.get("timestamp", datetime.now(timezone.utc).isoformat())
                 idx += 1
             except:
-                norad_id = 43880
+                norad_id = DEFAULT_PROFILE.norad_id
                 raw_frame = "8A8A8A8A8A8A"
+                original_timestamp = datetime.now(timezone.utc).isoformat()
 
         payload = {
             "norad_id": norad_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": original_timestamp,
             "raw_frame": raw_frame,
             "station_id": "sim_station_1",
             "snr": round(random.uniform(5.0, 25.0), 1),

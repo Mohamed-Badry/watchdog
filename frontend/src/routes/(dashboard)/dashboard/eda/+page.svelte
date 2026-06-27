@@ -33,8 +33,8 @@
       path += `&norad_id=${noradId}`;
     }
     try {
-      const json = await apiFetch<{ frames: TelemetryFrame[] }>(path);
-      telemetryFrames = json.frames || [];
+      const json = await apiFetch<any>(path);
+      telemetryFrames = Array.isArray(json) ? json : (json.frames || []);
     } catch (e) {
       console.error(e);
       telemetryFrames = [];

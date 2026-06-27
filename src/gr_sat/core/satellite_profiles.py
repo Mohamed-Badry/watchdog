@@ -5,8 +5,10 @@ Satellite-specific feature contracts, cadence settings, and baseline filters.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 @dataclass(frozen=True)
@@ -16,6 +18,8 @@ class BaselineFilter:
     threshold: float
 
     def mask(self, df: pd.DataFrame) -> pd.Series:
+        import pandas as pd
+        
         if self.field_name not in df.columns:
             return pd.Series(False, index=df.index, dtype=bool)
 
@@ -87,8 +91,39 @@ UWE4_PROFILE = SatelliteProfile(
 )
 
 
+CUTE_PROFILE = SatelliteProfile(
+    norad_id=49263,
+    name="CUTE",
+    feature_contract=FeatureContract(
+        version=1,
+        feature_names=(
+            "batt_voltage",
+            "batt_current",
+            "power_consumption",
+            "temp_batt_a",
+            "temp_obc",
+            "temp_panel_z",
+        ),
+        diagnosis_feature_names=(
+            "batt_voltage",
+            "batt_current",
+            "temp_batt_a",
+            "temp_obc",
+        ),
+    ),
+    pass_gap_seconds=120.0,
+    cadence_tolerance_ratio=0.5,
+    cadence_min_tolerance_seconds=5.0,
+    rolling_window=3,
+    baseline_filters=(
+        BaselineFilter("batt_voltage", "gt", 9.0),
+    ),
+)
+
+
 _SATELLITE_PROFILES = {
     UWE4_PROFILE.norad_id: UWE4_PROFILE,
+    CUTE_PROFILE.norad_id: CUTE_PROFILE,
 }
 
 DEFAULT_PROFILE = UWE4_PROFILE
@@ -102,6 +137,8 @@ def get_satellite_profile(norad_id: int | str) -> SatelliteProfile:
 
 
 def build_baseline_mask(df: pd.DataFrame, profile: SatelliteProfile) -> pd.Series:
+    import pandas as pd
+    
     if df.empty:
         return pd.Series(False, index=df.index, dtype=bool)
 

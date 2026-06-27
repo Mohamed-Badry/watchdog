@@ -28,10 +28,11 @@
       path += `&norad_id=${noradId}`;
     }
     try {
-      const data = await apiFetch<{ frames: TelemetryFrame[] }>(path);
+      const data = await apiFetch<any>(path);
       // Deduplicate frames to prevent Svelte each_key_duplicate crash
       const seen = new Set();
-      const uniqueFrames = (data.frames || []).filter(f => {
+      const framesList = Array.isArray(data) ? data : (data.frames || []);
+      const uniqueFrames = framesList.filter(f => {
         const k = f.timestamp + '_' + f.norad_id;
         if (seen.has(k)) return false;
         seen.add(k);

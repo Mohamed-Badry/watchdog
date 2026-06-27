@@ -6,8 +6,8 @@ This repository hosts the **Project Watchdog** codebase, an end-to-end pipeline 
 
 ## Key Documentation
 
-*   **[Technical Details & Architecture](DETAILS.md)**: Deep dive into the system's design, ML models, and normalized telemetry structures.
-*   **[WEBSITE_PLAN.md](WEBSITE_PLAN.md)**: Web interface, Docker orchestration, and UX integration plan.
+*   **[Technical Details & Architecture](docs/DETAILS.md)**: Deep dive into the system's design, ML models, and normalized telemetry structures.
+*   **[WEBSITE_PLAN.md](docs/WEBSITE_PLAN.md)**: Web interface, Docker orchestration, and UX integration plan.
 *   **[.gemini/GEMINI.md](.gemini/GEMINI.md)**: Active project context and agent instructions.
 
 ## Current Repository Status
@@ -260,3 +260,4 @@ The decoder system uses `satnogs-decoders` (Kaitai Structs) for binary parsing a
 | Satellite | NORAD ID | Decoder | Status |
 | :--- | :--- | :--- | :--- |
 | **UWE-4** | 43880 | `decoders/uwe4.py` | Primary target, ~7 months of data |
+| **CUTE** | 49263 | `decoders/cute.py` | 9600 bps GMSK, Active NASA Astrophysics payload |

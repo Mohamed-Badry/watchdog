@@ -68,8 +68,10 @@ def inject_faults(
         )
         for start in chosen_starts_therm:
             idx_range = range(start, start + frames_per_event)
-            df_faulted.iloc[list(idx_range), df_faulted.columns.get_loc("temp_batt_a")] += 7.0
-            df_faulted.iloc[list(idx_range), df_faulted.columns.get_loc("temp_batt_b")] += 7.0
+            if "temp_batt_a" in df_faulted.columns:
+                df_faulted.iloc[list(idx_range), df_faulted.columns.get_loc("temp_batt_a")] += 7.0
+            if "temp_batt_b" in df_faulted.columns:
+                df_faulted.iloc[list(idx_range), df_faulted.columns.get_loc("temp_batt_b")] += 7.0
             labels[list(idx_range)] = 1
             fault_types[list(idx_range)] = "thermal_runaway"
 

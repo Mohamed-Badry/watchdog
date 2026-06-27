@@ -32,8 +32,8 @@
       path += `&norad_id=${noradId}`;
     }
     try {
-      const json = await apiFetch<{ anomalies: AnomalyRecord[] }>(path);
-      anomalies = json.anomalies || [];
+      const json = await apiFetch<any>(path);
+      anomalies = Array.isArray(json) ? json : (json.anomalies || []);
       if (anomalies.length > 0) {
         const queryTs = $page.url.searchParams.get('timestamp');
         const queryNorad = $page.url.searchParams.get('norad_id');

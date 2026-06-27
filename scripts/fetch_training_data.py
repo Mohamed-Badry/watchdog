@@ -32,31 +32,10 @@ CHUNK_SIZE_DAYS = 1
 # We'll stick to a safe 2s delay between requests to avoid hitting 429s constantly.
 REQUEST_DELAY_SECONDS = 5.0
 
-# Load Targets from golden_candidates.csv
-# If not available, fallback to a small set.
-DATA_DIR = Path("data")
-CANDIDATES_PATH = DATA_DIR / "golden_candidates.csv"
-
-TARGETS = {}
-if CANDIDATES_PATH.exists():
-    import pandas as pd
-
-    try:
-        df = pd.read_csv(CANDIDATES_PATH)
-        # Use norad_cat_id as key, amsat_name as value
-        TARGETS = {
-            str(row["norad_cat_id"]): row["amsat_name"] for _, row in df.iterrows()
-        }
-        logger.info(f"Loaded {len(TARGETS)} targets from {CANDIDATES_PATH}")
-    except Exception as e:
-        logger.warning(f"Failed to parse {CANDIDATES_PATH}: {e}")
-else:
-    logger.warning(f"{CANDIDATES_PATH} not found. Using fallback targets.")
-    TARGETS = {
-        "43880": "UWE-4",
-        "40014": "BugSat-1",
-        "51657": "INSPIRESat-1",
-    }
+# --- LOAD TARGETS FROM CENTRAL REGISTRY ---
+from gr_sat.core.satellite_profiles import _SATELLITE_PROFILES
+TARGETS = {str(k): v.name for k, v in _SATELLITE_PROFILES.items()}
+logger.info(f"Loaded {len(TARGETS)} targets from core satellite profiles.")
 
 # --- LOGGING SETUP ---
 logger.configure(
@@ -258,7 +237,7 @@ def main():
     parser.add_argument("--days", type=int, default=30, help="Days to look back")
     parser.add_argument("--norad", type=str, help="Single NORAD ID to fetch.")
     parser.add_argument(
-        "--all", action="store_true", help="Fetch ALL Golden Cohort satellites."
+        "--all", action="store_true", help="Fetch ALL configured satellites."
     )
     parser.add_argument("--start", type=str, help="Start YYYY-MM-DD")
     parser.add_argument("--end", type=str, help="End YYYY-MM-DD")

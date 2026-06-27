@@ -94,7 +94,8 @@ def plot_satellite(norad_id: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--norad", type=str, default="43880")
+    from gr_sat.core.satellite_profiles import DEFAULT_PROFILE
+    parser.add_argument("--norad", type=str, default=str(DEFAULT_PROFILE.norad_id))
     args = parser.parse_args()
 
     plot_satellite(args.norad)

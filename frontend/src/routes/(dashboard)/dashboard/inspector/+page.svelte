@@ -29,8 +29,8 @@
       path += `&norad_id=${noradId}`;
     }
     try {
-      const json = await apiFetch<{ frames: TelemetryFrame[] }>(path);
-      telemetryFrames = json.frames || [];
+      const json = await apiFetch<any>(path);
+      telemetryFrames = Array.isArray(json) ? json : (json.frames || []);
       if (telemetryFrames.length > 0) {
         selectedFrameId = telemetryFrames[0].timestamp + telemetryFrames[0].norad_id;
       } else {

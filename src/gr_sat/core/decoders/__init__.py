@@ -13,6 +13,8 @@ To add a new satellite decoder:
 
 Currently supported satellites:
   - UWE-4 (NORAD 43880) — src/gr_sat/decoders/uwe4.py
+  - CUTE (NORAD 49263) — src/gr_sat/decoders/cute.py
 """
 
 from . import uwe4  # noqa: F401
+from . import cute  # noqa: F401
