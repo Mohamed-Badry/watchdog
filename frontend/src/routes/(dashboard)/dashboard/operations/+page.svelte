@@ -59,7 +59,7 @@
 
   let station = $state<StationLocation>({ ...stationPresets[0] });
   let selectedStationId = $state<string>('beni_suef');
-  let selectedNoradId = $state<string>('all');
+  let selectedNoradId = $state<string>('43880');
   let lookaheadHours = $state<number>(24);
   let minElevation = $state<number>(10);
   let loading = $state(false);

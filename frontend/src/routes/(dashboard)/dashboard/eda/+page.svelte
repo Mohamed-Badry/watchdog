@@ -17,7 +17,7 @@
   let satellites = $derived(data.satellites || []);
   let error = $derived(data.error);
 
-  let noradId = $state<string>('all');
+  let noradId = $state<string>('43880');
   let dataLimit = $state<number>(1000); // Increased limit for better macro trends
 
   let loading = $state(false);

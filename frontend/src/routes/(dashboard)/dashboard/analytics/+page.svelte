@@ -9,19 +9,45 @@
   import OrbitalDriftPlot from '$lib/components/charts/OrbitalDriftPlot.svelte';
   import { SERIES_CURRENT as BLUE, SERIES_AMBER as AMBER } from '$lib/chart-theme';
   import { fly, fade } from 'svelte/transition';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import Select from '$lib/components/ui/Select.svelte';
 
   let { data }: { data: PageData } = $props();
 
   let error = $derived(data.error);
   let analytics = $derived(data.analytics);
+  let satellites = $derived(data.satellites || []);
 
   let activeTab = $state<'throughput' | 'quality' | 'health'>('throughput');
+  
+  let currentNorad = $derived($page.url.searchParams.get('norad_id') || '43880');
+  
+  function handleSatelliteChange(newNorad: string) {
+    if (typeof window !== 'undefined') {
+      window.location.search = `?norad_id=${newNorad}`;
+    }
+  }
 </script>
 
 <section in:fly={{ y: 20, duration: 500, delay: 100 }} class="flex flex-col gap-6">
-  <div class="space-y-1">
-    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Deep Dive</p>
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Analytics</h1>
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div class="space-y-1">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Deep Dive</p>
+      <h1 class="text-3xl font-semibold tracking-tight text-ink">Analytics</h1>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <label for="sat-select" class="text-xs font-semibold uppercase tracking-wider text-ink-3">Target Profile</label>
+      <Select
+        id="sat-select"
+        value={currentNorad}
+        onchange={(val) => handleSatelliteChange(val.toString())}
+        options={[{ value: 'all', label: 'All Satellites (Global View)' }, ...satellites.map(s => ({ value: s.norad_id.toString(), label: `${s.name} (${s.norad_id})` }))]}
+        class="rounded-lg border border-border bg-panel px-3 py-1.5 min-w-[220px] outline-none transition hover:border-brand"
+        labelClass="text-sm text-ink font-medium"
+      />
+    </div>
   </div>
 
   {#if error}

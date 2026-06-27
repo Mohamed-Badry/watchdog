@@ -337,7 +337,7 @@ class DashboardDataRepository:
                 )
 
         # 2. Pipeline Data Quality
-        complete_count = int(working["frame_is_complete"].sum())
+        complete_count = int(working["frame_is_complete"].sum()) if "frame_is_complete" in working.columns else 0
         total_count = len(working)
         partial_count = total_count - complete_count
 

@@ -13,7 +13,7 @@
   let satellites = $derived(data.satellites || []);
   let error = $derived(data.error);
 
-  let noradId = $state<string>("all");
+  let noradId = $state<string>("43880");
   let limit = $state<number>(25);
   let isLive = $state<boolean>(true);
 

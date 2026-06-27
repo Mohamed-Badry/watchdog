@@ -1,11 +1,14 @@
 import type { PageLoad } from './$types';
 import { apiFetch, fetchSatellites } from '$lib/api';
 
-export const load: PageLoad = async ({ fetch }) => {
+export const load: PageLoad = async ({ fetch, url }) => {
     try {
+        const noradId = url.searchParams.get('norad_id') || '43880';
+        const query = noradId !== 'all' ? `?norad_id=${noradId}` : '';
+        
         const [satsData, analytics] = await Promise.all([
             fetchSatellites(fetch),
-            apiFetch<any>('/api/analytics', undefined, fetch)
+            apiFetch<any>(`/api/analytics${query}`, undefined, fetch)
         ]);
 
         return {

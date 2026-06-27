@@ -11,7 +11,8 @@ export class AppStore {
         const data = await fetchSatellites();
         this.satellites = data.satellites;
         if (this.satellites.length > 0 && !this.activeSatellite) {
-            this.activeSatellite = this.satellites[0].norad_id.toString();
+            const uwe4 = this.satellites.find(s => s.norad_id === 43880);
+            this.activeSatellite = uwe4 ? '43880' : this.satellites[0].norad_id.toString();
         }
     }
 
