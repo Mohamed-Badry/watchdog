@@ -4,7 +4,7 @@
 
 This repository hosts the **Project Watchdog** codebase, an end-to-end pipeline for satellite telemetry analysis. It features offline telemetry processing, per-satellite anomaly-model training, synthetic-fault benchmarking, a robust FastAPI backend, and a premium SvelteKit + Tailwind dashboard.
 
-## 📚 Key Documentation
+## Key Documentation
 
 *   **[Technical Details & Architecture](DETAILS.md)**: Deep dive into the system's design, ML models, and normalized telemetry structures.
 *   **[WEBSITE_PLAN.md](WEBSITE_PLAN.md)**: Web interface, Docker orchestration, and UX integration plan.
@@ -81,7 +81,7 @@ This repository hosts the **Project Watchdog** codebase, an end-to-end pipeline 
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### 1. Install Prerequisites
 We use **[Pixi](https://pixi.sh/)** for the core Python environment, and **[Bun](https://bun.sh/)** for the frontend.
@@ -124,7 +124,7 @@ docker compose up --build
 
 ---
 
-## 🛠 Usage & Task Lifecycle
+## Usage & Task Lifecycle
 
 We use `just` (installed automatically by Pixi) to run all common tasks across the stack.
 
@@ -163,7 +163,22 @@ just frontend-preview               # Preview the production build
 
 ---
 
-## 📂 Complete Data & Directory Structure
+## Production Deployment
+
+The project utilizes Docker Compose profiles to cleanly separate cloud resources from edge devices. Two deployment scripts are provided in the root directory:
+
+**1. The Cloud VPS (`./deploy_vps.sh`)**
+Spins up the TimescaleDB, PyTorch Backend, and the native Bun SvelteKit frontend. 
+*   **Firewall Rules:** The VPS requires inbound ports `80/443` (TCP) for web traffic, and `1883` (TCP) for the MQTT broker.
+*   **Security Note:** Do not expose port `5432` (PostgreSQL) or `8000` (FastAPI) to the public internet; they communicate internally via Docker.
+
+**2. The Edge Device (`./deploy_edge.sh`)**
+Spins up the local data buffer and simulator/radio software.
+*   **Firewall Rules:** No inbound ports need to be opened on the edge device. Standard outbound internet access is sufficient.
+
+---
+
+## Complete Data & Directory Structure
 
 Project Watchdog is strictly organized to separate raw data pipelines, machine learning models, core logic, simulated environments, and user interfaces.
 
@@ -231,7 +246,7 @@ Project Watchdog is strictly organized to separate raw data pipelines, machine l
 
 ---
 
-## 🔧 Adding a New Satellite Decoder
+## Adding a New Satellite Decoder
 
 The decoder system uses `satnogs-decoders` (Kaitai Structs) for binary parsing and a registry pattern for satellite-specific logic. To add support for a new satellite:
 
@@ -244,4 +259,4 @@ The decoder system uses `satnogs-decoders` (Kaitai Structs) for binary parsing a
 
 | Satellite | NORAD ID | Decoder | Status |
 | :--- | :--- | :--- | :--- |
-| **UWE-4** | 43880 | `decoders/uwe4.py` | ✅ Primary target, ~7 months of data |
+| **UWE-4** | 43880 | `decoders/uwe4.py` | Primary target, ~7 months of data |
