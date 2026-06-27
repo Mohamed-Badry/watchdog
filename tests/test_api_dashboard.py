@@ -165,7 +165,7 @@ class DashboardApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             payload["totals"],
             {
-                "satellite_count": 1,
+                "satellite_count": 2,
                 "frame_count": 4,
                 "anomaly_count": 2,
                 "partial_frame_count": 1,

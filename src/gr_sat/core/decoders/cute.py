@@ -114,4 +114,9 @@ class CuteDecoder(BaseDecoder):
             if v is not None and (math.isnan(v) or math.isinf(v)):
                 features[k] = None
 
+        features["frame_is_complete"] = all(
+            features.get(f) is not None
+            for f in ["batt_voltage", "batt_current", "temp_obc", "temp_batt_a", "temp_panel_z"]
+        )
+
         return features
