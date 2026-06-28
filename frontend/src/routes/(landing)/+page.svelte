@@ -149,10 +149,10 @@
         </div>
         <div class="space-y-4">
           <h1 class="hero-title invisible text-5xl font-black tracking-tight text-ink sm:text-6xl lg:text-7xl leading-[1.05] drop-shadow-lg">
-            Zero-latency <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-info">orbit operations.</span>
+            Amateur satellite telemetry <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-info">powered by machine learning.</span>
           </h1>
           <p class="hero-desc invisible text-lg leading-7 text-ink-2 md:text-xl font-medium max-w-xl mx-auto lg:mx-0">
-            Mission control for your ground station. Live pass telemetry, deep ML anomaly tracking, and seamless Edge-to-Cloud architecture.
+            Real-time telemetry decoding, orbital pass predictions, and unsupervised VAE anomaly detection for amateur CubeSat ground stations.
           </p>
         </div>
       </div>
@@ -196,10 +196,10 @@
                   <Satellite class="size-5" /> Phase 1: Contact
                 </div>
                 <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
-                  Autonomous <br/><span class="text-ink-2 font-medium">Ground Operations</span>
+                  Orbital Pass <br/><span class="text-ink-2 font-medium">Predictions & Planning</span>
                 </h2>
                 <p class="text-lg text-ink-3 leading-relaxed">
-                  Predictive pass modeling combined with real-time antenna tracking. Watchdog aligns physical servos with high-precision skyplot vectors. Plan your operations precisely with exact orbital intersections.
+                  Predict when satellites cross your local horizon. Watchdog computes high-precision skyplots, pass timelines, and visibility windows for your specific ground station coordinates.
                 </p>
               </div>
               
@@ -224,10 +224,10 @@
                   <Zap class="size-5" /> Phase 2: Ingress
                 </div>
                 <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
-                  Duplex Edge <br/><span class="text-ink-2 font-medium">Telemetry</span>
+                  Real-Time WebSocket <br/><span class="text-ink-2 font-medium">Telemetry Ingress</span>
                 </h2>
                 <p class="text-lg text-ink-3 leading-relaxed">
-                  Bypassing database polling overhead, Watchdog establishes direct WebSocket streams to the inference engine. Experience sub-second UI updates as your hardware breathes in real-time.
+                  Stream telemetry frames directly to your browser as they arrive. Watchdog establishes high-performance WebSockets to decode telemetry fields (battery, currents, temperature) with sub-second latency.
                 </p>
                 <div class="flex items-center gap-4 mt-2">
                    <div class="flex items-center gap-2 rounded-full border border-ok/20 bg-ok/10 px-4 py-2 text-sm font-semibold text-ok">
@@ -267,10 +267,10 @@
                   <BrainCircuit class="size-5" /> Phase 3: Intelligence
                 </div>
                 <h2 class="text-4xl lg:text-5xl font-black tracking-tight text-ink leading-tight">
-                  The Variational <br/><span class="text-ink-2 font-medium">Autoencoder</span>
+                  Unsupervised VAE <br/><span class="text-ink-2 font-medium">Anomaly Detection</span>
                 </h2>
                 <p class="text-lg text-ink-3 leading-relaxed">
-                  Trained offline, deployed to the edge. The VAE reconstructs incoming hardware vectors, flagging cascading faults long before traditional static Z-score bounds trip.
+                  Identify complex, multivariate anomalies. Our edge-deployed Variational Autoencoder learns normal telemetry correlations, flagging subtle issues (like thermal runaway) based on reconstruction error.
                 </p>
               </div>
 
@@ -383,7 +383,7 @@
       </h2>
       
       <p class="text-xl text-ink-3 max-w-2xl font-medium leading-relaxed">
-        Experience the definitive standard in Edge Operations. Combine predictive skyplot tracking with real-time hardware telemetry and machine learning anomaly detection.
+        A robust telemetry monitoring pipeline. Predict upcoming satellite passes, monitor live downlinks over WebSockets, and run VAE anomaly inference at the edge.
       </p>
       
       <!-- Feature Mini-List -->

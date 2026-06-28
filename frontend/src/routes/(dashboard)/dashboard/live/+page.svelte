@@ -32,7 +32,7 @@
       // Deduplicate frames to prevent Svelte each_key_duplicate crash
       const seen = new Set();
       const framesList = Array.isArray(data) ? data : (data.frames || []);
-      const uniqueFrames = framesList.filter(f => {
+      const uniqueFrames = framesList.filter((f: any) => {
         const k = f.timestamp + '_' + f.norad_id;
         if (seen.has(k)) return false;
         seen.add(k);
