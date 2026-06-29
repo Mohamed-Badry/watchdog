@@ -8,7 +8,9 @@ const pages = [
   { url: 'http://localhost:5173/dashboard/live', name: 'live' },
   { url: 'http://localhost:5173/dashboard/inspector', name: 'inspector' },
   { url: 'http://localhost:5173/dashboard/ml', name: 'ml' },
-  { url: 'http://localhost:5173/dashboard/analytics', name: 'analytics' }
+  { url: 'http://localhost:5173/dashboard/analytics', name: 'analytics' },
+  { url: 'http://localhost:5173/dashboard/eda', name: 'eda' },
+  { url: 'http://localhost:5173/dashboard/ml-report', name: 'ml-report' }
 ];
 
 const screenshotsDir = '/home/crim/Projects/gr_sat/frontend/static/screenshots';
@@ -52,6 +54,15 @@ const screenshotsDir = '/home/crim/Projects/gr_sat/frontend/static/screenshots';
                     if (calcBtn) calcBtn.click();
                 });
                 // Wait for the API to return and the map to update
+                await new Promise(r => setTimeout(r, 4000));
+            }
+            
+            if (p.name === 'eda') {
+                console.log(`  [EDA Page] Fetching telemetry data...`);
+                await page.evaluate(() => {
+                    const btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent && b.textContent.includes('Fetch Data'));
+                    if (btn) btn.click();
+                });
                 await new Promise(r => setTimeout(r, 4000));
             }
             
