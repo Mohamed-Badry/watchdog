@@ -2,6 +2,7 @@
   import type { PageData } from "./$types";
   import { untrack } from "svelte";
   import { fly } from "svelte/transition";
+  import { flip } from "svelte/animate";
   import { apiFetch, getWsUrl } from "$lib/api";
   import type { TelemetryFrame } from "$lib/types/api";
 
@@ -154,7 +155,7 @@
         <Select
           id="live-feed-size"
           bind:value={limit}
-          options={[{ value: 10, label: '10' }, { value: 25, label: '25' }, { value: 50, label: '50' }]}
+          options={[{ value: 25, label: '25' }, { value: 50, label: '50' }, { value: 100, label: '100' }, { value: 250, label: '250' }, { value: 500, label: '500' }, { value: 1000, label: '1000' }]}
           class="rounded-xl sm:rounded-lg border border-border bg-surface px-3 py-3 sm:py-1.5 min-w-[80px] outline-none transition hover:border-brand focus:border-brand"
           labelClass="text-base sm:text-sm text-ink font-medium"
         />
@@ -204,6 +205,7 @@
             {#each frames as frame, i (frame.timestamp + String(frame.norad_id))}
               <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
               <article 
+                animate:flip={{ duration: 400 }}
                 in:fly={{ y: -10, opacity: 0, duration: 400, delay: Math.min(i * 50, 400) }}
                 class="group relative flex flex-col gap-2 overflow-hidden rounded-xl border p-4 transition-all hover:border-brand/40 hover:bg-surface/80 cursor-pointer {selectedTimestamp === frame.timestamp ? 'border-brand bg-brand/15 ring-2 ring-brand/50 shadow-[0_0_20px_rgba(139,92,246,0.2)]' : 'border-border bg-surface/40 hover:shadow-sm'}"
                 onclick={(e) => {

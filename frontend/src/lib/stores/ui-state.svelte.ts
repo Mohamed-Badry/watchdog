@@ -28,7 +28,7 @@ export const uiState = $state({
   },
   live: {
     noradId: '43880',
-    limit: 25,
+    limit: 100,
     isLive: true,
     frames: [] as any[]
   }

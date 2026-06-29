@@ -158,6 +158,7 @@ def on_message(client, userdata, msg):
                         "timestamp": timestamp.isoformat(),
                         "is_anomaly": False,
                         "anomaly_score": None,
+                        "raw_frame": raw_hex,
                         **features
                     }
                     client._repository.append_live_frame(int(norad_id), row_dict)
