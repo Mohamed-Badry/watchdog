@@ -3,12 +3,13 @@
   import { BarX } from 'svelteplot';
   import { BRAND } from '$lib/chart-theme';
 
-  let { data = [] } = $props<{
+  let { data = [], height = 280 } = $props<{
     data: any[];
+    height?: number;
   }>();
 </script>
 
-<ResponsivePlot height={280}
+<ResponsivePlot {height}
   x={{ label: 'Count', labelAnchor: 'center', grid: true, nice: true }}
   y={{ type: 'band', label: false, domain: data.map((d: any) => d.field) }}
   marginLeft={80} marginRight={20} marginTop={10} marginBottom={40}>

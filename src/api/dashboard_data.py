@@ -382,6 +382,32 @@ class DashboardDataRepository:
         )
         macro_health = macro_health.reset_index()
 
+        # Calculate real Pearson correlation matrix
+        corr_cols = ["batt_voltage", "temp_batt_a", "temp_panel_z", "power_consumption"]
+        actual_corr_cols = [c for c in corr_cols if c in working.columns]
+        correlation_matrix = {}
+        if len(actual_corr_cols) >= 2:
+            try:
+                corr_df = working[actual_corr_cols].corr()
+                for c1 in actual_corr_cols:
+                    correlation_matrix[c1] = {}
+                    for c2 in actual_corr_cols:
+                        val = corr_df.loc[c1, c2]
+                        correlation_matrix[c1][c2] = float(val) if pd.notna(val) else 0.0
+            except Exception as e:
+                logger.warning("Failed to compute correlation matrix: %s", e)
+
+        # Calculate real field integrity success rates
+        fields_to_check = ["batt_voltage", "temp_panel_z", "temp_obc", "temp_batt_a", "temp_batt_b", "power_consumption", "uptime"]
+        field_integrity = {}
+        for f in fields_to_check:
+            if f in working.columns:
+                non_null = working[f].notna().sum()
+                total = len(working)
+                field_integrity[f] = float(non_null / total) if total > 0 else 0.0
+            else:
+                field_integrity[f] = 0.0
+
         return {
             "generated_at": now_iso(),
             "norad_id": norad_id,
@@ -399,7 +425,9 @@ class DashboardDataRepository:
                 "complete_frames": complete_count,
                 "partial_frames": partial_count,
                 "missing_fields": missing_list[:15],
+                "field_integrity": field_integrity,
             },
+            "macro_health_correlation": correlation_matrix,
             "macro_health": [
                 {
                     "date": timestamp_iso(row["_day"]),

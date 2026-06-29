@@ -3,8 +3,9 @@
   import { AreaY, Line } from 'svelteplot';
   import { BRAND } from '$lib/chart-theme';
 
-  let { data = [] } = $props<{
+  let { data = [], height = 240 } = $props<{
     data: any[];
+    height?: number;
   }>();
 
   let plotData = $derived(data.map((d: any) => ({
@@ -13,7 +14,7 @@
   })));
 </script>
 
-<ResponsivePlot height={240}
+<ResponsivePlot {height}
   x={{ type: 'time', label: false, grid: true }}
   y={{ label: 'Frames Received', grid: true, nice: true }}
   marginTop={30} marginRight={20} marginBottom={40} marginLeft={60}>

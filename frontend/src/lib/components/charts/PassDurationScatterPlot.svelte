@@ -3,12 +3,13 @@
   import { Dot } from 'svelteplot';
   import { SERIES_CURRENT as BLUE } from '$lib/chart-theme';
 
-  let { data = [] } = $props<{
+  let { data = [], height = 200 } = $props<{
     data: any[];
+    height?: number;
   }>();
 </script>
 
-<ResponsivePlot height={200}
+<ResponsivePlot {height}
   x={{ label: 'Pass Duration (seconds)', labelAnchor: 'center', grid: true, nice: true }}
   y={{ label: 'Frames Decoded', grid: true, nice: true }}
   marginTop={30} marginRight={20} marginBottom={40} marginLeft={60}>

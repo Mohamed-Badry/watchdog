@@ -3,8 +3,9 @@
   import { AreaY, Line } from 'svelteplot';
   import { SERIES_CURRENT as BLUE } from '$lib/chart-theme';
 
-  let { data = [] } = $props<{
+  let { data = [], height = 340 } = $props<{
     data: any[];
+    height?: number;
   }>();
 
   let plotData = $derived(data
@@ -13,9 +14,9 @@
   );
 </script>
 
-<ResponsivePlot height={340}
+<ResponsivePlot {height}
   x={{ type: 'time', label: false, grid: true }}
-  y={{ label: 'Voltage (V)', grid: true, nice: true, domain: [3.5, 4.3] }}
+  y={{ label: 'Voltage (V)', grid: true, nice: true }}
   marginTop={30} marginRight={20} marginBottom={40} marginLeft={60}>
   <AreaY data={plotData} 
          x="dateObj" 

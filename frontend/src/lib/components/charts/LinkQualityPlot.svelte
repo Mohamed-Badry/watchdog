@@ -3,8 +3,9 @@
   import { AreaY, Line } from 'svelteplot';
   import { SERIES_AMBER as AMBER } from '$lib/chart-theme';
 
-  let { data = [] } = $props<{
+  let { data = [], height = 200 } = $props<{
     data: any[];
+    height?: number;
   }>();
 
   let plotData = $derived(data.map((d: any) => ({
@@ -13,7 +14,7 @@
   })));
 </script>
 
-<ResponsivePlot height={200}
+<ResponsivePlot {height}
   x={{ type: 'time', label: false, grid: true }}
   y={{ label: 'Dropped Suspects', grid: true, nice: true }}
   marginTop={30} marginRight={20} marginBottom={40} marginLeft={60}>
