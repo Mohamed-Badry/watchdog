@@ -109,11 +109,6 @@ def train_for_satellite(
     models_path = Path(models_dir)
     models_path.mkdir(parents=True, exist_ok=True)
     data_path = Path(processed_dir) / f"{norad_id}.csv"
-    
-    if not data_path.exists():
-        logger.error(f"Processed data not found at {data_path}")
-        return
-
     profile = get_satellite_profile(norad_id)
     feature_names = list(profile.feature_contract.feature_names)
 
@@ -121,9 +116,47 @@ def train_for_satellite(
         f"Loading data for NORAD {norad_id} using feature contract "
         f"v{profile.feature_contract.version} ({profile.name})..."
     )
-    df = pd.read_csv(data_path)
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df = df.sort_values("timestamp")
+
+    df = None
+    try:
+        from api.database import get_engine
+        from api.db_models import TelemetryRow
+        from sqlmodel import Session, select
+        
+        engine = get_engine()
+        if engine:
+            with Session(engine) as session:
+                statement = (
+                    select(TelemetryRow)
+                    .where(TelemetryRow.norad_id == int(norad_id))
+                    .order_by(TelemetryRow.timestamp.asc())
+                )
+                results = session.exec(statement).all()
+                if results:
+                    rows = []
+                    for r in results:
+                        row = {
+                            "timestamp": r.timestamp,
+                            "norad_id": r.norad_id,
+                            "is_anomaly": r.is_anomaly or False,
+                            "anomaly_score": r.anomaly_score,
+                        }
+                        if isinstance(r.features, dict):
+                            row.update(r.features)
+                        rows.append(row)
+                    df = pd.DataFrame(rows)
+                    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+                    logger.info(f"Loaded {len(df)} telemetry frames from database for model training.")
+    except Exception as e:
+        logger.warning(f"Database query failed: {e}. Falling back to local file.")
+
+    if df is None or df.empty:
+        if not data_path.exists():
+            logger.error(f"Processed data not found at {data_path}")
+            return
+        df = pd.read_csv(data_path)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        df = df.sort_values("timestamp")
 
     orig_len = len(df)
 

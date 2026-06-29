@@ -47,29 +47,33 @@ class FrameStore:
         if sat_id not in self._cache:
             dfs: list[pd.DataFrame] = []
 
-            # 1. Historical CSV
-            path = self.processed_dir / f"{sat_id}.csv"
-            if path.exists():
-                try:
-                    csv_df = pd.read_csv(path)
-                    if "timestamp" in csv_df.columns:
-                        csv_df["timestamp"] = pd.to_datetime(
-                            csv_df["timestamp"], utc=True
-                        )
-                        csv_df["norad_id"] = sat_id
-                        dfs.append(csv_df)
-                except Exception as exc:
-                    logger.warning("Failed to load CSV for %d: %s", sat_id, exc)
-
-            # 2. Live database
-            dfs.extend(self._load_from_database(sat_id))
+            # 1. Try to load from live database first
+            db_dfs = self._load_from_database(sat_id)
+            if db_dfs:
+                dfs.extend(db_dfs)
+                logger.info(f"Loaded {len(dfs[0])} telemetry frames from database for NORAD {sat_id}")
+            else:
+                # 2. Offline Fallback to Historical CSV
+                logger.info(f"Database empty or offline. Falling back to local processed CSV for NORAD {sat_id}")
+                path = self.processed_dir / f"{sat_id}.csv"
+                if path.exists():
+                    try:
+                        csv_df = pd.read_csv(path)
+                        if "timestamp" in csv_df.columns:
+                            csv_df["timestamp"] = pd.to_datetime(
+                                csv_df["timestamp"], utc=True
+                            )
+                            csv_df["norad_id"] = sat_id
+                            dfs.append(csv_df)
+                    except Exception as exc:
+                        logger.warning("Failed to load CSV for %d: %s", sat_id, exc)
 
             if not dfs:
                 raise KeyError(
-                    f"No telemetry data found for NORAD {sat_id} in CSV or Database."
+                    f"No telemetry data found for NORAD {sat_id} in Database or CSV."
                 )
 
-            df = pd.concat(dfs, ignore_index=True) if len(dfs) > 1 else dfs[0]
+            df = dfs[0]
             df = df.drop_duplicates(subset=["timestamp"], keep="last")
 
             # Apply anomaly scores if a scoring service is wired in
