@@ -408,6 +408,13 @@ class DashboardDataRepository:
             else:
                 field_integrity[f] = 0.0
 
+        # Calculate real average SNR
+        avg_snr = 0.0
+        if "snr" in working.columns:
+            valid_snr = working["snr"].dropna()
+            if not valid_snr.empty:
+                avg_snr = float(valid_snr.mean())
+
         return {
             "generated_at": now_iso(),
             "norad_id": norad_id,
@@ -426,6 +433,7 @@ class DashboardDataRepository:
                 "partial_frames": partial_count,
                 "missing_fields": missing_list[:15],
                 "field_integrity": field_integrity,
+                "avg_snr": avg_snr,
             },
             "macro_health_correlation": correlation_matrix,
             "macro_health": [

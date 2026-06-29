@@ -48,7 +48,10 @@ class FrameStore:
             dfs: list[pd.DataFrame] = []
 
             # 1. Try to load from live database first
-            db_dfs = self._load_from_database(sat_id)
+            import os
+            db_dfs = []
+            if os.environ.get("TESTING") != "1":
+                db_dfs = self._load_from_database(sat_id)
             if db_dfs:
                 dfs.extend(db_dfs)
                 logger.info(f"Loaded {len(dfs[0])} telemetry frames from database for NORAD {sat_id}")

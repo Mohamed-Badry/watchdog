@@ -7,6 +7,7 @@
   import MissingFieldsBarChart from '$lib/components/charts/MissingFieldsBarChart.svelte';
   import MacroVoltageTrendPlot from '$lib/components/charts/MacroVoltageTrendPlot.svelte';
   import OrbitalDriftPlot from '$lib/components/charts/OrbitalDriftPlot.svelte';
+  import SparklinePlot from '$lib/components/charts/SparklinePlot.svelte';
   import { SERIES_CURRENT as BLUE, SERIES_AMBER as AMBER } from '$lib/chart-theme';
   import { fly, fade } from 'svelte/transition';
   import { page } from '$app/stores';
@@ -90,11 +91,46 @@
     return (sum / valid.length).toFixed(1);
   });
 
+  const formatLabel = (k: string) => k
+    .replace('temp_obc', 'OBC Temp')
+    .replace('temp_batt_a', 'Battery A Temp')
+    .replace('temp_batt_b', 'Battery B Temp')
+    .replace('temp_panel_z', 'Panel Z Temp')
+    .replace('batt_voltage', 'Battery Voltage')
+    .replace('batt_current', 'Battery Current')
+    .replace('power_consumption', 'Power Consumption')
+    .replace('temp_', '')
+    .replace('batt_', '')
+    .replace('_', ' ')
+    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
   // Safe getter for field integrity dictionary
   let fieldIntegrity = $derived((analytics?.quality?.field_integrity || {}) as Record<string, number>);
 
   // Safe getter for macro health correlation matrix
   let correlationMatrix = $derived((analytics?.macro_health_correlation || {}) as Record<string, Record<string, number>>);
+
+  // Dynamic SNR calculation
+  let avgSnr = $derived(analytics?.quality?.avg_snr != null ? analytics.quality.avg_snr.toFixed(1) : 'N/A');
+
+  // Dynamic battery & thermal status based on recent telemetry values
+  let recentHealth = $derived(analytics?.macro_health && analytics.macro_health.length > 0 ? analytics.macro_health[analytics.macro_health.length - 1] : null);
+  
+  let batteryStatus = $derived(() => {
+    if (!recentHealth || recentHealth.batt_voltage_mean == null) return { text: 'Unknown', color: 'text-ink-3' };
+    const v = recentHealth.batt_voltage_mean;
+    if (v < 3.5) return { text: 'Low Voltage', color: 'text-red-500' };
+    if (v < 3.7) return { text: 'Degraded', color: 'text-warning' };
+    return { text: 'Optimal', color: 'text-emerald-500' };
+  });
+
+  let thermalStatus = $derived(() => {
+    if (!recentHealth || recentHealth.temp_panel_z_mean == null) return { text: 'Unknown', color: 'text-ink-3' };
+    const t = recentHealth.temp_panel_z_mean;
+    if (t > 45.0 || t < -10.0) return { text: 'Critical', color: 'text-red-500' };
+    if (t > 30.0 || t < 0.0) return { text: 'Warning', color: 'text-warning' };
+    return { text: 'Nominal', color: 'text-emerald-500' };
+  });
 </script>
 
 <style>
@@ -231,21 +267,49 @@
           
           <!-- KPI Row -->
           <div class="kpi-row shrink-0">
-            <div class="kpi-card">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Total Frames</span>
-              <p class="text-xl font-bold text-ink mt-0.5">{totalFrames.toLocaleString()}</p>
+            <div class="kpi-card flex flex-row items-center justify-between gap-4">
+              <div class="flex flex-col">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Total Frames</span>
+                <p class="text-xl font-bold text-ink mt-0.5">{totalFrames.toLocaleString()}</p>
+              </div>
+              {#if analytics.throughput_30d}
+                <div class="w-16 shrink-0 opacity-80">
+                  <SparklinePlot data={analytics.throughput_30d.slice(-7)} height={32} />
+                </div>
+              {/if}
             </div>
-            <div class="kpi-card">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Data Ingress</span>
-              <p class="text-xl font-bold text-ink mt-0.5">{parsedDataMB} MB</p>
+            <div class="kpi-card flex flex-row items-center justify-between gap-4">
+              <div class="flex flex-col">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Data Ingress</span>
+                <p class="text-xl font-bold text-ink mt-0.5">{parsedDataMB} MB</p>
+              </div>
+              {#if analytics.throughput_30d}
+                <div class="w-16 shrink-0 opacity-80">
+                  <SparklinePlot data={analytics.throughput_30d.slice(-7)} height={32} />
+                </div>
+              {/if}
             </div>
-            <div class="kpi-card">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Avg Pass Duration</span>
-              <p class="text-xl font-bold text-ink mt-0.5">{avgPassDuration()}s</p>
+            <div class="kpi-card flex flex-row items-center justify-between gap-4">
+              <div class="flex flex-col">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Avg Pass Duration</span>
+                <p class="text-xl font-bold text-ink mt-0.5">{avgPassDuration()}s</p>
+              </div>
+              {#if analytics.pass_metrics}
+                <div class="w-16 shrink-0 opacity-80">
+                  <SparklinePlot data={analytics.pass_metrics.slice(-7).map((p: any) => ({ frame_count: p.duration_sec, anomaly_count: 0 }))} height={32} />
+                </div>
+              {/if}
             </div>
-            <div class="kpi-card">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Peak Influx</span>
-              <p class="text-xl font-bold text-ink mt-0.5">{maxDailyFrames().toLocaleString()} f/d</p>
+            <div class="kpi-card flex flex-row items-center justify-between gap-4">
+              <div class="flex flex-col">
+                <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Peak Influx</span>
+                <p class="text-xl font-bold text-ink mt-0.5">{maxDailyFrames().toLocaleString()} f/d</p>
+              </div>
+              {#if analytics.throughput_30d}
+                <div class="w-16 shrink-0 opacity-80">
+                  <SparklinePlot data={analytics.throughput_30d.slice(-7)} height={32} />
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -260,7 +324,7 @@
                   30-Day Frame Volume
                 </h3>
                 <div class="w-full">
-                  <ThroughputVolumePlot data={analytics.throughput_30d || []} height={190} />
+                  <ThroughputVolumePlot data={analytics.throughput_30d || []} height={280} />
                 </div>
               </div>
 
@@ -278,21 +342,29 @@
                         <th class="py-1.5 px-2">Acquisition Time (UTC)</th>
                         <th class="py-1.5 px-2 text-right">Duration</th>
                         <th class="py-1.5 px-2 text-right">Decoded Frames</th>
+                        <th class="py-1.5 px-2 text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-border/20 font-medium">
                       {#if analytics.pass_metrics && analytics.pass_metrics.length > 0}
-                        {#each analytics.pass_metrics.slice(-4).reverse() as p}
+                        {#each analytics.pass_metrics.slice(-8).reverse() as p}
+                          {@const isNominal = p.frame_count >= 5 && p.duration_sec > 0}
+                          {@const isDegraded = p.frame_count > 0 && p.frame_count < 5 && p.duration_sec > 0}
                           <tr>
                             <td class="py-1.5 px-2 text-ink">#{p.pass_id}</td>
                             <td class="py-1.5 px-2 text-ink-3">{new Date(p.timestamp).toLocaleString()}</td>
                             <td class="py-1.5 px-2 text-ink text-right">{p.duration_sec.toFixed(0)}s</td>
                             <td class="py-1.5 px-2 text-right text-brand">{p.frame_count}</td>
+                            <td class="py-1.5 px-2 text-right">
+                              <span class="text-[9px] px-1.5 py-0.5 rounded font-bold {isNominal ? 'bg-emerald-500/10 text-emerald-500' : isDegraded ? 'bg-warning/10 text-warning' : 'bg-red-500/10 text-red-500'}">
+                                {isNominal ? 'Nominal' : isDegraded ? 'Degraded' : 'Incomplete'}
+                              </span>
+                            </td>
                           </tr>
                         {/each}
                       {:else}
                         <tr>
-                          <td colspan="4" class="py-3 text-center text-ink-3">No tracking pass instances recorded.</td>
+                          <td colspan="5" class="py-3 text-center text-ink-3">No tracking pass instances recorded.</td>
                         </tr>
                       {/if}
                     </tbody>
@@ -309,7 +381,7 @@
                   Pass Duration vs Yield
                 </h3>
                 <div class="w-full">
-                  <PassDurationScatterPlot data={analytics.pass_metrics} height={150} />
+                  <PassDurationScatterPlot data={analytics.pass_metrics} height={220} />
                 </div>
               </div>
 
@@ -319,7 +391,7 @@
                   Link Quality Degradation
                 </h3>
                 <div class="w-full">
-                  <LinkQualityPlot data={analytics.throughput_30d || []} height={150} />
+                  <LinkQualityPlot data={analytics.throughput_30d || []} height={220} />
                 </div>
               </div>
             </div>
@@ -343,26 +415,27 @@
               <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Success Rate</span>
               <p class="text-xl font-bold text-ink mt-0.5">{successRate()}%</p>
             </div>
-            <div class="kpi-card">
-              <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">CRC Validation</span>
-              <p class="text-xl font-bold text-emerald-500 mt-0.5">AX.25</p>
-            </div>
           </div>
 
           <!-- Bottom Grid -->
           <div class="dashboard-columns grid-quality-split w-full shrink-0">
             <!-- Left Info Panel & Field Success rates -->
             <div class="flex flex-col gap-3">
-              <div class="panel-card">
+              <div class="panel-card flex-1">
                 <h3 class="mt-0 mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-3">
                   <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
-                  Parser Integrity
+                  Decoder Performance Summary
                 </h3>
-                <p class="text-[11px] leading-relaxed text-ink-2">
-                  Kaitai Struct decoders extract physical parameters from raw binary telemetry payloads. 
-                  A <span class="font-bold text-emerald-500">Complete</span> frame parses all required fields successfully. 
-                  A <span class="font-bold text-warning">Partial</span> frame indicates packet corruption or missing bytes during downlink transmission.
-                </p>
+                <div class="grid grid-cols-2 gap-3 text-[11px] leading-relaxed text-ink-2 mt-1">
+                  <div class="flex flex-col bg-panel/30 border border-border/25 p-2 rounded-lg">
+                    <span class="text-ink-3 text-[9px] uppercase tracking-wider font-bold">Total Packets Parsed</span>
+                    <span class="text-sm font-semibold text-ink mt-0.5">{totalFrames.toLocaleString()}</span>
+                  </div>
+                  <div class="flex flex-col bg-panel/30 border border-border/25 p-2 rounded-lg">
+                    <span class="text-ink-3 text-[9px] uppercase tracking-wider font-bold">Frame Parse Errors</span>
+                    <span class="text-sm font-semibold text-ink mt-0.5">{analytics.quality.partial_frames.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
 
               <!-- Real Dynamic Field Success Table -->
@@ -375,18 +448,23 @@
                   <table class="w-full text-left text-[11px] border-collapse">
                     <thead>
                       <tr class="border-b border-border/40 text-ink-3 font-semibold">
-                        <th class="py-1 px-1">Telemetry Field</th>
-                        <th class="py-1 px-1 text-right">Integrity</th>
-                        <th class="py-1 px-1 text-right">Status</th>
+                        <th class="py-1.5 px-1">Telemetry Field</th>
+                        <th class="py-1.5 px-1 text-right">Integrity</th>
+                        <th class="py-1.5 px-1 text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-border/20 font-medium">
                       {#each Object.entries(fieldIntegrity) as [field, rate]}
                         {@const pct = (rate * 100).toFixed(1)}
                         <tr>
-                          <td class="py-1 px-1 text-ink">{field}</td>
-                          <td class="py-1 px-1 text-right text-ink-2">{pct}%</td>
-                          <td class="py-1 px-1 text-right">
+                          <td class="py-2 px-1 text-ink">{formatLabel(field)}</td>
+                          <td class="py-2 px-1 text-right text-ink-2">
+                            <div>{pct}%</div>
+                            <div class="w-16 h-1 bg-panel border border-border/10 rounded-full ml-auto overflow-hidden mt-1">
+                              <div class="h-full bg-emerald-500 rounded-full" style="width: {pct}%"></div>
+                            </div>
+                          </td>
+                          <td class="py-2 px-1 text-right">
                             <span class="text-[9px] px-1.5 py-0.5 rounded font-bold {rate > 0.95 ? 'bg-emerald-500/10 text-emerald-500' : rate > 0.0 ? 'bg-warning/10 text-warning' : 'bg-red-500/10 text-red-500'}">
                               {rate > 0.95 ? 'Optimal' : rate > 0.0 ? 'Degraded' : 'Missing'}
                             </span>
@@ -408,10 +486,10 @@
               
               {#if analytics.quality.missing_fields.length > 0}
                 <div class="w-full">
-                  <MissingFieldsBarChart data={analytics.quality.missing_fields} height={290} />
+                  <MissingFieldsBarChart data={analytics.quality.missing_fields} height={420} />
                 </div>
               {:else}
-                <div class="w-full h-[290px] flex flex-col items-center justify-center text-emerald-500 border border-dashed border-emerald-500/20 bg-emerald-500/5 rounded-xl p-6">
+                <div class="w-full h-[420px] flex flex-col items-center justify-center text-emerald-500 border border-dashed border-emerald-500/20 bg-emerald-500/5 rounded-xl p-6">
                   <span class="text-sm font-semibold mb-1">100% Data Integrity</span>
                   <span class="text-[10px] opacity-75">No missing fields recorded. All packets parsed perfectly.</span>
                 </div>
@@ -435,25 +513,25 @@
             </div>
             <div class="kpi-card">
               <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Battery Status</span>
-              <p class="text-xl font-bold text-emerald-500 mt-0.5">Optimal</p>
+              <p class="text-xl font-bold {batteryStatus().color} mt-0.5">{batteryStatus().text}</p>
             </div>
             <div class="kpi-card">
               <span class="text-[9px] font-bold uppercase tracking-wider text-ink-3">Thermal State</span>
-              <p class="text-xl font-bold text-emerald-500 mt-0.5">Nominal</p>
+              <p class="text-xl font-bold {thermalStatus().color} mt-0.5">{thermalStatus().text}</p>
             </div>
           </div>
 
           <!-- Bottom Grid: Left charts, Right correlation matrix heatmap -->
           <div class="dashboard-columns grid-2col-split w-full shrink-0">
-            <!-- Left Column: Two health trends side-by-side -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Left Column: Two health trends stacked -->
+            <div class="flex flex-col gap-3">
               <div class="panel-card">
                 <h3 class="mt-0 mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-3">
                   <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                   Macro Battery Voltage (180 Days)
                 </h3>
                 <div class="w-full">
-                  <MacroVoltageTrendPlot data={analytics.macro_health || []} height={180} />
+                  <MacroVoltageTrendPlot data={analytics.macro_health || []} height={280} />
                 </div>
               </div>
 
@@ -463,44 +541,45 @@
                   Thermodynamic Z Drift (180 Days)
                 </h3>
                 <div class="w-full">
-                  <OrbitalDriftPlot data={analytics.macro_health || []} height={180} />
+                  <OrbitalDriftPlot data={analytics.macro_health || []} height={280} />
                 </div>
               </div>
             </div>
 
             <!-- Right Column: Real Pearson correlation heatmap -->
-            <div class="panel-card h-full justify-between">
-              <div>
-                <h3 class="mt-0 mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-3">
+            <div class="panel-card h-full justify-between flex flex-col">
+              <div class="flex flex-col h-full flex-1">
+                <h3 class="mt-0 mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink-3 shrink-0">
                   <span class="inline-block h-3 w-1 rounded-sm bg-brand"></span>
                   Telemetry Pearson Correlation
                 </h3>
-                <p class="text-[10px] leading-relaxed text-ink-3 mb-4">
+                <p class="text-[10px] leading-relaxed text-ink-3 mb-4 shrink-0">
                   Dynamic correlation coefficients (r) computed dynamically from all dataset rows.
                 </p>
                 
                 {#if Object.keys(correlationMatrix).length > 0}
-                  <div class="overflow-x-auto mt-2">
-                    <table class="w-full text-center border-collapse text-[10px]">
+                  <div class="overflow-x-auto mt-2 flex-1 flex flex-col">
+                    <table class="w-full h-full text-center border-collapse text-xs">
                       <thead>
                         <tr>
-                          <th class="p-1 text-left text-ink-3 font-semibold uppercase tracking-wider">Field</th>
+                          <th class="p-3 text-left text-ink-3 font-semibold uppercase tracking-wider">Field</th>
                           {#each Object.keys(correlationMatrix) as key}
-                            <th class="p-1 text-ink-3 font-semibold uppercase tracking-wider">{key.replace('temp_','').replace('batt_','')}</th>
+                            <th class="p-3 text-ink-3 font-semibold uppercase tracking-wider">{formatLabel(key)}</th>
                           {/each}
                         </tr>
                       </thead>
                       <tbody>
                         {#each Object.entries(correlationMatrix) as [rowKey, cols]}
                           <tr class="border-t border-border/20">
-                            <td class="p-1.5 text-left font-bold text-ink-2">{rowKey.replace('temp_','').replace('batt_','')}</td>
+                            <td class="p-3 py-4 text-left font-bold text-ink-2">{formatLabel(rowKey)}</td>
                             {#each Object.entries(cols) as [colKey, val]}
                               {@const isSelf = rowKey === colKey}
                               {@const absVal = Math.abs(val)}
                               <td 
-                                class="p-1.5 font-bold correlation-cell rounded" 
+                                class="p-3 py-4 text-sm font-bold correlation-cell" 
                                 style="background: {isSelf ? 'rgba(139, 92, 246, 0.15)' : val > 0 ? `rgba(16, 185, 129, ${absVal * 0.25})` : `rgba(245, 158, 11, ${absVal * 0.25})`}; 
-                                       color: {isSelf ? '#8B5CF6' : val > 0 ? '#10B981' : '#F59E0B'}"
+                                       color: {isSelf ? '#8B5CF6' : val > 0 ? '#10B981' : '#F59E0B'};
+                                       border: 3px solid transparent; background-clip: padding-box;"
                               >
                                 {val > 0 && !isSelf ? '+' : ''}{val.toFixed(2)}
                               </td>

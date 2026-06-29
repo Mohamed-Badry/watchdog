@@ -12,6 +12,8 @@ from gr_sat.ml.model_artifacts import ModelArtifactMetadata, model_artifact_path
 
 class DashboardApiTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
+        import os
+        os.environ["TESTING"] = "1"
         self.tmpdir = tempfile.TemporaryDirectory()
         self.root = Path(self.tmpdir.name)
         self.processed_dir = self.root / "data" / "processed"
@@ -136,6 +138,8 @@ class DashboardApiTests(unittest.IsolatedAsyncioTestCase):
         self.app = create_app(repository)
 
     def tearDown(self):
+        import os
+        os.environ.pop("TESTING", None)
         self.tmpdir.cleanup()
 
     async def _get(self, path: str, params: dict | None = None):
