@@ -22,7 +22,7 @@ const screenshotsDir = '/home/crim/Projects/gr_sat/frontend/static/screenshots';
         }
 
         const browser = await puppeteer.launch({
-            executablePath: './run_chrome.sh',
+            executablePath: './scripts/run_chrome.sh',
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
@@ -62,6 +62,18 @@ const screenshotsDir = '/home/crim/Projects/gr_sat/frontend/static/screenshots';
                 await page.evaluate(() => {
                     const btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent && b.textContent.includes('Fetch Data'));
                     if (btn) btn.click();
+                });
+                await new Promise(r => setTimeout(r, 4000));
+            }
+
+            if (p.name === 'live') {
+                console.log(`  [Live Page] Setting limit to 1000...`);
+                await page.evaluate(() => {
+                    const select = document.getElementById('live-feed-size') as HTMLSelectElement;
+                    if (select) {
+                        select.value = '1000';
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                 });
                 await new Promise(r => setTimeout(r, 4000));
             }
