@@ -14,10 +14,10 @@ API_URL = os.getenv("API_URL", "http://backend:8000")
 API_KEY = os.getenv("API_KEY", "dev_master_key")
 
 def run_fetch_data():
-    logger.info("Starting daily fetch_training_data job...")
+    logger.info("Starting daily fetch_training_data job (non-interactive, 3 days window)...")
     try:
         subprocess.run(
-            ["python", str(SCRIPTS_DIR / "fetch_training_data.py")],
+            ["python", str(SCRIPTS_DIR / "fetch_training_data.py"), "--all", "--days", "3"],
             check=True,
             cwd=str(PROJECT_ROOT)
         )
